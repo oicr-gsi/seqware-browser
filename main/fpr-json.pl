@@ -115,6 +115,8 @@ while (!$fprHandle->eof()) {
 	}
 	$fprData{"Donor"}{$donorSWID}{"Donor Attributes"} = $parentAttributes;
 	$fprData{"Donor"}{$donorSWID}{"Run"}{$sequencerRunSWID}{"Run Name"} = $runName;
+	$fprData{"Donor"}{$donorSWID}{"Workflow Run"}{$workflowRunSWID}{"Workflow Name"} = $workflowName;
+	$fprData{"Donor"}{$donorSWID}{"Workflow Run"}{$workflowRunSWID}{"Status"} = $runStatus;
 }
 
 my @categories = ("Workflow", "Project", "Run", "Library", "Donor");

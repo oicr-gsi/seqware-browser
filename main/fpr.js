@@ -107,7 +107,7 @@ fs.readFile(process.argv[7], 'utf8', function(err, data){
 	//functions associated with donor key
 	var obj;
 	//obj = getDonorInfo(fprData);
-	//obj = getDonorInfoByName(fprData, 'BLBC_0013');
+	//obj = getDonorInfoByName(fprData, 'PCSI_0625');
 
 	//obj = getNumLibrariesPerTissueAllDonors(fprData);
 	//obj = getNumLibrariesPerTissueByDonor(fprData, 'BLBC_0013');
@@ -116,7 +116,7 @@ fs.readFile(process.argv[7], 'utf8', function(err, data){
 	//obj = getNumOfLibraryTypeByDonor(fprData, 'PCSI_0023');
 
 	//obj = getStartEndDateAllDonors(fprData)
-	//obj = getStartEndDateByDonor(fprData, 'ACC_0002');
+	//obj = getStartEndDateByDonor(fprData, 'PCSI_0023');
 
 	//obj = getInstrumentNamesAllDonors(fprData);
 	//obj = getInstrumentNamesByDonor(fprData, 'PCSI_0023');
@@ -439,6 +439,7 @@ function getLibrariesByRun (fprData, runSWID) {
 function getDonorInfo (fprData) {
 	var returnObj = {};
 	var donors = getNumLibrariesPerTissueAllDonors(fprData);
+	var status = getAnalysisStatusAllCategory ('Donor', fprData, null, analysisYAML);
 
 	for (var donorSWID in fprData['Donor']) {
 		// to remove duplicates (because multiple SWIDs for a donor)
@@ -448,9 +449,17 @@ function getDonorInfo (fprData) {
 			returnObj[fprData['Donor'][donorSWID]['Donor Name']]['Tissue Types'] = {};
 			returnObj[fprData['Donor'][donorSWID]['Donor Name']]['SWID'] = [];
 		}
+		// Determine donor external name
 		if (/external_name.*=(.*?);/.test(fprData['Donor'][donorSWID]['Donor Attributes'])) {
 			var match = /external_name.*=(.*?);/.exec(fprData['Donor'][donorSWID]['Donor Attributes']);
 			returnObj[fprData['Donor'][donorSWID]['Donor Name']]['External Name'] = match[1];
+		}
+		// Only want running workflows
+		for (var analysisType in analysisYAML) {
+			if ('running' in status[donorSWID]['Analysis Status'][analysisType]) {
+				returnObj[fprData['Donor'][donorSWID]['Donor Name']]['Analysis Status'] = {};
+				returnObj[fprData['Donor'][donorSWID]['Donor Name']]['Analysis Status']['running'] = status[donorSWID]['Analysis Status'][analysisType]['running'];
+			}
 		}
 		returnObj[fprData['Donor'][donorSWID]['Donor Name']]['Tissue Types'] = donors[fprData['Donor'][donorSWID]['Donor Name']]['Tissue'];
 		// keep track of SWIDs for a donor
@@ -534,10 +543,13 @@ function getNumOfLibraryTypeAllDonors (fprData) {
 		for (var i = 0; i < temp[donor]['Libraries'].length; i++){
 			if (/.*_(.*?)$/.test(temp[donor]['Libraries'][i])) {
 				var match = /.*_(.*?)$/.exec(temp[donor]['Libraries'][i]);
-				if (typeof returnObj[donor]['Library Type'][match[1]] === 'undefined') {
-					returnObj[donor]['Library Type'][match[1]] = 1;
-				} else {
-					returnObj[donor]['Library Type'][match[1]]++;
+				// Some libraries end with a digit (not a library type)
+				if (/\D*/.test(match[1])) {
+					if (typeof returnObj[donor]['Library Type'][match[1]] === 'undefined') {
+						returnObj[donor]['Library Type'][match[1]] = 1;
+					} else {
+						returnObj[donor]['Library Type'][match[1]]++;
+					}
 				}
 			}
 		}

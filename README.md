@@ -154,14 +154,14 @@ The script first parses the file provenance report and converts everything into 
 *   getDonorInfoByName (fprHash, donorName)
     *   Example output:
 
-        obj = getDonorInfoByName(fprData, 'BLBC_0013');
+        obj = getDonorInfoByName(fprData, 'PCSI_0625');
 
-        ```{"BLBC_0013":{"External Name":"7695","Tissue Types":{"P":1,"R":1},"SWID":["957"]}}```
+        ```{"PCSI_0625":{"External Name":"94988","Tissue Types":{"P":2,"R":1},"SWID":["3371664"],"Analysis Status":{"running":1}}}```
 
     *   getDonorInfo (fprHash)
         *   Example output:
 
-            ```{"ACC_0002":{"External Name":{},"Tissue Types":{"R":1,"P":1},"SWID":["907","932"]},"BLBC_0014":{"External Name":"7696","Tissue Types":{"P":1},"SWID":["939"]},"BLBC_0013":{"External Name":"7695","Tissue Types":{"P":1,"R":1},"SWID":["957"]},"BLBC_0012":{"External Name":"7694","Tissue Types":{"P":1,"R":1},"SWID":["985"]},"BLBC_0011":{"External Name":"7693","Tissue Types":{"R":1},"SWID":["1008"]},"BLBC_0010":{"External Name":"7692","Tissue Types":{"R":1},"SWID":["1030"]},"BLBC_0005":{"External Name":"6185","Tissue Types":{"R":1},"SWID":["1069"]},"BLBC_0004":{"External Name":"6184","Tissue Types":{"R":1},"SWID":["1102"]}}```
+            ```"GECCO_6559":{"External Name":"92664","Tissue Types":{"P":1},"SWID":["3371643"]},"GECCO_6564":{"External Name":"Identity","Tissue Types":{"P":1},"SWID":["3371654"]},"PCSI_0625":{"External Name":"94988","Tissue Types":{"P":2,"R":1},"SWID":["3371664"],"Analysis Status":{"running":1}},"GECCO_6602":{"External Name":"92815","Tissue Types":{"R":1,"P":1},"SWID":["3371691"]},"GECCO_6561":{"External Name":{},"Tissue Types":{"P":1},"SWID":["3371700"]},"GECCO_6554":{"External Name":{},"Tissue Types":{"P":1},"SWID":["3371707"]},"GECCO_6574":{"External Name":{},"Tissue Types":{"P":1},"SWID":["3371715"]},"GECCO_6600":{"External Name":"110040009581","Tissue Types":{"R":1,"P":1},"SWID":["3371721"]},"GECCO_6605":{"External Name":{},"Tissue Types":{"R":1,"P":1},"SWID":["3371732"]},"GECCO_6627":{"External Name":{},"Tissue Types":{"R":1,"P":1},"SWID":["3371743"]}}```
 
 *   getNumLibrariesPerTissueByDonor (fprHash, donorName)
     *   Example output:
