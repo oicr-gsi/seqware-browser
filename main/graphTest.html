@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8"/>
+	<title>BLAH</title>
+	<script>
+		{{ChartJS}}
+	</script>
+	<script src="fpr.js"></script> 
+</head>
+
+
+<body>
+	<h1>Test</h1>
+	<label for="pieChart">{{Label}} Read Breakdown<br />
+		<canvas id="pieReadChart" width="400" height="400"></canvas>
+	</label>
+	<br />
+	<label for="barInsertChart">{{Label}} Insert Distribution<br />
+		<canvas id="barInsertChart" width="400" height="400"></canvas>
+	</label>
+	<br />
+	<label for="barSoftChart">{{Label}} Soft Clip by Cycle<br />
+		<canvas id="barSoftChart" width="400" height="400"></canvas>
+	</label>
+</body>
+
+<script> 
+window.onload = function() {
+	
+	var pieRead = document.getElementById("pieReadChart").getContext("2d");
+	new Chart(pieRead).Pie({{pieReadData}}, {
+		segmentStrokeWidth : 1
+	});
+	
+	var barInsert = document.getElementById("barInsertChart").getContext("2d");
+	window.barInsertChart = new Chart(barInsert).BarAlt({{barInsertData}}, {
+		labelsFilter: function (value, index) {
+			return(index + 1) % 50 !== 0;
+		},
+		scaleLabel: "               <%=value%>",
+		barShowStroke : false,
+		barValueSpacing : 1
+	});
+	
+	var colors = {{barInsertColors}};
+
+	for (var i = 0; i < colors.length; i++){
+		if (colors[i] == 'red'){
+			barInsertChart.datasets[0].bars[i].fillColor = "rgba(237,78,78,0.8)";
+		} else if (colors[i] == 'yellow') {
+			barInsertChart.datasets[0].bars[i].fillColor = "rgba(243,243,57,0.4)";
+		} else {
+			barInsertChart.datasets[0].bars[i].fillColor= "rgba(48,215,39,0.4)";
+		}
+	}
+	barInsertChart.update();
+
+	var barSoft = document.getElementById("barSoftChart").getContext("2d");
+	window.barSoftChart = new Chart(barSoft).BarAlt({{barSoftData}}, {
+		labelsFilter: function (value, index) {
+			return(index + 1) % 50 !== 0;
+		},
+		scaleLabel: "               <%=value%>",
+		barShowStroke : false,
+		barValueSpacing : 1
+	})	
+	
+}
+</script>
+</html> 
