@@ -51,6 +51,7 @@ while (!$fprHandle->eof()) {
 	my $runStatus = $linehash{"Workflow Run Status"};
 	my $sampleAttributes = $linehash{"Sample Attributes"};
 	my $parentAttributes = $linehash{"Parent Sample Attributes"};
+	my $lane = $linehash{"Lane Number"};
 
 	$workflowRunSWID = $linehash{"Workflow Run SWID"};
 	$projectSWID = $linehash{"Study SWID"};
@@ -112,6 +113,9 @@ while (!$fprHandle->eof()) {
 	}
 	if ( $libraryName =~ /.*?_.*?_.*?_(.*?)_.*/ ) {
 		$fprData{"Donor"}{$donorSWID}{"Tissue Type"}{$1}{"Library"}{$libraryName}++;
+	}
+	if ($filePath =~ /.*.BamQC.json$/ ) {
+		$fprData{"Donor"}{$donorSWID}{"Lane"}{$lane}{"Library"}{$libraryName} = $filePath;
 	}
 	$fprData{"Donor"}{$donorSWID}{"Donor Attributes"} = $parentAttributes;
 	$fprData{"Donor"}{$donorSWID}{"Run"}{$sequencerRunSWID}{"Run Name"} = $runName;
