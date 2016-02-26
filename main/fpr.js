@@ -4,21 +4,28 @@ var fs = require('fs');
 var _ = require('underscore');
 var YAML = require('yamljs');
 var readMultipleFiles = require('read-multiple-files');
+var http = require("http");
+var	mongodb = require('mongodb');
+var MongoClient = mongodb.MongoClient;
+var ObjectId = mongodb.ObjectID;
+var url = 'mongodb://127.0.0.1:27017/seqwareBrowser';
 
 var dateNow = new Date();
 var analysisYAML;
 
 // read fpr-Project/fpr-Workflow/fpr-Library JSON created by associated perl script
 //TODO: Maybe create a separate JSON just for this?
-
 readMultipleFiles([process.argv[3], process.argv[4], process.argv[6]], 'utf8', function(err, data){
 	if (err) return console.error(err);
+	console.log("starting project-workflow-library");
 	fprData = _.extend(JSON.parse(data[0]), JSON.parse(data[1]));
 	fprData = _.extend(fprData, JSON.parse(data[2]));
 
 	// function requiring project, workflow, library information
+
 	var obj;
 	//obj = getCurrentStats(fprData, '', '');
+
 	if (typeof obj !== 'undefined') {
 		obj = JSON.stringify(obj);
 		console.log(obj);
@@ -29,28 +36,53 @@ readMultipleFiles([process.argv[3], process.argv[4], process.argv[6]], 'utf8', f
 fs.readFile(process.argv[4], 'utf8', function(err, data){
 	if (err) return console.error(err);
 	console.log("starting project");
-	fprData = JSON.parse(data);
+	fprDataProject = JSON.parse(data);
 
 	// functions associated with project key
 	
 	var obj;
-	//obj = getCurrentStatsByProject(fprData, '', '', '10');
-	//obj = getLastModifiedProjects(fprData, 30);
-	//obj = getStartDateAllProjects(fprData);
-	//obj = getStartDateByProject(fprData, '10');
-	//obj = getAnalysisStatusAllProjects(fprData, 30, analysisYAML);
-	//obj = getAnalysisStatusByProject(fprData, analysisYAML, '10');
 
-	//obj = getNumDonorsAllProjects(fprData);
-	//obj = getNumDonorsByProject(fprData, '10');
-	//obj = getDonorsByProject(fprData, '10');
+	// Mongodb functions
+
+	//getLastModifiedProjects(fprDataProject, 30);
+
+	//var dates = getStartDateAllProjects(fprDataProject);
+	//var status = getAnalysisStatusAllProjects(fprDataProject, null, analysisYAML);
+	//var numDonors = getNumDonorsAllProjects(fprDataProject);
+	//var numLibraries = getNumLibrariesAllProjects(fprDataProject);
+	//var runData = getRunDataAllProjects(fprDataProject, '2015-01-01 00:00:00', '', analysisYAML);
 	
-	//obj = getNumLibrariesAllProjects(fprData);
-	//obj = getNumLibrariesByProject(fprData, '10');
-	//obj = getLibrariesByProject(fprData, '10');
+	for (var projectSWID in fprDataProject['Project']) {
+		//getCurrentStatsByProject(fprDataProject, '', '', projectSWID);
+		//getStartDateByProject(dates, projectSWID);
+		//getAnalysisStatusByProject(status, projectSWID);
+		//getNumDonorsByProject(numDonors, projectSWID);
+		//getDonorsByProject(fprDataProject, projectSWID);
+		//getNumLibrariesByProject(numLibraries, projectSWID);
+		//getLibrariesByProject(fprDataProject, projectSWID);
+		//getRunDataByProject(runData, projectSWID);
+	}
 
-	//obj = getRunDataAllProjects(fprData, '2015-01-01 00:00:00', '', analysisYAML);
-	//obj = getRunDataByProject(fprData, '2015-01-01 00:00:00', '', '10', analysisYAML);
+ //////// SOME FUNCTIONS HAVE DIFFERENT INPUTS NOW////////////////
+
+	//obj = getCurrentStatsByProject(fprDataProject, '', '', '10');
+	//obj = getLastModifiedProjects(fprDataProject, 30);
+	
+	
+	//obj = getStartDateByProject(fprDataProject, '10');
+	//obj = getAnalysisStatusAllProjects(fprDataProject, 30, analysisYAML);
+	//obj = getAnalysisStatusByProject(fprDataProject, analysisYAML, '10');
+
+	//obj = getNumDonorsAllProjects(fprDataProject);
+	//obj = getNumDonorsByProject(fprDataProject, '10');
+	//obj = getDonorsByProject(fprDataProject, '10');
+	
+	//obj = getNumLibrariesAllProjects(fprDataProject);
+	//obj = getNumLibrariesByProject(fprDataProject, '10');
+	//obj = getLibrariesByProject(fprDataProject, '10');
+
+	//obj = getRunDataAllProjects(fprDataProject, '2015-01-01 00:00:00', '', analysisYAML);
+	//obj = getRunDataByProject(fprDataProject, '2015-01-01 00:00:00', '', '10', analysisYAML);
 	
 	if (typeof obj !== 'undefined') {
 		obj = JSON.stringify(obj);
@@ -62,35 +94,17 @@ fs.readFile(process.argv[4], 'utf8', function(err, data){
 fs.readFile(process.argv[5], 'utf8', function(err, data){
 	if (err) return console.error(err);
 	console.log("starting run");
-	fprData = JSON.parse(data);
+	fprDataRun = JSON.parse(data);
 
 	// functions associated with run key
 	var obj;
-	//obj = getLibrariesAllRuns(fprData);
-	//obj = getLibrariesByRun(fprData, '8002');
-
-	if (typeof obj !== 'undefined') {
-		obj = JSON.stringify(obj);
-		console.log(obj);
+	//var libraries = getLibrariesAllRuns(fprDataRun);
+	for (var runSWID in fprDataRun['Run']) {
+		//getLibrariesByRun(libraries, runSWID);
 	}
-});
-
-// read fpr-Library JSON
-fs.readFile(process.argv[6], 'utf8', function(err, data){
-	if (err) return console.error(err);
-	console.log("starting library");
-	fprData = JSON.parse(data);
-
-	// functions associated with library key
-	var obj;
-	//obj = getAnalysisStatusAllLibraries(fprData, 30, analysisYAML);
-	//obj = getAnalysisStatusByLibrary(fprData, analysisYAML, '133');
-
-	//obj = getLibraryInfo(fprData);
-	//obj = getLibraryInfoBySWID(fprData, '165');
-
-	//obj = getWorkflowAllLibraries(fprData);
-	//obj = getWorkflowByLibrary(fprData, '165');
+	
+	//obj = getLibrariesAllRuns(fprDataRun);
+	//obj = getLibrariesByRun(fprDataRun, '8002');
 
 	if (typeof obj !== 'undefined') {
 		obj = JSON.stringify(obj);
@@ -102,24 +116,113 @@ fs.readFile(process.argv[6], 'utf8', function(err, data){
 fs.readFile(process.argv[7], 'utf8', function(err, data){
 	if (err) return console.error(err);
 	console.log("starting donor");
-	fprData = JSON.parse(data);
+	fprDataDonor = JSON.parse(data);
+
+	// remove duplicates
+	var donors = [];
+	for (var donorSWID in fprDataDonor['Donor']) {
+		donors.push(fprDataDonor['Donor'][donorSWID]['Donor Name']);
+
+	}
+	donors = _.uniq(donors);
 
 	//functions associated with donor key
+	var obj = {};
+	//var donorInfo = getDonorInfo(fprDataDonor);
+	//var numLibraries = getNumLibrariesPerTissueAllDonors(fprDataDonor);
+	//var numLibTypes = getNumOfLibraryTypeAllDonors(fprDataDonor);
+	//var dates = getStartEndDateAllDonors(fprDataDonor);
+	//var instruments = getInstrumentNamesAllDonors(fprDataDonor);
+
+	for (var i = 0; i < donors.length; i++){
+		//getDonorInfoByName(donorInfo, donors[i]);
+		//getNumLibrariesPerTissueByDonor(numLibraries, donors[i]);
+		//getNumOfLibraryTypeByDonor(numLibTypes, donors[i]);
+		//getStartEndDateByDonor(dates, donors[i]);
+		//getInstrumentNamesByDonor(instruments, donors[i]);
+	}
+	//files = getFilesByLibraryByLaneAllDonors(fprDataDonor);
+	for (var donor in files) {
+		if (typeof files[donor]['Lane'] !== 'undefined') {
+			for (var lane in files[donor]['Lane']) {
+				for (var library in files[donor]['Lane'][lane]) {
+					//obj = getReportData(files, donor, lane, library)['Donor'];
+					if (typeof obj !== 'undefined') {
+						obj = JSON.stringify(obj);
+						console.log(obj);
+					}
+				}
+			}
+		}
+	}
+
+	//obj = getDonorInfo(fprDataDonor);
+	//obj = getDonorInfoByName(fprDataDonor, 'PCSI_0625');
+
+	//obj = getNumLibrariesPerTissueAllDonors(fprDataDonor);
+	//obj = getNumLibrariesPerTissueByDonor(fprDataDonor, 'BLBC_0013');
+
+	//obj = getNumOfLibraryTypeAllDonors(fprDataDonor);
+	//obj = getNumOfLibraryTypeByDonor(fprDataDonor, 'PCSI_0023');
+
+	//obj = getStartEndDateAllDonors(fprDataDonor)
+	//obj = getStartEndDateByDonor(fprDataDonor, 'PCSI_0023');
+
+	//obj = getInstrumentNamesAllDonors(fprDataDonor);
+	//obj = getInstrumentNamesByDonor(fprDataDonor, 'BLBC_0006_Ly_R_nn_3_D_1');
+
+	//files = getFilesByLibraryByLaneAllDonors(fprDataDonor);
+	//obj = getReportData(files, 'PCSI_0023', '6', 'PCSI_0023_Pa_P_PE_700_WG');
+
+	if (typeof obj !== 'undefined') {
+		obj = JSON.stringify(obj);
+		//console.log(obj);
+	}
+});
+
+// can only run getReportData in the cluster, return json file and parse it back into mongo using this func
+fs.readFile(process.argv[8], 'utf8', function(err, data) {
+	if (err) return console.error(err);
+	console.log('connected');
+	var lines = data.toString().split('\n');
+
+	for (var i = 0; i < lines.length - 1; i++){
+		reportData = JSON.parse(lines[i]);
+		for (var donor in reportData) {
+			for (var lane in reportData[donor]['Lane']) {
+				for (var library in reportData[donor]['Lane'][lane]['Library']) {
+					updateData('ReportDataByLibraryByLaneByDonor', donor + '_' + lane + '_' + library, reportData);
+				}
+			}
+		}
+	}
+});
+
+// read fpr-Library JSON
+fs.readFile(process.argv[6], 'utf8', function(err, data){
+	if (err) return console.error(err);
+	console.log("starting library");
+	fprDataLibrary = JSON.parse(data);
+
+	// functions associated with library key
 	var obj;
-	//obj = getDonorInfo(fprData);
-	//obj = getDonorInfoByName(fprData, 'PCSI_0625');
+	//var status = getAnalysisStatusAllLibraries(fprDataLibrary, null, analysisYAML);
+	//var libraryInfo = getLibraryInfo(fprDataLibrary);
+	//var workflows = getWorkflowAllLibraries(fprDataLibrary);
 
-	//obj = getNumLibrariesPerTissueAllDonors(fprData);
-	//obj = getNumLibrariesPerTissueByDonor(fprData, 'BLBC_0013');
+	for (var sampleSWID in fprDataLibrary['Library']) {
+		//getAnalysisStatusByLibrary(status, sampleSWID);
+		//getLibraryInfoBySWID(libraryInfo, sampleSWID);
+		//getWorkflowByLibrary(workflows, sampleSWID);
+	}
+	//obj = getAnalysisStatusAllLibraries(fprDataLibrary, 30, analysisYAML);
+	//obj = getAnalysisStatusByLibrary(fprDataLibrary, analysisYAML, '133');
 
-	//obj = getNumOfLibraryTypeAllDonors(fprData);
-	//obj = getNumOfLibraryTypeByDonor(fprData, 'PCSI_0023');
+	//obj = getLibraryInfo(fprDataLibrary);
+	//obj = getLibraryInfoBySWID(fprDataLibrary, '165');
 
-	//obj = getStartEndDateAllDonors(fprData)
-	//obj = getStartEndDateByDonor(fprData, 'PCSI_0023');
-
-	//obj = getInstrumentNamesAllDonors(fprData);
-	//obj = getInstrumentNamesByDonor(fprData, 'PCSI_0023');
+	//obj = getWorkflowAllLibraries(fprDataLibrary);
+	//obj = getWorkflowByLibrary(fprDataLibrary, '165');
 
 	if (typeof obj !== 'undefined') {
 		obj = JSON.stringify(obj);
@@ -160,6 +263,9 @@ function getCurrentStats (fprData, dateFrom, dateTo){
 	//Library Total
 	returnObj['Total Libraries'] = Object.keys(fprData['Library']).length;
 	
+	// Update in mongodb
+	updateData('CurrentStats', 'current', returnObj);
+
 	return returnObj;
 }
 
@@ -190,6 +296,9 @@ function getCurrentStatsByProject (fprData, dateFrom, dateTo, projectSWID) {
 	returnObj[projectSWID] = {};
 	returnObj[projectSWID]['Workflow Status'] = {};
 	
+	returnObj[projectSWID]['Project Name'] = fprData['Project'][projectSWID]['Project Name'];
+	returnObj[projectSWID]['Project Libraries'] = Object.keys(fprData['Project'][projectSWID]['Library Name']).length;
+
 	if (dateFrom === '') {
 		returnObj[projectSWID]['Date From'] = 'Unspecified';
 	} else {
@@ -214,10 +323,10 @@ function getCurrentStatsByProject (fprData, dateFrom, dateTo, projectSWID) {
 			}
 		}
 	}
-	
-	returnObj[projectSWID]['Project Name'] = fprData['Project'][projectSWID]['Project Name'];
-	returnObj[projectSWID]['Project Libraries'] = Object.keys(fprData['Project'][projectSWID]['Library Name']).length;
-	
+
+	// Update in mongodb
+	updateData('CurrentStatsByProject', projectSWID, returnObj);
+
 	return returnObj;	
 }
 
@@ -235,6 +344,12 @@ function getLastModifiedProjects (fprData, dateRange) {
 			returnObj[projectSWID]['Last Modified'] = getDateTimeString(fprData['Project'][projectSWID]['Last Modified']);
 		}
 	}
+
+	returnObj['Date'] = getDateTimeString(dateNow);
+
+	// Update in mongodb
+	updateData('LastModifiedProject', 'lastMod_' + dateRange + '_days', returnObj);
+
 	return returnObj;
 }
 
@@ -256,11 +371,14 @@ function getStartDateAllProjects (fprData) {
 	return returnObj;
 }
 
-function getStartDateByProject (fprData, projectSWID) {
-	var dates = getStartDateAllProjects(fprData);
+// takes in dates from getStartDateAllProjects
+function getStartDateByProject (dates, projectSWID) {
 	var returnObj = {};
 	returnObj[projectSWID] = dates[projectSWID];
 	
+	// Update in mongodb
+	updateData('StartDateByProject', projectSWID, returnObj);
+
 	return returnObj;
 }
 
@@ -269,8 +387,8 @@ function getAnalysisStatusAllProjects (fprData, dateRange, analysisYAML) {
 	return getAnalysisStatusAllCategory('Project', fprData, dateRange, analysisYAML);
 }
 
-function getAnalysisStatusByProject (fprData, analysisYAML, projectSWID) {
-	return getAnalysisStatusByCategory('Project', fprData, analysisYAML, projectSWID);
+function getAnalysisStatusByProject (analysisCategories, projectSWID) {
+	return getAnalysisStatusByCategory('Project', analysisCategories, projectSWID);
 }
 
 // returns the number of donors for each project
@@ -296,11 +414,14 @@ function getNumDonorsAllProjects (fprData) {
 	return returnObj;
 }
 
-function getNumDonorsByProject (fprData, projectSWID) {
-	var donors = getNumDonorsAllProjects(fprData);
+// takes in num of donors from getNumDonorsAllProjects
+function getNumDonorsByProject (donors, projectSWID) {
 	var returnObj = {};
-	
 	returnObj[projectSWID] = donors[projectSWID];
+
+	// Update in mongodb
+	updateData('NumDonorsByProject', projectSWID, returnObj);
+
 	return returnObj;
 }
 
@@ -311,6 +432,9 @@ function getDonorsByProject (fprData, projectSWID) {
 	returnObj[projectSWID]['Project Name'] = fprData['Project'][projectSWID]['Project Name'];
 	returnObj[projectSWID]['Donors'] = Object.keys(fprData['Project'][projectSWID]['Donor Name']);
 	
+	// Update in mongodb
+	updateData('DonorsByProject', projectSWID, returnObj);
+
 	return returnObj;
 }
 
@@ -332,11 +456,14 @@ function getNumLibrariesAllProjects (fprData) {
 	return returnObj;
 }
 
-function getNumLibrariesByProject (fprData, projectSWID) {
-	var libraries = getNumLibrariesAllProjects(fprData);
+// takes in num of libraries from getNumLibrariesByProject
+function getNumLibrariesByProject (libraries, projectSWID) {
 	var returnObj = {};
-
 	returnObj[projectSWID] = libraries[projectSWID];
+
+	// Update in mongodb
+	updateData('NumLibrariesByProject', projectSWID, returnObj);
+
 	return returnObj;
 }
 
@@ -347,6 +474,9 @@ function getLibrariesByProject (fprData, projectSWID) {
 	returnObj[projectSWID]['Project Name'] = fprData['Project'][projectSWID]['Project Name'];
 	returnObj[projectSWID]['Libraries'] = Object.keys(fprData['Project'][projectSWID]['Library Name']);
 	
+	// Update in mongodb
+	updateData('LibrariesByProject', projectSWID, returnObj);
+
 	return returnObj;
 }
 
@@ -403,10 +533,14 @@ function getRunDataAllProjects (fprData, dateFrom, dateTo, analysisYAML) {
 	return returnObj;
 }
 
-function getRunDataByProject (fprData, dateFrom, dateTo, projectSWID, analysisYAML) {
-	var runs = getRunDataAllProjects (fprData, dateFrom, dateTo, analysisYAML);
+// takes in run data from getRunDataAllProjects
+function getRunDataByProject (runData, projectSWID) {
 	var returnObj = {};
-	returnObj[projectSWID] = runs[projectSWID];
+	returnObj[projectSWID] = runData[projectSWID];
+
+	// Update in mongodb
+	updateData('RunDataByProject', projectSWID, returnObj);
+
 	return returnObj;
 }
 
@@ -427,10 +561,14 @@ function getLibrariesAllRuns (fprData) {
 	return returnObj;
 }
 
-function getLibrariesByRun (fprData, runSWID) {
-	var libraries = getLibrariesAllRuns(fprData);
+// takes in libraries from getLibrariesAllRuns
+function getLibrariesByRun (libraries, runSWID) {
 	var returnObj = {};
 	returnObj[runSWID] = libraries[runSWID];
+
+	// Update in mongodb
+	updateData('LibrariesByRun', runSWID, returnObj);
+
 	return returnObj;
 }
 
@@ -469,10 +607,14 @@ function getDonorInfo (fprData) {
 	return returnObj;
 }
 
-function getDonorInfoByName (fprData, donor) {
-	var info = getDonorInfo(fprData);
+// takes in data from getDonorInfo
+function getDonorInfoByName (info, donor) {
 	var returnObj = {};
 	returnObj[donor] = info[donor];
+
+	// Update in mongodb
+	updateData('DonorInfo', donor, returnObj);
+
 	return returnObj;
 }
 
@@ -507,10 +649,14 @@ function getNumLibrariesPerTissueAllDonors (fprData) {
 	return returnObj;
 }
 
-function getNumLibrariesPerTissueByDonor (fprData, donor) {
-	var libraries = getNumLibrariesPerTissueAllDonors(fprData);
+// takes in num of libraries from getNumLibrariesPerTissueAllDonors
+function getNumLibrariesPerTissueByDonor (libraries, donor) {
 	var returnObj = {};
 	returnObj[donor] = libraries[donor];
+
+	// Update in mongodb
+	updateData('NumLibrariesPerTissueByDonor', donor, returnObj);
+
 	return returnObj;
 }
 
@@ -558,10 +704,13 @@ function getNumOfLibraryTypeAllDonors (fprData) {
 	return returnObj;
 }
 
-function getNumOfLibraryTypeByDonor (fprData, donor) {
-	var donors = getNumOfLibraryTypeAllDonors(fprData);
+//takes in num of library types from getNumOfLibraryTypeAllDonors
+function getNumOfLibraryTypeByDonor (numLibTypes, donor) {
 	var returnObj = {};
-	returnObj[donor] = donors[donor];
+	returnObj[donor] = numLibTypes[donor];
+
+	// Update in mongodb
+	updateData('NumOfLibraryTypeByDonor', donor, returnObj);
 	return returnObj;
 }
 
@@ -592,12 +741,13 @@ function getStartEndDateAllDonors (fprData) {
 	return returnObj;
 }
 
-function getStartEndDateByDonor (fprData, donor) {
-	var donors = getStartEndDateAllDonors(fprData);
+// takes in dates from getStartEndDateAllDonors
+function getStartEndDateByDonor (dates, donor) {
 	var returnObj = {};
-	returnObj[donor] = {};
-	returnObj[donor] = donors[donor];
+	returnObj[donor] = dates[donor];
 
+	// Update in mongodb
+	updateData('StartEndDateByDonor', donor, returnObj);
 	return returnObj;
 }
 
@@ -629,10 +779,13 @@ function getInstrumentNamesAllDonors (fprData) {
 	return returnObj;
 }
 
-function getInstrumentNamesByDonor (fprData, donor) {
-	var instruments = getInstrumentNamesAllDonors(fprData);
+// takes in instruments from getInstrumentNamesAllDonors
+function getInstrumentNamesByDonor (instruments, donor) {
 	var returnObj = {};
 	returnObj[donor] = instruments[donor];
+
+	//Update in mongodb
+	updateData('InstrumentNamesByDonor', donor, returnObj);
 	return returnObj;
 }
 
@@ -642,8 +795,8 @@ function getAnalysisStatusAllLibraries (fprData, dateRange, analysisYAML) {
 	return getAnalysisStatusAllCategory('Library', fprData, dateRange, analysisYAML);
 }
 
-function getAnalysisStatusByLibrary (fprData, analysisYAML, sampleSWID) {
-	return getAnalysisStatusByCategory('Library', fprData, analysisYAML, sampleSWID);
+function getAnalysisStatusByLibrary (analysisCategories, sampleSWID) {
+	return getAnalysisStatusByCategory('Library', analysisCategories, sampleSWID);
 }
 
 // for each library, returns the library types, tissue types, tissue origins
@@ -670,10 +823,13 @@ function getLibraryInfo (fprData) {
 	return returnObj;
 }
 
-function getLibraryInfoBySWID (fprData, sampleSWID) {
-	var info = getLibraryInfo(fprData);
+function getLibraryInfoBySWID (libraryInfo, sampleSWID) {
 	var returnObj = {};
-	returnObj[sampleSWID] = info[sampleSWID];
+	returnObj[sampleSWID] = libraryInfo[sampleSWID];
+
+	// Update in mongodb
+	updateData('LibraryInfo', sampleSWID, returnObj);
+
 	return returnObj;
 }
 
@@ -700,10 +856,13 @@ function getWorkflowAllLibraries (fprData) {
 	return returnObj;
 }
 
-function getWorkflowByLibrary (fprData, sampleSWID) {
-	var workflows = getWorkflowAllLibraries(fprData);
+function getWorkflowByLibrary (workflows, sampleSWID) {
 	var returnObj = {};
 	returnObj[sampleSWID] = workflows[sampleSWID];
+
+	//Update in mongodb
+	updateData('WorkflowByLibrary', sampleSWID, returnObj);
+
 	return returnObj;
 }
 
@@ -750,12 +909,254 @@ function getAnalysisStatusAllCategory(category, fprData, dateRange, analysisYAML
 	return returnObj;
 }
 
-function getAnalysisStatusByCategory(category, fprData, analysisYAML, SWID) {
-	var categories = getAnalysisStatusAllCategory(category, fprData, null, analysisYAML);
+// takes in returned object from getAnalysisStatusAllCategory
+function getAnalysisStatusByCategory(category, analysisCategories, SWID) {
 	var returnObj = {};
-	returnObj[SWID] = categories[SWID];
+	returnObj[SWID] = analysisCategories[SWID];
+
+	// Update in mongodb
+	updateData('AnalysisStatusBy' + category, SWID, returnObj);
+
 	return returnObj;
 }
+
+// Reporting Stuff
+// Returns associated JSON file per library per lane per donor
+function getFilesByLibraryByLaneAllDonors(fprData) {
+	var files = {};
+
+	for (var donorSWID in fprData['Donor']) {
+		var donor = fprData['Donor'][donorSWID]['Donor Name'];
+		if (typeof files[donor] === 'undefined') {
+			files[donor] = {};
+			files[donor]['SWID'] = [];
+		}
+		files[donor]['SWID'].push(donorSWID);
+		if (typeof fprData['Donor'][donorSWID]['Lane'] !== 'undefined') {
+			for (var lane in fprData['Donor'][donorSWID]['Lane']) {
+				if (typeof files[donor]['Lane'] === 'undefined') {
+					files[donor]['Lane'] = {};
+				}
+				if (typeof files[donor]['Lane'][lane] === 'undefined') {
+					files[donor]['Lane'][lane] = {};
+				}
+				for (var library in fprData['Donor'][donorSWID]['Lane'][lane]['Library']) {
+					files[donor]['Lane'][lane][library] = fprData['Donor'][donorSWID]['Lane'][lane]['Library'][library];
+				}
+				_.uniq(files[donor]['Lane'][lane][library]);
+			}
+		}
+	}
+	return files; //returns all JSON files associated by library-lane-donor
+}
+
+// Takes in files returned by getFilesByLibraryByLaneAllDonors and gets Report Data for one specified (donor, lane, library)
+function getReportData(JSONfiles, donor, lane, library) {
+	var json = JSONfiles[donor]['Lane'][lane][library];
+	var jsonString = fs.readFileSync(json, 'utf8');
+	var lineObj = JSON.parse(jsonString);
+
+	var returnObj = {};
+	returnObj['Donor'] = {};
+	returnObj['Donor'][donor] = {};
+	returnObj['Donor'][donor]['Lane'] = {};
+	returnObj['Donor'][donor]['Lane'][lane] = {};
+	returnObj['Donor'][donor]['Lane'][lane]['Library'] = {};
+	returnObj['Donor'][donor]['Lane'][lane]['Library'][library] = {};
+
+	// Initialize
+	var readsSP = parseFloat(lineObj['reads per start point']).toFixed(2);
+	var onTargetRate = lineObj['reads on target']/lineObj['mapped reads'];
+
+	// Barcode
+	if (lineObj['barcode'] === 'undefined') {
+		returnObj['Donor'][donor]['Lane'][lane]['Library'][library]['Barcode'] = 'noIndex';
+	} else {
+		returnObj['Donor'][donor]['Lane'][lane]['Library'][library]['Barcode'] = lineObj['barcode'];
+	}
+
+	// Run name
+	returnObj['Donor'][donor]['Lane'][lane]['Library'][library]['Run Name'] = lineObj['run name'];
+	// Reads per start point
+	returnObj['Donor'][donor]['Lane'][lane]['Library'][library]['Reads/SP'] = readsSP;
+
+	// Map %, Raw Reads, Raw Yield
+	var rawReads = (parseInt(lineObj['mapped reads']) + parseInt(lineObj['unmapped reads']) + parseInt(lineObj['qual fail reads']));
+
+	if (rawReads > 0) {
+		returnObj['Donor'][donor]['Lane'][lane]['Library'][library]['Map %'] = ((lineObj['mapped reads']/rawReads)*100).toFixed(2) + '%';
+		returnObj['Donor'][donor]['Lane'][lane]['Library'][library]['Raw Reads'] = rawReads;
+		returnObj['Donor'][donor]['Lane'][lane]['Library'][library]['Raw Yield'] = parseInt(rawReads*lineObj['average read length']);
+	} else {
+		returnObj['Donor'][donor]['Lane'][lane]['Library'][library]['Map %'] = 0;
+		returnObj['Donor'][donor]['Lane'][lane]['Library'][library]['Raw Reads'] = 0;
+		returnObj['Donor'][donor]['Lane'][lane]['Library'][library]['Raw Yield'] = 0;
+	}
+
+	// % on Target
+	returnObj['Donor'][donor]['Lane'][lane]['Library'][library]['% on Target'] = (onTargetRate*100).toFixed(2) + '%';
+
+	// Insert mean, insert stdev, read length
+	if (lineObj['number of ends'] === 'paired end') {
+		returnObj['Donor'][donor]['Lane'][lane]['Library'][library]['Insert Mean'] = parseFloat(lineObj['insert mean']).toFixed(2);
+		returnObj['Donor'][donor]['Lane'][lane]['Library'][library]['Insert Stdev'] = parseFloat(lineObj['insert stdev']).toFixed(2);
+		returnObj['Donor'][donor]['Lane'][lane]['Library'][library]['Read Length'] = lineObj['read 1 average length'] + ',' + lineObj['read 2 average length'];
+	} else {
+		returnObj['Donor'][donor]['Lane'][lane]['Library'][library]['Insert Mean'] = 'n/a';
+		returnObj['Donor'][donor]['Lane'][lane]['Library'][library]['Insert Stdev'] = 'n/a';
+		returnObj['Donor'][donor]['Lane'][lane]['Library'][library]['Read Length'] = lineObj['read ? average length'];
+	}
+
+	// Coverage
+	var rawEstYield = lineObj['aligned bases'] * onTargetRate;
+	var collapsedEstYield = rawEstYield/readsSP;
+
+	returnObj['Donor'][donor]['Lane'][lane]['Library'][library]['Coverage (collapsed)'] = (collapsedEstYield/lineObj['target size']).toFixed(2);
+	returnObj['Donor'][donor]['Lane'][lane]['Library'][library]['Coverage (raw)'] = (rawEstYield/lineObj['target size']).toFixed(2);
+
+	// Update in mongodb
+	//updateData('ReportDataByLibraryByLaneByDonor', donor + '_' + lane + '_' + library, returnObj);
+
+	return returnObj;
+}
+
+function generateGraphsByLibraryByLaneByDonor(json, donor, lane, library) {
+	var jsonString = fs.readFileSync(json, 'utf8');
+	var lineObj = JSON.parse(jsonString);
+	var label = lineObj['run name'] + ' Lane: ' + lineObj['lane'] + ' Barcode: ' + lineObj['barcode'] + '\n' + lineObj['library'];
+
+	// pie chart - read breakdown
+	var pieReadData = [];
+	var pieArray = [];
+	var colors = ['#878BB6', '#4ACAB4', '#FF8153', '#FFEA88'];
+	var labels = ['on target', 'off target', 'repeat/low quality', 'unmapped'];
+	pieArray.push(lineObj['mapped reads']);
+	pieArray.push(parseInt(lineObj['mapped reads']) - parseInt(lineObj['reads on target']));
+	pieArray.push(lineObj['qual fail reads']);
+	pieArray.push(lineObj['unmapped reads']);
+
+	for (var i = 0; i < pieArray.length; i++) {
+		var obj = {};
+		obj['value'] = pieArray[i];
+		obj['color'] = colors[i];
+		obj['label'] = labels[i];
+		pieReadData.push(obj);
+	}
+
+	// bar chart - insert distribution
+	var xValInsert = [];
+	var yValInsert = [];
+	var barInsertColors = [];
+	var insertMean = lineObj['insert mean'];
+	var histObj = lineObj['insert histogram'];
+	var insertMax = 650;
+	var insertStep = 50;
+	for (var i in histObj) {
+		if (i < insertMax) {
+			xValInsert.push(i);
+			yValInsert.push(histObj[i]);
+
+			if ((i < (insertMean - (2 * insertStep))) || (i > (insertMean + (2 * insertStep)))) {
+				barInsertColors.push('red');
+			} else if ((i < (insertMean - insertStep)) || (i > (insertMean + insertStep))) {
+				barInsertColors.push('yellow');
+			} else {
+				barInsertColors.push('green');
+			}
+		}
+	}
+	var barInsertData = {};
+	barInsertData['datasets'] = [];
+	barInsertData['labels'] = xValInsert;
+	var vals = {
+		label: "Pairs",
+		fillColor: "rgba(220,220,220,0.5)",
+        strokeColor: "rgba(220,220,220,0.8)",
+        highlightFill: "rgba(220,220,220,0.75)",
+        highlightStroke: "rgba(220,220,220,1)"
+	}
+	vals['data'] = yValInsert;
+	barInsertData['datasets'].push(vals);
+
+	// bar chart - soft clip by cycle
+	// initialize objects
+	var readArray = ['read 1', 'read 2', 'read ?'];
+	var alignedObj = {};
+	var insertObj = {};
+	for (var i = 0; i < readArray.length; i++) {
+		alignedObj[readArray[i]] = {};
+		insertObj[readArray[i]] = {};
+		alignedObj[readArray[i]] = lineObj[readArray[i] + ' aligned by cycle'];
+		insertObj[readArray[i]] = lineObj[readArray[i] + ' insertion by cycle'];
+	}
+	var xValSoft = [];
+	var yValSoft = [];
+	var read1max = 0;
+
+	for (var i = 0; i < readArray.length; i++) {
+		if (typeof lineObj[readArray[i] + ' soft clip by cycle'] !== 'undefined') {
+			var errorObj = lineObj[readArray[i] + ' soft clip by cycle'];
+			for (var j in errorObj) {
+				if (lineObj['number of ends'] === 'single end'){
+					xValSoft.push(j);
+				} else {
+					if (readArray[i] === 'read 1') {
+						xValSoft.push(j);
+						read1max++;
+					} else if (readArray[i] === 'read 2') {
+						xValSoft.push(j + read1max);
+					}
+				}
+				if (alignedObj[readArray[i]][j] + insertObj[readArray[i]][j] + errorObj[j] > 0) {
+					yValSoft.push((errorObj[j]/(alignedObj[readArray[i]][j] + errorObj[j] + insertObj[readArray[i]][j])) * 100);
+				} else {
+					yValSoft.push(0);
+				}
+			}
+			if (readArray[i] === 'read 1') {
+				xValSoft.push(read1max);
+				yValSoft.push(0);
+				read1max++;
+			}
+		}
+	}
+	var barSoftData = {};
+	barSoftData['datasets'] = [];
+	barSoftData['labels'] = xValSoft;
+	var values = {
+		label: "% Bases Soft Clipped",
+		fillColor: "red",
+        strokeColor: "red",
+        highlightFill: "rgba(220,220,220,0.75)",
+        highlightStroke: "rgba(220,220,220,1)"
+	}
+	values['data'] = yValSoft;
+	barSoftData['datasets'].push(values);
+
+	// Output to html
+	fs.readFile('./graphTest.html', 'utf8', function (err, data) {
+		if (err) return console.error(err);
+		http.createServer(function (request, response) {
+			var js = fs.readFileSync('./Chart.js-master/Chart.js', 'utf8');
+
+			response.writeHead(200, {'Content-Type': 'text/html'});
+			data = data.replace('{{ChartJS}}', js);
+			data = data.replace(/{{Label}}/g, label);
+		    data = data.replace('{{pieReadData}}', JSON.stringify(pieReadData));
+		    data = data.replace('{{barInsertData}}', JSON.stringify(barInsertData));
+		    data = data.replace('{{barInsertColors}}', JSON.stringify(barInsertColors));
+		    data = data.replace('{{barSoftData}}', JSON.stringify(barSoftData));
+		    response.write(data);
+		    response.end();
+	    }).listen(8081);
+	});
+
+	console.log('Server running at http://127.0.0.1:8081/');
+}
+
+//Test graph
+//generateGraphsByLibraryByLaneByDonor('SWID_3165537_PV_0001_Bm_P_PE_423_EX_3_151216_D00331_0149_AC8L3CANXX_AACGTGAT_L001_R1_001.annotated.bam.BamQC.json');
+
 
 // ETC
 // takes in a date object or date string and converts it into %Y-%m-%d %H:%M:%S format
@@ -804,4 +1205,18 @@ function convertToDateObject(dateFrom, dateTo) {
 		}
 	}
 	return [dateFrom, dateTo];
+}
+
+// updates provided info in mongodb
+function updateData(collection, id, data) {
+	// set the collection entry _id to the SWID/name of entry
+	data['_id'] = id;
+
+	MongoClient.connect(url, function(err, db) {
+		if (err) return console.error(err);
+		console.log('connected');
+
+		// Return updated info, insert if not already in db
+		db.collection(collection).updateOne({_id: data['_id']}, data, {upsert: true}, function (err) {});
+	});
 }
