@@ -13,6 +13,7 @@ var url = 'mongodb://127.0.0.1:27017/seqwareBrowser';
 var dateNow = new Date();
 var analysisYAML;
 
+/*
 // read fpr-Project/fpr-Workflow/fpr-Library JSON created by associated perl script
 //TODO: Maybe create a separate JSON just for this?
 readMultipleFiles([process.argv[3], process.argv[4], process.argv[6]], 'utf8', function(err, data){
@@ -44,7 +45,7 @@ fs.readFile(process.argv[4], 'utf8', function(err, data){
 
 	// Mongodb functions
 
-	//getLastModifiedProjects(fprDataProject, 30);
+	//getLastModifiedProjects(fprDataProject, 60);
 
 	//var dates = getStartDateAllProjects(fprDataProject);
 	//var status = getAnalysisStatusAllProjects(fprDataProject, null, analysisYAML);
@@ -101,14 +102,24 @@ fs.readFile(process.argv[5], 'utf8', function(err, data){
 	//var libraries = getLibrariesAllRuns(fprDataRun);
 	for (var runSWID in fprDataRun['Run']) {
 		//getLibrariesByRun(libraries, runSWID);
+		if (typeof fprDataRun['Run'][runSWID]['Lane'] !== 'undefined') {
+			for (var lane in fprDataRun['Run'][runSWID]['Lane']) {
+				for (var library in fprDataRun['Run'][runSWID]['Lane'][lane]['Library']) {
+					obj = getReportDataByLibraryByLaneByRun(fprDataRun, runSWID, lane, library);
+					obj = JSON.stringify(obj);
+					console.log(obj);
+				}
+			}
+		}
 	}
+	
 	
 	//obj = getLibrariesAllRuns(fprDataRun);
 	//obj = getLibrariesByRun(fprDataRun, '8002');
 
 	if (typeof obj !== 'undefined') {
 		obj = JSON.stringify(obj);
-		console.log(obj);
+		//console.log(obj);
 	}
 });
 
@@ -146,7 +157,7 @@ fs.readFile(process.argv[7], 'utf8', function(err, data){
 		if (typeof files[donor]['Lane'] !== 'undefined') {
 			for (var lane in files[donor]['Lane']) {
 				for (var library in files[donor]['Lane'][lane]) {
-					//obj = getReportData(files, donor, lane, library)['Donor'];
+					//obj = getReportDataByLibraryByLaneByDonor(files, donor, lane, library)['Donor'];
 					if (typeof obj !== 'undefined') {
 						obj = JSON.stringify(obj);
 						console.log(obj);
@@ -180,7 +191,8 @@ fs.readFile(process.argv[7], 'utf8', function(err, data){
 	}
 });
 
-// can only run getReportData in the cluster, return json file and parse it back into mongo using this func
+// can only run getReportData in the cluster sinces files are in the cluster, 
+// return json file and parse it back into mongo using this func
 fs.readFile(process.argv[8], 'utf8', function(err, data) {
 	if (err) return console.error(err);
 	console.log('connected');
@@ -188,10 +200,11 @@ fs.readFile(process.argv[8], 'utf8', function(err, data) {
 
 	for (var i = 0; i < lines.length - 1; i++){
 		reportData = JSON.parse(lines[i]);
-		for (var donor in reportData) {
-			for (var lane in reportData[donor]['Lane']) {
-				for (var library in reportData[donor]['Lane'][lane]['Library']) {
-					updateData('ReportDataByLibraryByLaneByDonor', donor + '_' + lane + '_' + library, reportData);
+		for (var key in reportData['Run']) {
+			for (var lane in reportData['Run'][key]['Lane']) {
+				for (var library in reportData['Run'][key]['Lane'][lane]['Library']) {
+					//updateData('ReportDataByLibraryByLaneByDonor', key + '_' + lane + '_' + library, reportData);
+					updateData('ReportDataByLibraryByLaneByRun', key + '_' + lane + '_' + library, reportData);
 				}
 			}
 		}
@@ -237,7 +250,7 @@ fs.readFile(process.argv[2], 'utf8', function(err, data){
 	analysisYAML = YAML.parse(data);
 	//console.log(analysisYAML);
 });
-
+*/
 /////////////////////////////// Functions ///////////////////////////////
 
 // returns current stats such as workflow run status, total projects, total libraries
@@ -348,7 +361,7 @@ function getLastModifiedProjects (fprData, dateRange) {
 	returnObj['Date'] = getDateTimeString(dateNow);
 
 	// Update in mongodb
-	updateData('LastModifiedProject', 'lastMod_' + dateRange + '_days', returnObj);
+	updateData('LastModifiedProjects', 'lastMod_' + dateRange + '_days', returnObj);
 
 	return returnObj;
 }
@@ -866,61 +879,7 @@ function getWorkflowByLibrary (workflows, sampleSWID) {
 	return returnObj;
 }
 
-//// General Analysis Status
-// general template to get workflow run analysis status based on category (either project or library)
-function getAnalysisStatusAllCategory(category, fprData, dateRange, analysisYAML) {
-	var returnObj = {};
-	if (dateRange === null) {
-		var dates = convertToDateObject('', '');
-		var dateFrom = dates[0];
-		var dateTo = dates[1];
-	} else {
-		var dateTo = dateNow;
-		var dateFrom = new Date().setDate(dateNow.getDate() - dateRange);
-	}
-	for (var SWID in fprData[category]) {
-		var date = new Date(fprData[category][SWID]['Last Modified']);
-		if (date <= dateTo && date >= dateFrom && date !== 'undefined') {
-			returnObj[SWID] = {};
-			returnObj[SWID]['Workflow Runs'] = [];
-			returnObj[SWID]['Analysis Status'] = {};
-			returnObj[SWID][category + ' Name'] = fprData[category][SWID][category + " Name"];
-			returnObj[SWID]['Last Modified'] = getDateTimeString(fprData[category][SWID]['Last Modified']);
-			for (var workflowSWID in fprData[category][SWID]['Workflow Run']){
-				returnObj[SWID]['Workflow Runs'].push(fprData[category][SWID]['Workflow Run'][workflowSWID]['Workflow Name']);
-				for (var analysisType in analysisYAML) {
-					if (typeof returnObj[SWID]['Analysis Status'][analysisType] === 'undefined') {
-						returnObj[SWID]['Analysis Status'][analysisType] = {};
-					}
-					// for each workflow, check which analysis type it is and increment count by 1
-					if (fprData[category][SWID]['Workflow Run'][workflowSWID]['Workflow Name'] in analysisYAML[analysisType]) {
-						if (typeof returnObj[SWID]['Analysis Status'][analysisType][fprData[category][SWID]['Workflow Run'][workflowSWID]['Status']] === 'undefined') {
-							returnObj[SWID]['Analysis Status'][analysisType][fprData[category][SWID]['Workflow Run'][workflowSWID]['Status']] = 1;
-						} else {
-							returnObj[SWID]['Analysis Status'][analysisType][fprData[category][SWID]['Workflow Run'][workflowSWID]['Status']]++;
-						}
-					}
-				}
-			}
-			returnObj[SWID]['Workflow Runs'] = _.uniq(returnObj[SWID]['Workflow Runs']);
-		}
-	}
-
-	return returnObj;
-}
-
-// takes in returned object from getAnalysisStatusAllCategory
-function getAnalysisStatusByCategory(category, analysisCategories, SWID) {
-	var returnObj = {};
-	returnObj[SWID] = analysisCategories[SWID];
-
-	// Update in mongodb
-	updateData('AnalysisStatusBy' + category, SWID, returnObj);
-
-	return returnObj;
-}
-
-// Reporting Stuff
+//// Reporting Functions (detailed pages)
 // Returns associated JSON file per library per lane per donor
 function getFilesByLibraryByLaneAllDonors(fprData) {
 	var files = {};
@@ -951,11 +910,8 @@ function getFilesByLibraryByLaneAllDonors(fprData) {
 }
 
 // Takes in files returned by getFilesByLibraryByLaneAllDonors and gets Report Data for one specified (donor, lane, library)
-function getReportData(JSONfiles, donor, lane, library) {
+function getReportDataByLibraryByLaneByDonor(JSONfiles, donor, lane, library) {
 	var json = JSONfiles[donor]['Lane'][lane][library];
-	var jsonString = fs.readFileSync(json, 'utf8');
-	var lineObj = JSON.parse(jsonString);
-
 	var returnObj = {};
 	returnObj['Donor'] = {};
 	returnObj['Donor'][donor] = {};
@@ -964,60 +920,88 @@ function getReportData(JSONfiles, donor, lane, library) {
 	returnObj['Donor'][donor]['Lane'][lane]['Library'] = {};
 	returnObj['Donor'][donor]['Lane'][lane]['Library'][library] = {};
 
+	returnObj['Donor'][donor]['Lane'][lane]['Library'][library] = getReportData(json, returnObj['Donor'][donor]['Lane'][lane]['Library'][library]);
+
+	// Update in mongodb
+	//updateData('ReportDataByLibraryByLaneByDonor', donor + '_' + lane + '_' + library, returnObj);
+
+	return returnObj;
+}
+
+// Returns associated JSON file per library per lane per run
+function getReportDataByLibraryByLaneByRun(fprData, runSWID, lane, library) {
+	var json = fprData['Run'][runSWID]['Lane'][lane]['Library'][library];
+	var returnObj = {};
+	returnObj['Run'] = {};
+	returnObj['Run'][fprData['Run'][runSWID]['Run Name']] = {};
+	returnObj['Run'][fprData['Run'][runSWID]['Run Name']]['Lane'] = {};
+	returnObj['Run'][fprData['Run'][runSWID]['Run Name']]['Lane'][lane] = {};
+	returnObj['Run'][fprData['Run'][runSWID]['Run Name']]['Lane'][lane]['Library'] = {};
+	returnObj['Run'][fprData['Run'][runSWID]['Run Name']]['Lane'][lane]['Library'][library] = {};
+
+	returnObj['Run'][fprData['Run'][runSWID]['Run Name']]['Lane'][lane]['Library'][library] = getReportData(json, returnObj['Run'][fprData['Run'][runSWID]['Run Name']]['Lane'][lane]['Library'][library]);
+
+	//Update in mongodb
+	//updateData('ReportDataByLibraryByLaneByRun', fprData['Run'][runSWID]['Run Name'] + '_' + lane + '_' + library);
+
+	return returnObj;
+}
+
+function getReportData(jsonFile, obj) {
+	var jsonString = fs.readFileSync(jsonFile, 'utf8');
+	var lineObj = JSON.parse(jsonString);
+
 	// Initialize
 	var readsSP = parseFloat(lineObj['reads per start point']).toFixed(2);
 	var onTargetRate = lineObj['reads on target']/lineObj['mapped reads'];
 
 	// Barcode
 	if (lineObj['barcode'] === 'undefined') {
-		returnObj['Donor'][donor]['Lane'][lane]['Library'][library]['Barcode'] = 'noIndex';
+		obj['Barcode'] = 'noIndex';
 	} else {
-		returnObj['Donor'][donor]['Lane'][lane]['Library'][library]['Barcode'] = lineObj['barcode'];
+		obj['Barcode'] = lineObj['barcode'];
 	}
 
 	// Run name
-	returnObj['Donor'][donor]['Lane'][lane]['Library'][library]['Run Name'] = lineObj['run name'];
+	obj['Run Name'] = lineObj['run name'];
 	// Reads per start point
-	returnObj['Donor'][donor]['Lane'][lane]['Library'][library]['Reads/SP'] = readsSP;
+	obj['Reads/SP'] = readsSP;
 
 	// Map %, Raw Reads, Raw Yield
 	var rawReads = (parseInt(lineObj['mapped reads']) + parseInt(lineObj['unmapped reads']) + parseInt(lineObj['qual fail reads']));
 
 	if (rawReads > 0) {
-		returnObj['Donor'][donor]['Lane'][lane]['Library'][library]['Map %'] = ((lineObj['mapped reads']/rawReads)*100).toFixed(2) + '%';
-		returnObj['Donor'][donor]['Lane'][lane]['Library'][library]['Raw Reads'] = rawReads;
-		returnObj['Donor'][donor]['Lane'][lane]['Library'][library]['Raw Yield'] = parseInt(rawReads*lineObj['average read length']);
+		obj['Map %'] = ((lineObj['mapped reads']/rawReads)*100).toFixed(2) + '%';
+		obj['Raw Reads'] = rawReads;
+		obj['Raw Yield'] = parseInt(rawReads*lineObj['average read length']);
 	} else {
-		returnObj['Donor'][donor]['Lane'][lane]['Library'][library]['Map %'] = 0;
-		returnObj['Donor'][donor]['Lane'][lane]['Library'][library]['Raw Reads'] = 0;
-		returnObj['Donor'][donor]['Lane'][lane]['Library'][library]['Raw Yield'] = 0;
+		obj['Map %'] = 0;
+		obj['Raw Reads'] = 0;
+		obj['Raw Yield'] = 0;
 	}
 
 	// % on Target
-	returnObj['Donor'][donor]['Lane'][lane]['Library'][library]['% on Target'] = (onTargetRate*100).toFixed(2) + '%';
+	obj['% on Target'] = (onTargetRate*100).toFixed(2) + '%';
 
 	// Insert mean, insert stdev, read length
 	if (lineObj['number of ends'] === 'paired end') {
-		returnObj['Donor'][donor]['Lane'][lane]['Library'][library]['Insert Mean'] = parseFloat(lineObj['insert mean']).toFixed(2);
-		returnObj['Donor'][donor]['Lane'][lane]['Library'][library]['Insert Stdev'] = parseFloat(lineObj['insert stdev']).toFixed(2);
-		returnObj['Donor'][donor]['Lane'][lane]['Library'][library]['Read Length'] = lineObj['read 1 average length'] + ',' + lineObj['read 2 average length'];
+		obj['Insert Mean'] = parseFloat(lineObj['insert mean']).toFixed(2);
+		obj['Insert Stdev'] = parseFloat(lineObj['insert stdev']).toFixed(2);
+		obj['Read Length'] = lineObj['read 1 average length'] + ',' + lineObj['read 2 average length'];
 	} else {
-		returnObj['Donor'][donor]['Lane'][lane]['Library'][library]['Insert Mean'] = 'n/a';
-		returnObj['Donor'][donor]['Lane'][lane]['Library'][library]['Insert Stdev'] = 'n/a';
-		returnObj['Donor'][donor]['Lane'][lane]['Library'][library]['Read Length'] = lineObj['read ? average length'];
+		obj['Insert Mean'] = 'n/a';
+		obj['Insert Stdev'] = 'n/a';
+		obj['Read Length'] = lineObj['read ? average length'];
 	}
 
 	// Coverage
 	var rawEstYield = lineObj['aligned bases'] * onTargetRate;
 	var collapsedEstYield = rawEstYield/readsSP;
 
-	returnObj['Donor'][donor]['Lane'][lane]['Library'][library]['Coverage (collapsed)'] = (collapsedEstYield/lineObj['target size']).toFixed(2);
-	returnObj['Donor'][donor]['Lane'][lane]['Library'][library]['Coverage (raw)'] = (rawEstYield/lineObj['target size']).toFixed(2);
+	obj['Coverage (collapsed)'] = (collapsedEstYield/lineObj['target size']).toFixed(2);
+	obj['Coverage (raw)'] = (rawEstYield/lineObj['target size']).toFixed(2);
 
-	// Update in mongodb
-	//updateData('ReportDataByLibraryByLaneByDonor', donor + '_' + lane + '_' + library, returnObj);
-
-	return returnObj;
+	return obj;
 }
 
 function generateGraphsByLibraryByLaneByDonor(json, donor, lane, library) {
@@ -1034,6 +1018,7 @@ function generateGraphsByLibraryByLaneByDonor(json, donor, lane, library) {
 	pieArray.push(parseInt(lineObj['mapped reads']) - parseInt(lineObj['reads on target']));
 	pieArray.push(lineObj['qual fail reads']);
 	pieArray.push(lineObj['unmapped reads']);
+	total = lineObj['mapped reads'] + (parseInt(lineObj['mapped reads']) - parseInt(lineObj['reads on target'])) + lineObj['qual fail reads'] + lineObj['unmapped reads'];
 
 	for (var i = 0; i < pieArray.length; i++) {
 		var obj = {};
@@ -1157,6 +1142,59 @@ function generateGraphsByLibraryByLaneByDonor(json, donor, lane, library) {
 //Test graph
 //generateGraphsByLibraryByLaneByDonor('SWID_3165537_PV_0001_Bm_P_PE_423_EX_3_151216_D00331_0149_AC8L3CANXX_AACGTGAT_L001_R1_001.annotated.bam.BamQC.json');
 
+//// General Analysis Status
+// general template to get workflow run analysis status based on category (either project or library)
+function getAnalysisStatusAllCategory(category, fprData, dateRange, analysisYAML) {
+	var returnObj = {};
+	if (dateRange === null) {
+		var dates = convertToDateObject('', '');
+		var dateFrom = dates[0];
+		var dateTo = dates[1];
+	} else {
+		var dateTo = dateNow;
+		var dateFrom = new Date().setDate(dateNow.getDate() - dateRange);
+	}
+	for (var SWID in fprData[category]) {
+		var date = new Date(fprData[category][SWID]['Last Modified']);
+		if (date <= dateTo && date >= dateFrom && date !== 'undefined') {
+			returnObj[SWID] = {};
+			returnObj[SWID]['Workflow Runs'] = [];
+			returnObj[SWID]['Analysis Status'] = {};
+			returnObj[SWID][category + ' Name'] = fprData[category][SWID][category + " Name"];
+			returnObj[SWID]['Last Modified'] = getDateTimeString(fprData[category][SWID]['Last Modified']);
+			for (var workflowSWID in fprData[category][SWID]['Workflow Run']){
+				returnObj[SWID]['Workflow Runs'].push(fprData[category][SWID]['Workflow Run'][workflowSWID]['Workflow Name']);
+				for (var analysisType in analysisYAML) {
+					if (typeof returnObj[SWID]['Analysis Status'][analysisType] === 'undefined') {
+						returnObj[SWID]['Analysis Status'][analysisType] = {};
+					}
+					// for each workflow, check which analysis type it is and increment count by 1
+					if (fprData[category][SWID]['Workflow Run'][workflowSWID]['Workflow Name'] in analysisYAML[analysisType]) {
+						if (typeof returnObj[SWID]['Analysis Status'][analysisType][fprData[category][SWID]['Workflow Run'][workflowSWID]['Status']] === 'undefined') {
+							returnObj[SWID]['Analysis Status'][analysisType][fprData[category][SWID]['Workflow Run'][workflowSWID]['Status']] = 1;
+						} else {
+							returnObj[SWID]['Analysis Status'][analysisType][fprData[category][SWID]['Workflow Run'][workflowSWID]['Status']]++;
+						}
+					}
+				}
+			}
+			returnObj[SWID]['Workflow Runs'] = _.uniq(returnObj[SWID]['Workflow Runs']);
+		}
+	}
+
+	return returnObj;
+}
+
+// takes in returned object from getAnalysisStatusAllCategory
+function getAnalysisStatusByCategory(category, analysisCategories, SWID) {
+	var returnObj = {};
+	returnObj[SWID] = analysisCategories[SWID];
+
+	// Update in mongodb
+	updateData('AnalysisStatusBy' + category, SWID, returnObj);
+
+	return returnObj;
+}
 
 // ETC
 // takes in a date object or date string and converts it into %Y-%m-%d %H:%M:%S format

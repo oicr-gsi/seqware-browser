@@ -114,13 +114,15 @@ while (!$fprHandle->eof()) {
 	if ( $libraryName =~ /.*?_.*?_.*?_(.*?)_.*/ ) {
 		$fprData{"Donor"}{$donorSWID}{"Tissue Type"}{$1}{"Library"}{$libraryName}++;
 	}
-	if ($filePath =~ /.*.BamQC.json$/ ) {
-		$fprData{"Donor"}{$donorSWID}{"Lane"}{$lane}{"Library"}{$libraryName} = $filePath;
-	}
 	$fprData{"Donor"}{$donorSWID}{"Donor Attributes"} = $parentAttributes;
 	$fprData{"Donor"}{$donorSWID}{"Run"}{$sequencerRunSWID}{"Run Name"} = $runName;
 	$fprData{"Donor"}{$donorSWID}{"Workflow Run"}{$workflowRunSWID}{"Workflow Name"} = $workflowName;
 	$fprData{"Donor"}{$donorSWID}{"Workflow Run"}{$workflowRunSWID}{"Status"} = $runStatus;
+	
+	if ($filePath =~ /.*.BamQC.json$/ ) {
+        $fprData{"Donor"}{$donorSWID}{"Lane"}{$lane}{"Library"}{$libraryName} = $filePath;
+        $fprData{"Run"}{$sequencerRunSWID}{"Lane"}{$lane}{"Library"}{$libraryName} = $filePath;
+    }
 }
 
 my @categories = ("Workflow", "Project", "Run", "Library", "Donor");

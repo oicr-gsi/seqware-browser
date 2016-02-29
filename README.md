@@ -5,6 +5,7 @@ API code for next gen seqware browser
 The script first parses the file provenance report and converts everything into an organized object/dictionary hash ( for explaining purposes, call it fprHash ).
 
 ## Methods
+Each method has a sample output of data in JSON format --> Updating to mongodb
 
 *   getCurrentStats (fprHash, dateFrom, dateTo)
     *   Example output: 
@@ -253,5 +254,94 @@ Variant Calling:
   MutectStrelka: 3324548
   SomaticClassifier: 640448
 ```
+
+## Mongodb 
+Currently on local machine, example data in collection:
+
+```
+> show collections
+AnalysisStatusByLibrary
+AnalysisStatusByProject
+CurrentStats
+CurrentStatsByProject
+DonorInfo
+DonorsByProject
+InstrumentNamesByDonor
+LastModifiedProjects
+LibrariesByProject
+LibrariesByRun
+LibraryInfo
+NumDonorsByProject
+NumLibrariesByProject
+NumLibrariesPerTissueByDonor
+NumOfLibraryTypeByDonor
+ReportDataByLibraryByLaneByDonor
+ReportDataByLibraryByLaneByRun
+RunDataByProject
+StartDateByProject
+StartEndDateByDonor
+WorkflowByLibrary
+```
+
+### Collections:
+*   AnalysisStatusByLibrary
+*   *   ```{ "94" : { "Workflow Runs" : [  "FileImport" ], "Analysis Status" : { "Alignment" : {  }, "Base calling" : { "completed" : 1 }, "Quality Control" : {  }, "Variant Calling" : {  } }, "Library Name" : "PCSI_0024_Pa_P_MP_405_WG", "Last Modified" : "2012-01-06 17:41:34" }, "_id" : "94" }```
+
+*   AnalysisStatusByProject
+*   *   ```{ "4" : { "Workflow Runs" : [  "FileImport",  "" ], "Analysis Status" : { "Alignment" : {  }, "Base calling" : { "completed" : 2 }, "Quality Control" : {  }, "Variant Calling" : {  } }, "Project Name" : "ICGCPancreaticCancerSeq", "Last Modified" : "2012-01-18 16:40:08" }, "_id" : "4" }```
+
+*   CurrentStats
+*   *   ```{ "Date From" : "Unspecified", "Date To" : "2016-02-29 10:14:31", "Workflow Status" : { "completed" : 175706, "failed" : 229, "cancelled" : 3, "" : 1 }, "Total Projects" : 113, "Total Libraries" : 13458, "_id" : "current" }```
+
+*   CurrentStatsByProject
+*   *   ```{ "6" : { "Workflow Status" : { "completed" : 18 }, "Project Name" : "PancreaticCellLineSequencing", "Project Libraries" : 2, "Date From" : "Unspecified", "Date To" : "2016-02-29 10:07:32" }, "_id" : "6" }```
+
+*   DonorInfo
+*   *   ```{ "ACC_0002" : { "External Name" : {  }, "Tissue Types" : { "R" : 1, "P" : 1 }, "SWID" : [  "907",  "932" ] }, "_id" : "ACC_0002" }```
+
+*   DonorsByProject
+*   *   ```{ "4" : { "Project Name" : "ICGCPancreaticCancerSeq", "Donors" : [  "PCSI_0013",    "PCSI_0005",    "PCSI_0014",    "PCSI_0012",    "PCSI_0024",    "PCSI_0007",    "PCSI_0006" ] }, "_id" : "4" }```
+
+*   InstrumentNameByDonor
+*   *   ```{ "ACC_0002" : { "Instruments" : [  "h801" ], "SWID" : [  "907",  "932" ] }, "_id" : "ACC_0002" }```
+
+*   LastModifiedProjects
+*   *   ```{ "63" : { "Project Name" : "PCSI", "Last Modified" : "2016-01-23 07:35:26" }, "90" : { "Project Name" : "CPC-GENE", "Last Modified" : "2016-01-11 23:04:34" }, "288147" : { "Project Name" : "HALT", "Last Modified" : "2016-01-06 21:06:36" }, "327091" : { "Project Name" : "Rapid_Autopsy_Metastatic_Panc", "Last Modified" : "2016-01-01 09:53:40" }, "1236599" : { "Project Name" : "DCIS", "Last Modified" : "2016-01-13 22:53:14" }, "1349398" : { "Project Name" : "EPICLiran", "Last Modified" : "2016-01-08 21:21:19" }, "1753531" : { "Project Name" : "Liposarcoma_Sequencing", "Last Modified" : "2016-01-20 14:40:51" }, "1861831" : { "Project Name" : "GECCOSequencing", "Last Modified" : "2016-01-23 09:46:22" }, "1988216" : { "Project Name" : "EACdysplasia", "Last Modified" : "2016-01-20 01:08:43" }, "2194176" : { "Project Name" : "test", "Last Modified" : "2016-01-23 07:37:52" }, "2690872" : { "Project Name" : "SingleCellRNAMedulloblastoma", "Last Modified" : "2016-01-06 00:37:21" }, "2904368" : { "Project Name" : "CatherineOBrienExomes", "Last Modified" : "2016-01-13 17:43:55" }, "2904369" : { "Project Name" : "PlycytemiaVera", "Last Modified" : "2016-01-22 22:20:26" }, "3473424" : { "Project Name" : "CellLineAML", "Last Modified" : "2016-02-29 10:12:52" }, "" : { "Project Name" : "", "Last Modified" : "2016-01-23 02:35:08" }, "Date" : "2016-02-29 10:22:09", "_id" : "lastMod_60_days" }```
+
+*   LibrariesByProject
+*   *   ```{ "4" : { "Project Name" : "ICGCPancreaticCancerSeq", "Libraries" : [    "PCSI_0005_Pa_P_PE_456_WG",     "PCSI_0006_Pa_P_PE_450_WG",     "PCSI_0006_Pa_C_PE_536_WG",     "PCSI_0007_Pa_P_PE_494_WG",     "PCSI_0024_Pa_X_MP_405_WG",     "PCSI_0024_Pa_C_MP_405_WG",     "PCSI_0024_Pa_P_MP_405_WG",     "PCSI_0013_Pa_C_MP_405_WG",     "PCSI_0024_Pa_X_PE_500_WG",     "PCSI_0014_Pa_C_MP_405_WG",     "PCSI_0012_Pa_C_MP_405_WG" ] }, "_id" : "4" }```
+
+*   LibrariesByRun
+*   *   ```{ "7935" : { "Libraries" : { "PCSI_0024_Pa_X_MP_405_WG" : "95", "PCSI_0024_Pa_P_MP_405_WG" : "94" }, "Run Name" : "100606_i580_61UA6_LT" }, "_id" : "7935" }```
+
+*   LibraryInfo
+*   *   ```{ "94" : { "Library Name" : "PCSI_0024_Pa_P_MP_405_WG", "Library Type" : "WG", "Tissue Type" : "P", "Tissue Origin" : "Pa" }, "_id" : "94" }```
+
+*   NumDonorsByProject
+*   *   ```{ "4" : { "Donors" : { "PCSI" : 7 }, "Project Name" : "ICGCPancreaticCancerSeq" }, "_id" : "4" }```
+
+*   NumLibrariesByProject
+*   *   ```{ "4" : { "Project Name" : "ICGCPancreaticCancerSeq", "Libraries" : 11 }, "_id" : "4" }```
+
+*   NumOfLibraryTypeByDonor
+*   *   ```{ "ACC_0002" : { "Library Type" : { "1" : 1, "WG" : 1 }, "SWID" : [  "907",  "932" ] }, "_id" : "ACC_0002" }```
+
+*   ReportDataByLibraryByLaneByDonor
+*   *   ```{ "BLBC_0005" : { "Lane" : { "5" : { "Library" : { "BLBC_0005_Ly_R_PE_445_EX" : { "Barcode" : "CGATGT", "Run Name" : "110819_SN393_0183_AB02B9ACXX", "Reads/SP" : "2.43", "Map %" : "88.44%", "Raw Reads" : 384666138, "Raw Yield" : 38851191316, "% on Target" : "48.71%", "Insert Mean" : "316.81", "Insert Stdev" : "24.97", "Read Length" : "101,101", "Coverage (collapsed)" : "135.85", "Coverage (raw)" : "330.12" } } } } }, "_id" : "BLBC_0005_5_BLBC_0005_Ly_R_PE_445_EX" }```
+
+*   ReportDataByLibraryByLaneByRun
+*   *   ```{ "Run" : { "110525_SN801_0052_Bb01n6acxx" : { "Lane" : { "8" : { "Library" : { "PCSI_0069_Ly_R_PE_392_EX" : { "Barcode" : "NoIndex", "Run Name" : "110525_SN801_0052_Bb01n6acxx", "Reads/SP" : "1.06", "Map %" : "86.55%", "Raw Reads" : 204034290, "Raw Yield" : 20607432365, "% on Target" : "50.35%", "Insert Mean" : "261.11", "Insert Stdev" : "38.08", "Read Length" : "101,101", "Coverage (collapsed)" : "160.78", "Coverage (raw)" : "170.42" } } } } } }, "_id" : "110525_SN801_0052_Bb01n6acxx_8_PCSI_0069_Ly_R_PE_392_EX" }```
+
+*   RunDataByProject
+*   *   ```{ "6" : { "Run" : { "610219" : { "Donor" : { "PCSI" : 1 }, "Analysis Status" : { "Alignment" : { "completed" : 1 }, "Base calling" : { "completed" : 1 }, "Quality Control" : { "completed" : 7 }, "Variant Calling" : {  } }, "Run Name" : "130923_M00753_0059_000000000-A42TJ" }, "610222" : { "Donor" : { "PCSI" : 1 }, "Analysis Status" : { "Alignment" : { "completed" : 1 }, "Base calling" : { "completed" : 1 }, "Quality Control" : { "completed" : 7 }, "Variant Calling" : {  } }, "Run Name" : "130923_M00146_0029_000000000-A42PY" } }, "Last Modified" : "2015-08-15 06:52:37", "Project Name" : "PancreaticCellLineSequencing" }, "_id" : "6" }```
+
+*   StartDateByProject
+*   *   ```{ "6" : { "Project Name" : "PancreaticCellLineSequencing", "Start Date" : "2013-08-13" }, "_id" : "6" }```
+
+*   StartEndDateByDonor
+*   *   ```{ "BLBC_0013" : { "SWID" : [  "957" ], "End Date" : "2012-01-06 17:41:35", "Start Date" : "2011-03-25" }, "_id" : "BLBC_0013" }```
+
+*   WorkflowByLibrary
+*   *   ```{ "94" : { "Library Name" : "PCSI_0024_Pa_P_MP_405_WG", "Workflow Run" : { "25831" : { "File Paths" : [ "/oicr/data/archive/i580/100606_I580_61UA6_LT/Data/Intensities/Bustard1.8.0a5_11-06-2010_mchan.2/GERALD_11-06-2010_mchan/s_1_2_sequence.txt.gz",     "/oicr/data/archive/i580/100606_I580_61UA6_LT/Data/Intensities/Bustard1.8.0a5_11-06-2010_mchan.2/GERALD_11-06-2010_mchan/s_3_1_sequence.txt.gz",    "/oicr/data/archive/i580/100606_I580_61UA6_LT/Data/Intensities/Bustard1.8.0a5_11-06-2010_mchan.2/GERALD_11-06-2010_mchan/s_4_1_sequence.txt.gz",    "/oicr/data/archive/i580/100606_I580_61UA6_LT/Data/Intensities/Bustard1.8.0a5_11-06-2010_mchan.2/GERALD_11-06-2010_mchan/s_2_1_sequence.txt.gz",    "/oicr/data/archive/i580/100606_I580_61UA6_LT/Data/Intensities/Bustard1.8.0a5_11-06-2010_mchan.2/GERALD_11-06-2010_mchan/s_3_2_sequence.txt.gz",    "/oicr/data/archive/i580/100606_I580_61UA6_LT/Data/Intensities/Bustard1.8.0a5_11-06-2010_mchan.2/GERALD_11-06-2010_mchan/s_2_2_sequence.txt.gz",    "/oicr/data/archive/i580/100606_I580_61UA6_LT/Data/Intensities/Bustard1.8.0a5_11-06-2010_mchan.2/GERALD_11-06-2010_mchan/s_4_2_sequence.txt.gz",    "/oicr/data/archive/i580/100606_I580_61UA6_LT/Data/Intensities/Bustard1.8.0a5_11-06-2010_mchan.2/GERALD_11-06-2010_mchan/s_1_1_sequence.txt.gz" ], "Workflow Name" : "FileImport", "Skip" : "false", "End Date" : "2012-01-06 17:41:34" } } }, "_id" : "94" }```
 
 Note: this page is a work in progress
