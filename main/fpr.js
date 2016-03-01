@@ -5,10 +5,13 @@ var _ = require('underscore');
 var YAML = require('yamljs');
 var readMultipleFiles = require('read-multiple-files');
 var http = require("http");
+
 var	mongodb = require('mongodb');
 var MongoClient = mongodb.MongoClient;
 var ObjectId = mongodb.ObjectID;
 var url = 'mongodb://127.0.0.1:27017/seqwareBrowser';
+
+var Highcharts = require('highcharts');
 
 var dateNow = new Date();
 var analysisYAML;
@@ -1020,19 +1023,53 @@ function generateGraphsByLibraryByLaneByDonor(json, donor, lane, library) {
 	pieArray.push(lineObj['unmapped reads']);
 	total = lineObj['mapped reads'] + (parseInt(lineObj['mapped reads']) - parseInt(lineObj['reads on target'])) + lineObj['qual fail reads'] + lineObj['unmapped reads'];
 
+	var readBreakdownData = {
+        chart: {
+        	borderColor: '#3a3a3a',
+            borderWidth: 1,
+            plotShadow: true,
+            type: 'pie'
+        },
+        title: {
+            text: label + ' Read Breakdown'
+        },
+        tooltip: {
+        	pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+        },
+        plotOptions: {
+        	pie: {
+        		allowPointSelect: true,
+        		cursor: 'pointer',
+        		dataLabels: {
+        			enabled: true,
+                    format: '<b>{point.name}</b>: {point.percentage:.1f} %',
+                    style: {
+                        color: (Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black'
+                    }        			
+        		}
+        	}
+        },
+        series: [{
+            name: 'Read Breakdown',
+            colorByPoint: true,
+            data: []
+        }],
+    };
 	for (var i = 0; i < pieArray.length; i++) {
 		var obj = {};
-		obj['value'] = pieArray[i];
-		obj['color'] = colors[i];
-		obj['label'] = labels[i];
-		pieReadData.push(obj);
+		obj['name'] = labels[i];
+		obj['y'] = pieArray[i]/total;
+		readBreakdownData.series[0].data.push(obj);
 	}
 
-	// bar chart - insert distribution
+	// line chart - insert distribution
 	var xValInsert = [];
 	var yValInsert = [];
-	var barInsertColors = [];
-	var insertMean = lineObj['insert mean'];
+	var insertColors = {};
+	var red = 'rgb(255, 102, 102)';
+	var yellow = 'rgb(255, 255, 102)';
+	var green = 'rgb(179, 255, 102)';
+	var insertMean = parseInt(lineObj['insert mean']);
 	var histObj = lineObj['insert histogram'];
 	var insertMax = 650;
 	var insertStep = 50;
@@ -1040,28 +1077,81 @@ function generateGraphsByLibraryByLaneByDonor(json, donor, lane, library) {
 		if (i < insertMax) {
 			xValInsert.push(i);
 			yValInsert.push(histObj[i]);
-
-			if ((i < (insertMean - (2 * insertStep))) || (i > (insertMean + (2 * insertStep)))) {
-				barInsertColors.push('red');
-			} else if ((i < (insertMean - insertStep)) || (i > (insertMean + insertStep))) {
-				barInsertColors.push('yellow');
-			} else {
-				barInsertColors.push('green');
-			}
 		}
 	}
-	var barInsertData = {};
-	barInsertData['datasets'] = [];
-	barInsertData['labels'] = xValInsert;
-	var vals = {
-		label: "Pairs",
-		fillColor: "rgba(220,220,220,0.5)",
-        strokeColor: "rgba(220,220,220,0.8)",
-        highlightFill: "rgba(220,220,220,0.75)",
-        highlightStroke: "rgba(220,220,220,1)"
+	if ((xValInsert[0] < (insertMean - (2 * insertStep))) || (xValInsert[0] > (insertMean + (2 * insertStep)))) {
+		var iColor = red;
+	} else if ((xValInsert[0] < (insertMean - insertStep)) || (xValInsert[0] > (insertMean + insertStep))) {
+		var iColor = yellow;
+	} else {
+		var iColor = green
 	}
-	vals['data'] = yValInsert;
-	barInsertData['datasets'].push(vals);
+	for (var i = 1; i < xValInsert.length; i++) {
+		xValInsert[i] = parseInt(xValInsert[i]);
+		if ((xValInsert[i] < (insertMean - (2 * insertStep))) || (xValInsert[i] > (insertMean + (2 * insertStep)))) {
+			var color = red;
+		} else if ((xValInsert[i] < (insertMean - insertStep)) || (xValInsert[i] > (insertMean + insertStep))){
+			var color = yellow;
+		} else {
+			var color = green;
+		}
+		if (color !== iColor) {
+			insertColors[i] = iColor;
+			iColor = color;
+		}
+		if (i == xValInsert.length - 1) {
+			insertColors[i] = iColor;
+		}
+	}
+	var zones = [];
+	for (var value in insertColors) {
+		var obj = {};
+		obj['value'] = value;
+		obj['fillColor'] = insertColors[value];
+		obj['color'] = insertColors[value];
+		zones.push(obj);
+	}
+	var insertDistributionData = {
+		chart: {
+			borderColor: '#3a3a3a',
+            borderWidth: 1,
+			type: 'area'
+		},
+        title: {
+            text: label + ' Insert Distribution',
+            x: -20 //center
+        },
+        plotOptions: {
+        	area:{
+        		pointStart: 0
+        	}
+        },
+        legend: {
+        	enabled: false
+        },
+        xAxis: {
+        	title: {
+        		text: 'Insert Size (bp)'
+        	},
+        	tickInterval: 50
+            //categories: xValInsert
+        },
+        yAxis: {
+            title: {
+                text: 'Pairs'
+            }
+        },
+        tooltip: {
+            valueSuffix: ' bp'
+        },
+        series: [{
+            name: 'Insert Distribution',
+            zoneAxis: 'x',
+        	zones: zones,
+            data: yValInsert
+
+        }]
+    };
 
 	// bar chart - soft clip by cycle
 	// initialize objects
@@ -1105,32 +1195,56 @@ function generateGraphsByLibraryByLaneByDonor(json, donor, lane, library) {
 			}
 		}
 	}
-	var barSoftData = {};
-	barSoftData['datasets'] = [];
-	barSoftData['labels'] = xValSoft;
-	var values = {
-		label: "% Bases Soft Clipped",
-		fillColor: "red",
-        strokeColor: "red",
-        highlightFill: "rgba(220,220,220,0.75)",
-        highlightStroke: "rgba(220,220,220,1)"
-	}
-	values['data'] = yValSoft;
-	barSoftData['datasets'].push(values);
+
+	var softClipData = {
+		chart: {
+			borderColor: '#3a3a3a',
+            borderWidth: 1,
+			type: 'area'
+		},
+        title: {
+            text: label + ' Soft Clips by Cycle',
+            x: -20 //center
+        },
+        plotOptions: {
+        	area:{
+        		pointStart: 0
+        	}
+        },
+        legend: {
+        	enabled: false
+        },
+        xAxis: {
+        	title: {
+        		text: 'Cycles', 
+        	},
+        	min: 0,
+        	startOnTick: true,
+        	tickInterval: 50,
+            //categories: xValSoft
+        },
+        yAxis: {
+            title: {
+                text: '% Bases Soft Clipped'
+            },
+            max: 100
+        },
+        series: [{
+            name: 'Soft Clips By Cycle',
+            data: yValSoft,
+            color: 'rgb(255, 102, 102)',
+            fillColor: 'rgb(255, 102, 102)'
+        }]
+	};
 
 	// Output to html
 	fs.readFile('./graphTest.html', 'utf8', function (err, data) {
 		if (err) return console.error(err);
 		http.createServer(function (request, response) {
-			var js = fs.readFileSync('./Chart.js-master/Chart.js', 'utf8');
-
 			response.writeHead(200, {'Content-Type': 'text/html'});
-			data = data.replace('{{ChartJS}}', js);
-			data = data.replace(/{{Label}}/g, label);
-		    data = data.replace('{{pieReadData}}', JSON.stringify(pieReadData));
-		    data = data.replace('{{barInsertData}}', JSON.stringify(barInsertData));
-		    data = data.replace('{{barInsertColors}}', JSON.stringify(barInsertColors));
-		    data = data.replace('{{barSoftData}}', JSON.stringify(barSoftData));
+		    data = data.replace('{{readBreakdownData}}', JSON.stringify(readBreakdownData));
+		    data = data.replace('{{insertDistributionData}}', JSON.stringify(insertDistributionData));
+		    data = data.replace('{{softClipData}}', JSON.stringify(softClipData));
 		    response.write(data);
 		    response.end();
 	    }).listen(8081);
@@ -1140,7 +1254,8 @@ function generateGraphsByLibraryByLaneByDonor(json, donor, lane, library) {
 }
 
 //Test graph
-//generateGraphsByLibraryByLaneByDonor('SWID_3165537_PV_0001_Bm_P_PE_423_EX_3_151216_D00331_0149_AC8L3CANXX_AACGTGAT_L001_R1_001.annotated.bam.BamQC.json');
+generateGraphsByLibraryByLaneByDonor('SWID_3165537_PV_0001_Bm_P_PE_423_EX_3_151216_D00331_0149_AC8L3CANXX_AACGTGAT_L001_R1_001.annotated.bam.BamQC.json');
+//generateGraphsByLibraryByLaneByDonor('SWID_3574804_PCSI_0633_Ly_R_PE_667_WG_160209_D00353_0127_AC8T56ANXX_CCGTCC_L006_R1_001.annotated.bam.BamQC.json');
 
 //// General Analysis Status
 // general template to get workflow run analysis status based on category (either project or library)
