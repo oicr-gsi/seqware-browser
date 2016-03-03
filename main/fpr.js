@@ -103,8 +103,16 @@ fs.readFile(process.argv[5], 'utf8', function(err, data){
 
 	// functions associated with run key
 	var obj;
-	//var libraries = getLibrariesAllRuns(fprDataRun);
 	/*
+	//var libraries = getLibrariesAllRuns(fprDataRun);
+	for (var runSWID in fprDataRun['Run']) {
+		if (fprDataRun['Run'][runSWID]['Run Name'] == '150226_D00331_0124_AC6DP5ANXX') {
+			obj = getReportDataByLibraryByLaneByRun(fprDataRun, runSWID, '7', 'PCSI_0322_Pa_X_PE_611_WG');
+			obj = JSON.stringify(obj);
+			console.log(obj);
+		}
+	}
+	
 	for (var runSWID in fprDataRun['Run']) {
 		//getLibrariesByRun(libraries, runSWID);
 		if (typeof fprDataRun['Run'][runSWID]['Lane'] !== 'undefined') {
@@ -117,6 +125,7 @@ fs.readFile(process.argv[5], 'utf8', function(err, data){
 			}
 		}
 	}
+	/*
 	for (var runSWID in fprDataRun['Run']) {
 		for (var library in fprDataRun['Run'][runSWID]['Library']) {
 			obj = getRNASeqQCDataByLibraryByRun(fprDataRun, runSWID, library);
@@ -124,7 +133,6 @@ fs.readFile(process.argv[5], 'utf8', function(err, data){
 			console.log(obj);
 		}
 	}
-	
 	
 	//obj = getLibrariesAllRuns(fprDataRun);
 	//obj = getLibrariesByRun(fprDataRun, '8002');
@@ -209,7 +217,7 @@ fs.readFile(process.argv[8], 'utf8', function(err, data) {
 	if (err) return console.error(err);
 	console.log('connected');
 	var lines = data.toString().split('\n');
-	/*
+	
 	for (var i = 0; i < lines.length - 1; i++){
 		reportData = JSON.parse(lines[i]);
 		for (var key in reportData['Run']) {
@@ -221,7 +229,7 @@ fs.readFile(process.argv[8], 'utf8', function(err, data) {
 			}
 		}
 	}
-	
+	/*
 	for (var i = 0; i < lines.length - 1; i++){
 		reportData = JSON.parse(lines[i]);
 		for (var key in reportData['Run']) {
@@ -230,6 +238,7 @@ fs.readFile(process.argv[8], 'utf8', function(err, data) {
 			}
 		}
 	}
+	
 });
 
 // read fpr-Library JSON
@@ -960,9 +969,8 @@ function getReportDataByLibraryByLaneByRun(fprData, runSWID, lane, library) {
 	returnObj['Run'][fprData['Run'][runSWID]['Run Name']]['Lane'][lane] = {};
 	returnObj['Run'][fprData['Run'][runSWID]['Run Name']]['Lane'][lane]['Library'] = {};
 	returnObj['Run'][fprData['Run'][runSWID]['Run Name']]['Lane'][lane]['Library'][library] = {};
-	
-	returnObj['Run'][fprData['Run'][runSWID]['Run Name']]['Lane'][lane]['Library'][library] = getReportData(json, returnObj['Run'][fprData['Run'][runSWID]['Run Name']]['Lane'][lane]['Library'][library]);
-	returnObj['Run'][fprData['Run'][runSWID]['Run Name']]['Lane'][lane]['Library'][library] = getMouseData(xenomeFile, returnObj['Run'][fprData['Run'][runSWID]['Run Name']]['Lane'][lane]['Library'][library]);
+
+	returnObj['Run'][fprData['Run'][runSWID]['Run Name']]['Lane'][lane]['Library'][library] = getReportData(json, xenomeFile, returnObj['Run'][fprData['Run'][runSWID]['Run Name']]['Lane'][lane]['Library'][library]);
 	
 	//Update in mongodb
 	//updateData('ReportDataByLibraryByLaneByRun', fprData['Run'][runSWID]['Run Name'] + '_' + lane + '_' + library, returnObj);
@@ -1096,9 +1104,9 @@ function getRNASeqQCDataByLibraryByRun(fprData, runSWID, library) {
 	return returnObj;
 }
 
-function getReportData(jsonFile, obj) {
+function getReportData(jsonFile, xenomeFile, obj) {
 	if (typeof jsonFile !== 'undefined') {
-		var jsonString = fs.readFileSync(jsonFile, 'utf8');
+		var jsonString = fs.readFileSync(jsonFile, 'utf8'); 
 		var lineObj = JSON.parse(jsonString);
 
 		// Initialize
@@ -1106,14 +1114,12 @@ function getReportData(jsonFile, obj) {
 		var onTargetRate = lineObj['reads on target']/lineObj['mapped reads'];
 
 		// Barcode
-		if (lineObj['barcode'] === 'undefined') {
+		if (typeof lineObj['barcode'] === 'undefined') {
 			obj['Barcode'] = 'noIndex';
 		} else {
 			obj['Barcode'] = lineObj['barcode'];
 		}
 
-		// Run name
-		obj['Run Name'] = lineObj['run name'];
 		// Reads per start point
 		obj['Reads/SP'] = readsSP;
 
@@ -1151,10 +1157,8 @@ function getReportData(jsonFile, obj) {
 		obj['Coverage (collapsed)'] = (collapsedEstYield/lineObj['target size']).toFixed(2);
 		obj['Coverage (raw)'] = (rawEstYield/lineObj['target size']).toFixed(2);
 	}
-	return obj;
-}
 
-function getMouseData(xenomeFile, obj) {
+	// Get Mouse Data
 	if (typeof xenomeFile !== 'undefined') {
 		var xenomeLog = fs.readFileSync(xenomeFile, 'utf8');
 		var lines = xenomeLog.toString().split('\n');
@@ -1168,7 +1172,6 @@ function getMouseData(xenomeFile, obj) {
 	} else {
 		obj['% Mouse Content'] = 'N/A';
 	}
-	
 	return obj;
 }
 
@@ -1536,6 +1539,9 @@ function updateData(collection, id, data) {
 		console.log('connected');
 
 		// Return updated info, insert if not already in db
-		db.collection(collection).updateOne({_id: data['_id']}, data, {upsert: true}, function (err) {});
+		db.collection(collection).updateOne({_id: data['_id']}, data, {upsert: true}, function (err) {
+			if (err) return console.error(err);
+			db.close();
+		});
 	});
 }
