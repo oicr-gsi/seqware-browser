@@ -60,7 +60,6 @@ while (!$fprHandle->eof()) {
 	$sampleSWID = $linehash{"Sample SWID"};
 	$donorSWID = $linehash{"Root Sample SWID"};
 	
-
 	#By Workflow
 	$fprData{"Workflow"}{$workflowRunSWID}{"Last Modified"} = $date;
 	unless ( defined $fprData{"Workflow"}{$workflowRunSWID}{"Status"} ){
@@ -118,11 +117,15 @@ while (!$fprHandle->eof()) {
 	$fprData{"Donor"}{$donorSWID}{"Run"}{$sequencerRunSWID}{"Run Name"} = $runName;
 	$fprData{"Donor"}{$donorSWID}{"Workflow Run"}{$workflowRunSWID}{"Workflow Name"} = $workflowName;
 	$fprData{"Donor"}{$donorSWID}{"Workflow Run"}{$workflowRunSWID}{"Status"} = $runStatus;
-	
+
 	if ($filePath =~ /.*.BamQC.json$/ ) {
-        $fprData{"Donor"}{$donorSWID}{"Lane"}{$lane}{"Library"}{$libraryName} = $filePath;
-        $fprData{"Run"}{$sequencerRunSWID}{"Lane"}{$lane}{"Library"}{$libraryName} = $filePath;
-    }
+        $fprData{"Donor"}{$donorSWID}{"Lane"}{$lane}{"Library"}{$libraryName}{"JSON"} = $filePath;
+        $fprData{"Run"}{$sequencerRunSWID}{"Lane"}{$lane}{"Library"}{$libraryName}{"JSON"} = $filePath;
+    } elsif ($filePath =~ /.*.log$/ and $workflowName eq ("Xenome")){
+   		$fprData{"Run"}{$sequencerRunSWID}{"Lane"}{$lane}{"Library"}{$libraryName}{"XenomeFile"} = $filePath;
+   	} elsif ($filePath =~ /.*rnaqc.report.zip$/){
+   		$fprData{"Run"}{$sequencerRunSWID}{"Library"}{$libraryName}{"RNAZipFile"} = $filePath;
+   	}
 }
 
 my @categories = ("Workflow", "Project", "Run", "Library", "Donor");

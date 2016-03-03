@@ -5,6 +5,7 @@ var _ = require('underscore');
 var YAML = require('yamljs');
 var readMultipleFiles = require('read-multiple-files');
 var http = require("http");
+var AdmZip = require('adm-zip');
 
 var	mongodb = require('mongodb');
 var MongoClient = mongodb.MongoClient;
@@ -97,12 +98,13 @@ fs.readFile(process.argv[4], 'utf8', function(err, data){
 // read fpr-Run JSON
 fs.readFile(process.argv[5], 'utf8', function(err, data){
 	if (err) return console.error(err);
-	console.log("starting run");
+	//console.log("starting run");
 	fprDataRun = JSON.parse(data);
 
 	// functions associated with run key
 	var obj;
 	//var libraries = getLibrariesAllRuns(fprDataRun);
+	/*
 	for (var runSWID in fprDataRun['Run']) {
 		//getLibrariesByRun(libraries, runSWID);
 		if (typeof fprDataRun['Run'][runSWID]['Lane'] !== 'undefined') {
@@ -113,6 +115,13 @@ fs.readFile(process.argv[5], 'utf8', function(err, data){
 					console.log(obj);
 				}
 			}
+		}
+	}
+	for (var runSWID in fprDataRun['Run']) {
+		for (var library in fprDataRun['Run'][runSWID]['Library']) {
+			obj = getRNASeqQCDataByLibraryByRun(fprDataRun, runSWID, library);
+			obj = JSON.stringify(obj);
+			console.log(obj);
 		}
 	}
 	
@@ -155,7 +164,7 @@ fs.readFile(process.argv[7], 'utf8', function(err, data){
 		//getStartEndDateByDonor(dates, donors[i]);
 		//getInstrumentNamesByDonor(instruments, donors[i]);
 	}
-	//files = getFilesByLibraryByLaneAllDonors(fprDataDonor);
+	//files = getJSONFilesByLibraryByLaneAllDonors(fprDataDonor);
 	for (var donor in files) {
 		if (typeof files[donor]['Lane'] !== 'undefined') {
 			for (var lane in files[donor]['Lane']) {
@@ -185,7 +194,7 @@ fs.readFile(process.argv[7], 'utf8', function(err, data){
 	//obj = getInstrumentNamesAllDonors(fprDataDonor);
 	//obj = getInstrumentNamesByDonor(fprDataDonor, 'BLBC_0006_Ly_R_nn_3_D_1');
 
-	//files = getFilesByLibraryByLaneAllDonors(fprDataDonor);
+	//files = getJSONFilesByLibraryByLaneAllDonors(fprDataDonor);
 	//obj = getReportData(files, 'PCSI_0023', '6', 'PCSI_0023_Pa_P_PE_700_WG');
 
 	if (typeof obj !== 'undefined') {
@@ -200,7 +209,7 @@ fs.readFile(process.argv[8], 'utf8', function(err, data) {
 	if (err) return console.error(err);
 	console.log('connected');
 	var lines = data.toString().split('\n');
-
+	/*
 	for (var i = 0; i < lines.length - 1; i++){
 		reportData = JSON.parse(lines[i]);
 		for (var key in reportData['Run']) {
@@ -209,6 +218,15 @@ fs.readFile(process.argv[8], 'utf8', function(err, data) {
 					//updateData('ReportDataByLibraryByLaneByDonor', key + '_' + lane + '_' + library, reportData);
 					updateData('ReportDataByLibraryByLaneByRun', key + '_' + lane + '_' + library, reportData);
 				}
+			}
+		}
+	}
+	
+	for (var i = 0; i < lines.length - 1; i++){
+		reportData = JSON.parse(lines[i]);
+		for (var key in reportData['Run']) {
+			for (var library in reportData['Run'][key]['Library']){
+				updateData('RNASeqQCDataByLibraryByRun', key + '_' + library, reportData);
 			}
 		}
 	}
@@ -884,7 +902,7 @@ function getWorkflowByLibrary (workflows, sampleSWID) {
 
 //// Reporting Functions (detailed pages)
 // Returns associated JSON file per library per lane per donor
-function getFilesByLibraryByLaneAllDonors(fprData) {
+function getJSONFilesByLibraryByLaneAllDonors(fprData) {
 	var files = {};
 
 	for (var donorSWID in fprData['Donor']) {
@@ -903,7 +921,7 @@ function getFilesByLibraryByLaneAllDonors(fprData) {
 					files[donor]['Lane'][lane] = {};
 				}
 				for (var library in fprData['Donor'][donorSWID]['Lane'][lane]['Library']) {
-					files[donor]['Lane'][lane][library] = fprData['Donor'][donorSWID]['Lane'][lane]['Library'][library];
+					files[donor]['Lane'][lane][library] = fprData['Donor'][donorSWID]['Lane'][lane]['Library'][library]['JSON'];
 				}
 				_.uniq(files[donor]['Lane'][lane][library]);
 			}
@@ -912,7 +930,7 @@ function getFilesByLibraryByLaneAllDonors(fprData) {
 	return files; //returns all JSON files associated by library-lane-donor
 }
 
-// Takes in files returned by getFilesByLibraryByLaneAllDonors and gets Report Data for one specified (donor, lane, library)
+// Takes in files returned by getJSONFilesByLibraryByLaneAllDonors and gets Report Data for one specified (donor, lane, library)
 function getReportDataByLibraryByLaneByDonor(JSONfiles, donor, lane, library) {
 	var json = JSONfiles[donor]['Lane'][lane][library];
 	var returnObj = {};
@@ -933,7 +951,8 @@ function getReportDataByLibraryByLaneByDonor(JSONfiles, donor, lane, library) {
 
 // Returns associated JSON file per library per lane per run
 function getReportDataByLibraryByLaneByRun(fprData, runSWID, lane, library) {
-	var json = fprData['Run'][runSWID]['Lane'][lane]['Library'][library];
+	var json = fprData['Run'][runSWID]['Lane'][lane]['Library'][library]['JSON'];
+	var xenomeFile = fprData['Run'][runSWID]['Lane'][lane]['Library'][library]['XenomeFile'];
 	var returnObj = {};
 	returnObj['Run'] = {};
 	returnObj['Run'][fprData['Run'][runSWID]['Run Name']] = {};
@@ -941,69 +960,215 @@ function getReportDataByLibraryByLaneByRun(fprData, runSWID, lane, library) {
 	returnObj['Run'][fprData['Run'][runSWID]['Run Name']]['Lane'][lane] = {};
 	returnObj['Run'][fprData['Run'][runSWID]['Run Name']]['Lane'][lane]['Library'] = {};
 	returnObj['Run'][fprData['Run'][runSWID]['Run Name']]['Lane'][lane]['Library'][library] = {};
-
+	
 	returnObj['Run'][fprData['Run'][runSWID]['Run Name']]['Lane'][lane]['Library'][library] = getReportData(json, returnObj['Run'][fprData['Run'][runSWID]['Run Name']]['Lane'][lane]['Library'][library]);
-
+	returnObj['Run'][fprData['Run'][runSWID]['Run Name']]['Lane'][lane]['Library'][library] = getMouseData(xenomeFile, returnObj['Run'][fprData['Run'][runSWID]['Run Name']]['Lane'][lane]['Library'][library]);
+	
 	//Update in mongodb
-	//updateData('ReportDataByLibraryByLaneByRun', fprData['Run'][runSWID]['Run Name'] + '_' + lane + '_' + library);
+	//updateData('ReportDataByLibraryByLaneByRun', fprData['Run'][runSWID]['Run Name'] + '_' + lane + '_' + library, returnObj);
 
 	return returnObj;
 }
 
+function getRNASeqQCData(zipFile) {
+	var zip = new AdmZip(zipFile);
+	//var zip = new AdmZip('./SWID_3011599_PCSI_0326_Pa_P_PE_328_MR_526_151112_D00331_0145_AC859WANXX_CAGATC_L006_R1_001_rnaqc.report.zip');
+	var zipEntries = zip.getEntries();
+	var dir = zipEntries[0].entryName;
+	var obj = {};
+
+	var picard;
+	var metrics;
+	var uniq;
+	var contam;
+	var TOTAL_READS = 0;
+	var RIBOSOMAL_READS;
+	var UNIQ_READS;
+	var START_POINTS;
+	zipEntries.forEach(function(zipEntry) {
+		if (zipEntry.entryName == dir + 'CollectRNASeqMetricsSummary.txt'){
+			picard = zipEntry.getData().toString('utf8').split('\n');
+			metrics = picard[1].split('\t');
+		} else if (zipEntry.entryName == dir + 'ReadsPerStartPoint.txt'){
+			uniq = zipEntry.getData().toString('utf8').split('\n');
+		} else if (zipEntry.entryName == dir + 'rRNAcontaminationSummary.txt'){
+			contam = zipEntry.getData().toString('utf8').split('\n');
+		}
+	});
+	//Parse Metrics
+	// Read/Start Point Metrics
+	UNIQ_READS = uniq[0];
+	START_POINTS = uniq[1]+'\n';
+	// RNA Summary Metrics
+	for (var i = 0; i < contam.length; i++) {
+		if (/total/.exec(contam[i])) {
+			var parts = contam[i].split(' ');
+			TOTAL_READS = parts[0];
+		}
+		if (/0 mapped/.exec(contam[i])) {
+			var parts = contam[i].split(' ');
+			RIBOSOMAL_READS = parts[0];
+		}
+	}
+	
+	// Picard
+	var PF_BASES=metrics[0];
+	var PF_ALIGNED_BASES=metrics[1];
+	//***var RIBOSOMAL_BASES=metrics[2];
+	var CODING_BASES=metrics[3];
+	var UTR_BASES=metrics[4];
+	var INTRONIC_BASES=metrics[5];
+	var INTERGENIC_BASES=metrics[6];
+	var IGNORED_READS=metrics[7];
+	var CORRECT_STRAND_READS=metrics[8];
+	var INCORRECT_STRAND_READS=metrics[9];
+	var PCT_RIBOSOMAL_BASES=metrics[10];
+	var PCT_CODING_BASES=metrics[11];
+	var PCT_UTR_BASES=metrics[12];
+	var PCT_INTRONIC_BASES=metrics[13];
+	var PCT_INTERGENIC_BASES=metrics[14];
+	var PCT_MRNA_BASES=metrics[15];
+	var PCT_USABLE_BASES=metrics[16];
+	var PCT_CORRECT_STRAND_READS=metrics[17];
+	var MEDIAN_CV_COVERAGE=metrics[18];
+	var MEDIAN_5PRIME_BIAS=metrics[19];
+	var MEDIAN_3PRIME_BIAS=metrics[20];
+	var MEDIAN_5PRIME_TO_3PRIME_BIAS=metrics[21];
+
+	// Add to object
+	obj['Total Reads (including unaligned)'] = TOTAL_READS;
+	obj['Uniq Reads'] = UNIQ_READS;
+	if (START_POINTS != 0) {
+		obj['Reads Per Start Point'] = (UNIQ_READS/START_POINTS).toFixed(2);
+	} else {
+		obj['Reads Per Start point'] = '#Start Points Job Failed -> rerun!'
+	}
+	obj['Passed Filter Bases'] = PF_BASES;
+	obj['Passed Filter Aligned Bases'] = PF_ALIGNED_BASES;
+	obj['Coding Bases'] = CODING_BASES;
+	obj['UTR Bases'] = UTR_BASES;
+	obj['Intronic Bases'] = INTRONIC_BASES;
+	obj['Intergenic Bases'] = INTERGENIC_BASES;
+	if (CORRECT_STRAND_READS != 0) {
+		obj['Correct Strand Reads'] = CORRECT_STRAND_READS;
+	} else {
+		obj['Correct Strand Reads'] = 'Not a Strand Specific Library';
+	}
+	if (INCORRECT_STRAND_READS != 0) {
+		obj['Incorrect Strand Reads'] = INCORRECT_STRAND_READS;
+	} else {
+		obj['Incorrect Strand Reads'] = 'Not a Strand Specific Library';
+	}
+	obj['Proportion Coding Bases'] = PCT_CODING_BASES;
+	obj['Proportion UTR Bases'] = PCT_UTR_BASES;
+	obj['Proportion Intronic Bases'] = PCT_INTRONIC_BASES;
+	obj['Proportion Intergenic Bases'] = PCT_INTERGENIC_BASES;
+	obj['Proportion mRNA Bases'] = PCT_MRNA_BASES;
+	obj['Proportion Usable Bases'] = PCT_USABLE_BASES;
+	if (PCT_CORRECT_STRAND_READS != 0) {
+		obj['Proportion Correct Strand Reads'] = PCT_CORRECT_STRAND_READS;
+	} else {
+		obj['Proportion Correct Strand Reads'] = 'Not a Strand Specific Library';
+	}
+	obj['Median CV Coverage'] = MEDIAN_CV_COVERAGE;
+	obj['Median 5Prime Bias'] = MEDIAN_5PRIME_BIAS;
+	obj['Median 3Prime Bias'] = MEDIAN_3PRIME_BIAS;
+	obj['Median 5Prime to 3Prime Bias'] = MEDIAN_5PRIME_TO_3PRIME_BIAS;
+	if (TOTAL_READS != 0) {
+		obj['rRNA Contamination (%reads aligned)'] = ((RIBOSOMAL_READS/TOTAL_READS)*100).toFixed(2);
+	} else {
+		obj['rRNA Contamination (%reads algined)'] = 'Total Reads Job Failed -> re-run report';
+	}
+	return obj;
+}
+//var obj = {};
+//obj = getRNASeqQCData('/oicr/data/archive/seqware/seqware_analysis_8/hsqwprod/seqware-results/RNAseqQc_2.3/92922100/140926_SN802_0204_AC5JLPACXX_ERNA_0041_nn_C_PE_398_WT_rnaqc.report.zip');
+
+function getRNASeqQCDataByLibraryByRun(fprData, runSWID, library) {
+	var returnObj = {};
+	returnObj['Run'] = {};
+	returnObj['Run'][fprData['Run'][runSWID]['Run Name']] = {};
+	returnObj['Run'][fprData['Run'][runSWID]['Run Name']]['Library'] = {};
+	returnObj['Run'][fprData['Run'][runSWID]['Run Name']]['Library'][library] = getRNASeqQCData(fprData['Run'][runSWID]['Library'][library]['RNAZipFile']);
+	
+	//Update in mongodb
+	//updateData('RNASeqQCDataByLibraryByRun', fprData['Run'][runSWID]['Run Name'] + '_' + library, returnObj);
+	return returnObj;
+}
+
 function getReportData(jsonFile, obj) {
-	var jsonString = fs.readFileSync(jsonFile, 'utf8');
-	var lineObj = JSON.parse(jsonString);
+	if (typeof jsonFile !== 'undefined') {
+		var jsonString = fs.readFileSync(jsonFile, 'utf8');
+		var lineObj = JSON.parse(jsonString);
 
-	// Initialize
-	var readsSP = parseFloat(lineObj['reads per start point']).toFixed(2);
-	var onTargetRate = lineObj['reads on target']/lineObj['mapped reads'];
+		// Initialize
+		var readsSP = parseFloat(lineObj['reads per start point']).toFixed(2);
+		var onTargetRate = lineObj['reads on target']/lineObj['mapped reads'];
 
-	// Barcode
-	if (lineObj['barcode'] === 'undefined') {
-		obj['Barcode'] = 'noIndex';
-	} else {
-		obj['Barcode'] = lineObj['barcode'];
+		// Barcode
+		if (lineObj['barcode'] === 'undefined') {
+			obj['Barcode'] = 'noIndex';
+		} else {
+			obj['Barcode'] = lineObj['barcode'];
+		}
+
+		// Run name
+		obj['Run Name'] = lineObj['run name'];
+		// Reads per start point
+		obj['Reads/SP'] = readsSP;
+
+		// Map %, Raw Reads, Raw Yield
+		var rawReads = (parseInt(lineObj['mapped reads']) + parseInt(lineObj['unmapped reads']) + parseInt(lineObj['qual fail reads']));
+
+		if (rawReads > 0) {
+			obj['Map %'] = ((lineObj['mapped reads']/rawReads)*100).toFixed(2) + '%';
+			obj['Raw Reads'] = rawReads;
+			obj['Raw Yield'] = parseInt(rawReads*lineObj['average read length']);
+		} else {
+			obj['Map %'] = 0;
+			obj['Raw Reads'] = 0;
+			obj['Raw Yield'] = 0;
+		}
+
+		// % on Target
+		obj['% on Target'] = (onTargetRate*100).toFixed(2) + '%';
+
+		// Insert mean, insert stdev, read length
+		if (lineObj['number of ends'] === 'paired end') {
+			obj['Insert Mean'] = parseFloat(lineObj['insert mean']).toFixed(2);
+			obj['Insert Stdev'] = parseFloat(lineObj['insert stdev']).toFixed(2);
+			obj['Read Length'] = lineObj['read 1 average length'] + ',' + lineObj['read 2 average length'];
+		} else {
+			obj['Insert Mean'] = 'n/a';
+			obj['Insert Stdev'] = 'n/a';
+			obj['Read Length'] = lineObj['read ? average length'];
+		}
+
+		// Coverage
+		var rawEstYield = lineObj['aligned bases'] * onTargetRate;
+		var collapsedEstYield = rawEstYield/readsSP;
+
+		obj['Coverage (collapsed)'] = (collapsedEstYield/lineObj['target size']).toFixed(2);
+		obj['Coverage (raw)'] = (rawEstYield/lineObj['target size']).toFixed(2);
 	}
+	return obj;
+}
 
-	// Run name
-	obj['Run Name'] = lineObj['run name'];
-	// Reads per start point
-	obj['Reads/SP'] = readsSP;
-
-	// Map %, Raw Reads, Raw Yield
-	var rawReads = (parseInt(lineObj['mapped reads']) + parseInt(lineObj['unmapped reads']) + parseInt(lineObj['qual fail reads']));
-
-	if (rawReads > 0) {
-		obj['Map %'] = ((lineObj['mapped reads']/rawReads)*100).toFixed(2) + '%';
-		obj['Raw Reads'] = rawReads;
-		obj['Raw Yield'] = parseInt(rawReads*lineObj['average read length']);
+function getMouseData(xenomeFile, obj) {
+	if (typeof xenomeFile !== 'undefined') {
+		var xenomeLog = fs.readFileSync(xenomeFile, 'utf8');
+		var lines = xenomeLog.toString().split('\n');
+		var match;
+		for (var i = 0; i < lines.length; i++){
+			if (/\t(.*)\tmouse?/.test(lines[i])) {
+				match = /\t(.*)\tmouse?/.exec(lines[i]);
+			}
+		}
+		obj['% Mouse Content'] = parseFloat(match[1]).toFixed(2);
 	} else {
-		obj['Map %'] = 0;
-		obj['Raw Reads'] = 0;
-		obj['Raw Yield'] = 0;
+		obj['% Mouse Content'] = 'N/A';
 	}
-
-	// % on Target
-	obj['% on Target'] = (onTargetRate*100).toFixed(2) + '%';
-
-	// Insert mean, insert stdev, read length
-	if (lineObj['number of ends'] === 'paired end') {
-		obj['Insert Mean'] = parseFloat(lineObj['insert mean']).toFixed(2);
-		obj['Insert Stdev'] = parseFloat(lineObj['insert stdev']).toFixed(2);
-		obj['Read Length'] = lineObj['read 1 average length'] + ',' + lineObj['read 2 average length'];
-	} else {
-		obj['Insert Mean'] = 'n/a';
-		obj['Insert Stdev'] = 'n/a';
-		obj['Read Length'] = lineObj['read ? average length'];
-	}
-
-	// Coverage
-	var rawEstYield = lineObj['aligned bases'] * onTargetRate;
-	var collapsedEstYield = rawEstYield/readsSP;
-
-	obj['Coverage (collapsed)'] = (collapsedEstYield/lineObj['target size']).toFixed(2);
-	obj['Coverage (raw)'] = (rawEstYield/lineObj['target size']).toFixed(2);
-
+	
 	return obj;
 }
 
@@ -1253,8 +1418,9 @@ function generateGraphsByLibraryByLaneByDonor(json, donor, lane, library) {
 	console.log('Server running at http://127.0.0.1:8081/');
 }
 
+//getMouseData('SWID_1506799_PCSI_0322_Pa_X_PE_611_WG_526_150226_D00331_0124_AC6DP5ANXX_NoIndex_L007.log');
 //Test graph
-generateGraphsByLibraryByLaneByDonor('SWID_3165537_PV_0001_Bm_P_PE_423_EX_3_151216_D00331_0149_AC8L3CANXX_AACGTGAT_L001_R1_001.annotated.bam.BamQC.json');
+//generateGraphsByLibraryByLaneByDonor('SWID_3165537_PV_0001_Bm_P_PE_423_EX_3_151216_D00331_0149_AC8L3CANXX_AACGTGAT_L001_R1_001.annotated.bam.BamQC.json');
 //generateGraphsByLibraryByLaneByDonor('SWID_3574804_PCSI_0633_Ly_R_PE_667_WG_160209_D00353_0127_AC8T56ANXX_CCGTCC_L006_R1_001.annotated.bam.BamQC.json');
 
 //// General Analysis Status

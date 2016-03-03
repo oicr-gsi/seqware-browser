@@ -8,13 +8,17 @@
 	<script src="https://code.highcharts.com/highcharts.js"></script>
 	<script src="https://code.highcharts.com/modules/exporting.js"></script>
 </head>
-
-
+<style>
+	.chart {
+		height: 400px;
+		width: 600px;
+	}
+</style>
 <body>
 	<h1>Test</h1>
-	<div id="readBreakdownData" style="height: 400px; width: 600px"></div>
-	<div id="insertDistributionData" style="height: 400px; width: 600px"></div>
-	<div id="softClipData" style="height: 400px; width: 600px"></div>
+	<div id="readBreakdownData" class="chart"></div>
+	<div id="insertDistributionData" class="chart"></div>
+	<div id="softClipData" class="chart"></div>
 </body>
 
 <script> 
