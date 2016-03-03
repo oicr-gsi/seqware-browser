@@ -2,6 +2,633 @@ seqware-browser
 ================
 API code for next gen seqware browser
 
+## Mongodb 
+Currently on local machine, example data in collection:
+
+```
+> show collections
+AnalysisStatusByLibrary
+AnalysisStatusByProject
+CurrentStats
+CurrentStatsByProject
+DonorInfo
+DonorsByProject
+InstrumentNamesByDonor
+LastModifiedProjects
+LibrariesByProject
+LibrariesByRun
+LibraryInfo
+NumDonorsByProject
+NumLibrariesByProject
+NumLibrariesPerTissueByDonor
+NumOfLibraryTypeByDonor
+RNASeqQCDataByLibraryByRun
+ReportDataByLibraryByLaneByDonor
+ReportDataByLibraryByLaneByRun
+RunDataByProject
+StartDateByProject
+StartEndDateByDonor
+WorkflowByLibrary
+```
+
+### Collections:
+All _ids for datasets within each collection is the [SWID of the base field] or a [string of the collective fields that make it unique]
+*   AnalysisStatusByLibrary
+    ```
+    {
+      "94": {
+        "Workflow Runs": [
+          "FileImport"
+        ],
+        "Analysis Status": {
+          "Alignment": {
+            
+          },
+          "Base calling": {
+            "completed": 1
+          },
+          "Quality Control": {
+            
+          },
+          "Variant Calling": {
+            
+          }
+        },
+        "Library Name": "PCSI_0024_Pa_P_MP_405_WG",
+        "Last Modified": "2012-01-06 17:41:34"
+      },
+      "_id": "94"
+    }
+    ```
+
+    Organized by library SWID, each contain the name of the library, an array of workflow runs under that library, last modified date, and number of workflows in each category, organized according to workflow run status
+
+*   AnalysisStatusByProject
+    ```
+    {
+      "4": {
+        "Workflow Runs": [
+          "FileImport",
+          ""
+        ],
+        "Analysis Status": {
+          "Alignment": {
+            
+          },
+          "Base calling": {
+            "completed": 2
+          },
+          "Quality Control": {
+            
+          },
+          "Variant Calling": {
+            
+          }
+        },
+        "Project Name": "ICGCPancreaticCancerSeq",
+        "Last Modified": "2012-01-18 16:40:08"
+      },
+      "_id": "4"
+    }
+    ```
+
+    Organized by project SWID, each contain the name of the project, an array of workflow runs under that project, last modified date, and number of workflows in each category, organized according to workflow run status
+
+*   CurrentStats
+    ```
+    {
+      "Date From": "Unspecified",
+      "Date To": "2016-02-29 10:14:31",
+      "Workflow Status": {
+        "completed": 175706,
+        "failed": 229,
+        "cancelled": 3,
+        "": 1
+      },
+      "Total Projects": 113,
+      "Total Libraries": 13458,
+      "_id": "current"
+    }
+    ```
+
+    Provides list of current stats including total number of workflows that are completed, failed, cancelled, running, total number of projects, and total number of libraries
+    *   Can take in parameters {dateFrom, dateTo} and returns the workflow status totals that apply to that time interval (if no parameters are provided, returns stats for all dates)
+
+*   CurrentStatsByProject
+    ```
+    {
+      "6": {
+        "Workflow Status": {
+          "completed": 18
+        },
+        "Project Name": "PancreaticCellLineSequencing",
+        "Project Libraries": 2,
+        "Date From": "Unspecified",
+        "Date To": "2016-02-29 10:07:32"
+      },
+      "_id": "6"
+    }
+    ```
+
+    Organized by projectSWID, provides list of current stats including project name, workflows and their status totals, number of library samples
+    *   Can take in parameters {dateFrom, dateTo} and returns the worklflow status totals that apply to that time interval (if no parameters are provided, returns stats for all dates)
+
+*   DonorInfo
+    ```
+    {
+      "BLBC_0001": {
+        "External Name": "6175",
+        "Tissue Types": {
+          "R": 1
+        },
+        "SWID": [
+          "1171"
+        ]
+      },
+      "_id": "BLBC_0001"
+    }
+    ```
+
+    Organized by donor name, provides the external name, number of libraries per tissue type
+
+*   DonorsByProject
+    ```
+    {
+      "4": {
+        "Project Name": "ICGCPancreaticCancerSeq",
+        "Donors": [
+          "PCSI_0013",
+          "PCSI_0005",
+          "PCSI_0014",
+          "PCSI_0012",
+          "PCSI_0024",
+          "PCSI_0007",
+          "PCSI_0006"
+        ]
+      },
+      "_id": "4"
+    }
+    ```
+
+    Organized by project SWID, each entry contains the project name and an array of associated donors
+
+*   InstrumentNameByDonor
+    ```
+    {
+      "ACC_0002": {
+        "Instruments": [
+          "h801"
+        ],
+        "SWID": [
+          "907",
+          "932"
+        ]
+      },
+      "_id": "ACC_0002"
+    }
+    ```
+
+    Organized by donor name, each entry contains an array of instruments that the donor sample has been seqeunced on
+
+*   LastModifiedProjects
+    ```
+    {
+      "63": {
+        "Project Name": "PCSI",
+        "Last Modified": "2016-01-23 07:35:26"
+      },
+      "90": {
+        "Project Name": "CPC-GENE",
+        "Last Modified": "2016-01-11 23:04:34"
+      },
+      "288147": {
+        "Project Name": "HALT",
+        "Last Modified": "2016-01-06 21:06:36"
+      },
+      "327091": {
+        "Project Name": "Rapid_Autopsy_Metastatic_Panc",
+        "Last Modified": "2016-01-01 09:53:40"
+      },
+      "1236599": {
+        "Project Name": "DCIS",
+        "Last Modified": "2016-01-13 22:53:14"
+      },
+      "1349398": {
+        "Project Name": "EPICLiran",
+        "Last Modified": "2016-01-08 21:21:19"
+      },
+      "1753531": {
+        "Project Name": "Liposarcoma_Sequencing",
+        "Last Modified": "2016-01-20 14:40:51"
+      },
+      "1861831": {
+        "Project Name": "GECCOSequencing",
+        "Last Modified": "2016-01-23 09:46:22"
+      },
+      "1988216": {
+        "Project Name": "EACdysplasia",
+        "Last Modified": "2016-01-20 01:08:43"
+      },
+      "2194176": {
+        "Project Name": "test",
+        "Last Modified": "2016-01-23 07:37:52"
+      },
+      "2690872": {
+        "Project Name": "SingleCellRNAMedulloblastoma",
+        "Last Modified": "2016-01-06 00:37:21"
+      },
+      "2904368": {
+        "Project Name": "CatherineOBrienExomes",
+        "Last Modified": "2016-01-13 17:43:55"
+      },
+      "2904369": {
+        "Project Name": "PlycytemiaVera",
+        "Last Modified": "2016-01-22 22:20:26"
+      },
+      "3473424": {
+        "Project Name": "CellLineAML",
+        "Last Modified": "2016-02-29 10:12:52"
+      },
+      "": {
+        "Project Name": "",
+        "Last Modified": "2016-01-23 02:35:08"
+      },
+      "Date": "2016-02-29 10:22:09",
+      "_id": "lastMod_60_days"
+    }
+    ```
+
+    Returns a list of project SWIDs and their project names and last modified dates
+    *   Can take in a date range (i.e., 30 days and will return the list of modified projects in the last 30 days)
+
+*   LibrariesByProject
+    ```
+    {
+      "4": {
+        "Project Name": "ICGCPancreaticCancerSeq",
+        "Libraries": [
+          "PCSI_0005_Pa_P_PE_456_WG",
+          "PCSI_0006_Pa_P_PE_450_WG",
+          "PCSI_0006_Pa_C_PE_536_WG",
+          "PCSI_0007_Pa_P_PE_494_WG",
+          "PCSI_0024_Pa_X_MP_405_WG",
+          "PCSI_0024_Pa_C_MP_405_WG",
+          "PCSI_0024_Pa_P_MP_405_WG",
+          "PCSI_0013_Pa_C_MP_405_WG",
+          "PCSI_0024_Pa_X_PE_500_WG",
+          "PCSI_0014_Pa_C_MP_405_WG",
+          "PCSI_0012_Pa_C_MP_405_WG"
+        ]
+      },
+      "_id": "4"
+    }
+    ```
+
+    Organized by project SWID, returns the project name and an array of the associated libraries to that project
+
+*   LibrariesByRun
+    ```
+    {
+      "7935": {
+        "Libraries": {
+          "PCSI_0024_Pa_X_MP_405_WG": "95",
+          "PCSI_0024_Pa_P_MP_405_WG": "94"
+        },
+        "Run Name": "100606_i580_61UA6_LT"
+      },
+      "_id": "7935"
+    }
+    ```
+
+    Organized by run SWID, returns the list of libraries on that run and the library sample SWIDs
+
+*   LibraryInfo
+    ```
+    {
+      "94": {
+        "Library Name": "PCSI_0024_Pa_P_MP_405_WG",
+        "Library Type": "WG",
+        "Tissue Type": "P",
+        "Tissue Origin": "Pa"
+      },
+      "_id": "94"
+    }
+    ```
+
+    Organized by sample SWID, returns the library name, type, tissue type, origin
+
+*   NumDonorsByProject
+    ```
+    {
+      "4": {
+        "Donors": {
+          "PCSI": 7
+        },
+        "Project Name": "ICGCPancreaticCancerSeq"
+      },
+      "_id": "4"
+    }
+    ```
+
+    Organized by project SWID, returns the project name and a list of the libraries associated with that project along with the number of libraries per donor
+
+*   NumLibrariesByProject
+    ```
+    {
+      "4": {
+        "Project Name": "ICGCPancreaticCancerSeq",
+        "Libraries": 11
+      },
+      "_id": "4"
+    }
+    ```
+
+    Organized by project SWID, returns the project name and the number of libraries associated with that project
+
+*   NumOfLibraryTypeByDonor
+    ```
+    {
+      "OVCA_0006": {
+        "Library Type": {
+          "WT": 1,
+          "EX": 1,
+          "MR": 1
+        },
+        "SWID": [
+          "1741",
+          "1835",
+          "295410"
+        ]
+      },
+      "_id": "OVCA_0006"
+    }
+    ```
+
+    Organized by donor name, returns the number of libraries under each library type
+
+*   RNASeqQCDataByLibraryByRun
+    ```
+    {
+      "Run": {
+        "140926_SN802_0204_AC5JLPACXX": {
+          "Library": {
+            "ERNA_0041_nn_C_PE_398_WT": {
+              "Total Reads (including unaligned)": "153650668",
+              "Uniq Reads": "407818",
+              "Reads Per Start Point": "3.37",
+              "Passed Filter Bases": "30586350",
+              "Passed Filter Aligned Bases": "30584373",
+              "Coding Bases": "3919059",
+              "UTR Bases": "2381864",
+              "Intronic Bases": "7478793",
+              "Intergenic Bases": "16804657",
+              "Correct Strand Reads": "79162",
+              "Incorrect Strand Reads": "457",
+              "Proportion Coding Bases": "0.128139",
+              "Proportion UTR Bases": "0.077878",
+              "Proportion Intronic Bases": "0.24453",
+              "Proportion Intergenic Bases": "0.549452",
+              "Proportion mRNA Bases": "0.206018",
+              "Proportion Usable Bases": "0.206004",
+              "Proportion Correct Strand Reads": "0.99426",
+              "Median CV Coverage": "0.920239",
+              "Median 5Prime Bias": "0.436754",
+              "Median 3Prime Bias": "0.809127",
+              "Median 5Prime to 3Prime Bias": "0.854082",
+              "rRNA Contamination (%reads aligned)": "0.26"
+            }
+          }
+        }
+      },
+      "_id": "140926_SN802_0204_AC5JLPACXX_ERNA_0041_nn_C_PE_398_WT"
+    }
+    ```
+
+    Organized by run, returns libraries and the RNA details for alignment QC
+    Note: the _id is the runName_library
+
+*   ReportDataByLibraryByLaneByDonor
+    ```
+    {
+      "BLBC_0005": {
+        "Lane": {
+          "5": {
+            "Library": {
+              "BLBC_0005_Ly_R_PE_445_EX": {
+                "Barcode": "CGATGT",
+                "Run Name": "110819_SN393_0183_AB02B9ACXX",
+                "Reads/SP": "2.43",
+                "Map %": "88.44%",
+                "Raw Reads": 384666138,
+                "Raw Yield": 38851191316,
+                "% on Target": "48.71%",
+                "Insert Mean": "316.81",
+                "Insert Stdev": "24.97",
+                "Read Length": "101,101",
+                "Coverage (collapsed)": "135.85",
+                "Coverage (raw)": "330.12"
+              }
+            }
+          }
+        }
+      },
+      "_id": "BLBC_0005_5_BLBC_0005_Ly_R_PE_445_EX"
+    }
+    ```
+
+    Organized by donor name, returns the lane and the library associated with it and the corresponding wide instrument report data (for the details page)
+    Note: the _id is the donorName_lane_library
+
+*   ReportDataByLibraryByLaneByRun
+    ```
+    {
+      "Run": {
+        "110525_SN801_0052_Bb01n6acxx": {
+          "Lane": {
+            "8": {
+              "Library": {
+                "PCSI_0069_Ly_R_PE_392_EX": {
+                  "Barcode": "NoIndex",
+                  "Reads/SP": "1.06",
+                  "Map %": "86.55%",
+                  "Raw Reads": 204034290,
+                  "Raw Yield": 20607432365,
+                  "% on Target": "50.35%",
+                  "Insert Mean": "261.11",
+                  "Insert Stdev": "38.08",
+                  "Read Length": "101,101",
+                  "Coverage (collapsed)": "160.78",
+                  "Coverage (raw)": "170.42",
+                  "% Mouse Content": "N/A"
+                }
+              }
+            }
+          }
+        }
+      },
+      "_id": "110525_SN801_0052_Bb01n6acxx_8_PCSI_0069_Ly_R_PE_392_EX"
+    }
+    ```
+
+    Organized by run name, returns lane, library and wide instrument report data for the library by lane by run details page
+    Note: the _id is the runName_lane_library
+
+*   RunDataByProject
+    ```
+    {
+      "6": {
+        "Run": {
+          "610219": {
+            "Donor": {
+              "PCSI": 1
+            },
+            "Analysis Status": {
+              "Alignment": {
+                "completed": 1
+              },
+              "Base calling": {
+                "completed": 1
+              },
+              "Quality Control": {
+                "completed": 7
+              },
+              "Variant Calling": {
+                
+              }
+            },
+            "Run Name": "130923_M00753_0059_000000000-A42TJ"
+          },
+          "610222": {
+            "Donor": {
+              "PCSI": 1
+            },
+            "Analysis Status": {
+              "Alignment": {
+                "completed": 1
+              },
+              "Base calling": {
+                "completed": 1
+              },
+              "Quality Control": {
+                "completed": 7
+              },
+              "Variant Calling": {
+                
+              }
+            },
+            "Run Name": "130923_M00146_0029_000000000-A42PY"
+          }
+        },
+        "Last Modified": "2015-08-15 06:52:37",
+        "Project Name": "PancreaticCellLineSequencing"
+      },
+      "_id": "6"
+    }
+    ```
+
+    Organized by project SWID, returns list of runs with run name, associated donors : library count and associated workflow run analysis status count
+
+*   StartDateByProject
+    ```
+    {
+      "6": {
+        "Project Name": "PancreaticCellLineSequencing",
+        "Start Date": "2013-08-13"
+      },
+      "_id": "6"
+    }
+    ```
+
+    Organized by project SWID, returns the start date of the project
+
+*   StartEndDateByDonor
+    ```
+    {
+      "BLBC_0013": {
+        "SWID": [
+          "957"
+        ],
+        "End Date": "2012-01-06 17:41:35",
+        "Start Date": "2011-03-25"
+      },
+      "_id": "BLBC_0013"
+    }
+    ```
+
+    Organized by donor name and returns start date (date of donor sample in lab) and end date (last modified)
+
+*   WorkflowByLibrary
+    ```
+    {
+      "94": {
+        "Library Name": "PCSI_0024_Pa_P_MP_405_WG",
+        "Workflow Run": {
+          "25831": {
+            "File Paths": [
+              "/oicr/data/archive/i580/100606_I580_61UA6_LT/Data/Intensities/Bustard1.8.0a5_11-06-2010_mchan.2/GERALD_11-06-2010_mchan/s_1_2_sequence.txt.gz",
+              "/oicr/data/archive/i580/100606_I580_61UA6_LT/Data/Intensities/Bustard1.8.0a5_11-06-2010_mchan.2/GERALD_11-06-2010_mchan/s_3_1_sequence.txt.gz",
+              "/oicr/data/archive/i580/100606_I580_61UA6_LT/Data/Intensities/Bustard1.8.0a5_11-06-2010_mchan.2/GERALD_11-06-2010_mchan/s_4_1_sequence.txt.gz",
+              "/oicr/data/archive/i580/100606_I580_61UA6_LT/Data/Intensities/Bustard1.8.0a5_11-06-2010_mchan.2/GERALD_11-06-2010_mchan/s_2_1_sequence.txt.gz",
+              "/oicr/data/archive/i580/100606_I580_61UA6_LT/Data/Intensities/Bustard1.8.0a5_11-06-2010_mchan.2/GERALD_11-06-2010_mchan/s_3_2_sequence.txt.gz",
+              "/oicr/data/archive/i580/100606_I580_61UA6_LT/Data/Intensities/Bustard1.8.0a5_11-06-2010_mchan.2/GERALD_11-06-2010_mchan/s_2_2_sequence.txt.gz",
+              "/oicr/data/archive/i580/100606_I580_61UA6_LT/Data/Intensities/Bustard1.8.0a5_11-06-2010_mchan.2/GERALD_11-06-2010_mchan/s_4_2_sequence.txt.gz",
+              "/oicr/data/archive/i580/100606_I580_61UA6_LT/Data/Intensities/Bustard1.8.0a5_11-06-2010_mchan.2/GERALD_11-06-2010_mchan/s_1_1_sequence.txt.gz"
+            ],
+            "Workflow Name": "FileImport",
+            "Skip": "false",
+            "End Date": "2012-01-06 17:41:34"
+          }
+        }
+      },
+      "_id": "94"
+    }
+    ```
+
+    Organized by library SWID, returns the library name, list of workflow runs and their associated files, workflow name, skip, and end date
+
+### Analysis YAML
+
+The analysis YAML is a yml file that contains list of workflows that correspond to each analysis type (alignment, base calling, quality control, variant calling)
+
+```
+---
+Alignment:
+  BWA: 3326549
+  BwaMem: 3490867
+  GenomicAlignmentNovoalign: 940113
+  GenomicAlignmentNovoalign_2: 1726998
+  GenomicAlignmentNovoalign_V2.07.15b: 3478218
+  RNAseqAligner-Tophat: 3500779
+Base calling:
+  CASAVA: 3504552
+  CASAVA-RTA: 538774
+  FileImport: 3215649
+  Xenome: 3403815
+Quality Control:
+  BamQC: 3556289
+  CoverageAnalysis: 3498310
+  FastQC: 3504913
+  FingerprintCollector: 3557655
+  FusionDetection-Tophat: 3500783
+  GCBias-OSW: 3549180
+  RNAseqQc: 3502433
+  SeqControl: 3549189
+  TargetedSequencingQC: 1338647
+Variant Calling:
+  BamFilterMergeCollapse: 3371881
+  Cufflinks: 3502421
+  GATK: 1818184
+  GATK3: 3239906
+  GATKAnnotateAndSort: 678388
+  GATKGenotypeGVCFs: 3285541
+  GATKHaplotypeCaller: 3371982
+  GATKRecalibrationAndVariantCalling: 17740
+  GATKRecalibrationAndVariantCallingHg19Exomes: 654471
+  GATKRecalibrationAndVariantCallingHg19WholeGenome: 554991
+  MutectStrelka: 3324548
+  SomaticClassifier: 640448
+```
+
 The script first parses the file provenance report and converts everything into an organized object/dictionary hash ( for explaining purposes, call it fprHash ).
 
 ## Methods
@@ -211,632 +838,5 @@ Each method has a sample output of data in JSON format --> Updating to mongodb
         *   Example output:
 
             ```{"ACC_0002":{"Instruments":["h801"],"SWID":["907","932"]},"BLBC_0014":{"Instruments":["h801"],"SWID":["939"]},"BLBC_0013":{"Instruments":["h801","h203"],"SWID":["957"]},"BLBC_0012":{"Instruments":["h801","h203"],"SWID":["985"]},"BLBC_0011":{"Instruments":["h801"],"SWID":["1008"]},"BLBC_0010":{"Instruments":["h801"],"SWID":["1030"]},"BLBC_0005":{"Instruments":["h393"],"SWID":["1069"]},"BLBC_0004":{"Instruments":["h801"],"SWID":["1102"]},"BLBC_0002":{"Instruments":["h801"],"SWID":["1148"]},"BLBC_0001":{"Instruments":["h801"],"SWID":["1171"]},"BLBC_0006_Ly_R_nn_3_D_1":{"Instruments":["h393"],"SWID":["1209"]}}```
-
-### Analysis YAML
-
-The analysis YAML is a yml file that contains list of workflows that correspond to each analysis type (alignment, base calling, quality control, variant calling)
-
-```
----
-Alignment:
-  BWA: 3326549
-  BwaMem: 3490867
-  GenomicAlignmentNovoalign: 940113
-  GenomicAlignmentNovoalign_2: 1726998
-  GenomicAlignmentNovoalign_V2.07.15b: 3478218
-  RNAseqAligner-Tophat: 3500779
-Base calling:
-  CASAVA: 3504552
-  CASAVA-RTA: 538774
-  FileImport: 3215649
-  Xenome: 3403815
-Quality Control:
-  BamQC: 3556289
-  CoverageAnalysis: 3498310
-  FastQC: 3504913
-  FingerprintCollector: 3557655
-  FusionDetection-Tophat: 3500783
-  GCBias-OSW: 3549180
-  RNAseqQc: 3502433
-  SeqControl: 3549189
-  TargetedSequencingQC: 1338647
-Variant Calling:
-  BamFilterMergeCollapse: 3371881
-  Cufflinks: 3502421
-  GATK: 1818184
-  GATK3: 3239906
-  GATKAnnotateAndSort: 678388
-  GATKGenotypeGVCFs: 3285541
-  GATKHaplotypeCaller: 3371982
-  GATKRecalibrationAndVariantCalling: 17740
-  GATKRecalibrationAndVariantCallingHg19Exomes: 654471
-  GATKRecalibrationAndVariantCallingHg19WholeGenome: 554991
-  MutectStrelka: 3324548
-  SomaticClassifier: 640448
-```
-
-## Mongodb 
-Currently on local machine, example data in collection:
-
-```
-> show collections
-AnalysisStatusByLibrary
-AnalysisStatusByProject
-CurrentStats
-CurrentStatsByProject
-DonorInfo
-DonorsByProject
-InstrumentNamesByDonor
-LastModifiedProjects
-LibrariesByProject
-LibrariesByRun
-LibraryInfo
-NumDonorsByProject
-NumLibrariesByProject
-NumLibrariesPerTissueByDonor
-NumOfLibraryTypeByDonor
-RNASeqQCDataByLibraryByRun
-ReportDataByLibraryByLaneByDonor
-ReportDataByLibraryByLaneByRun
-RunDataByProject
-StartDateByProject
-StartEndDateByDonor
-WorkflowByLibrary
-```
-
-### Collections:
-All _ids for datasets within each collection is the [SWID of the base field] or a [string of the collective fields that make it unique]
-*   AnalysisStatusByLibrary
-    *   ```
-        {
-          "94": {
-            "Workflow Runs": [
-              "FileImport"
-            ],
-            "Analysis Status": {
-              "Alignment": {
-                
-              },
-              "Base calling": {
-                "completed": 1
-              },
-              "Quality Control": {
-                
-              },
-              "Variant Calling": {
-                
-              }
-            },
-            "Library Name": "PCSI_0024_Pa_P_MP_405_WG",
-            "Last Modified": "2012-01-06 17:41:34"
-          },
-          "_id": "94"
-        }
-        ```
-
-    Organized by library SWID, each contain the name of the library, an array of workflow runs under that library, last modified date, and number of workflows in each category, organized according to workflow run status
-
-*   AnalysisStatusByProject
-    *   ```
-        {
-          "4": {
-            "Workflow Runs": [
-              "FileImport",
-              ""
-            ],
-            "Analysis Status": {
-              "Alignment": {
-                
-              },
-              "Base calling": {
-                "completed": 2
-              },
-              "Quality Control": {
-                
-              },
-              "Variant Calling": {
-                
-              }
-            },
-            "Project Name": "ICGCPancreaticCancerSeq",
-            "Last Modified": "2012-01-18 16:40:08"
-          },
-          "_id": "4"
-        }
-        ```
-
-    Organized by project SWID, each contain the name of the project, an array of workflow runs under that project, last modified date, and number of workflows in each category, organized according to workflow run status
-
-*   CurrentStats
-    *   ```
-        {
-          "Date From": "Unspecified",
-          "Date To": "2016-02-29 10:14:31",
-          "Workflow Status": {
-            "completed": 175706,
-            "failed": 229,
-            "cancelled": 3,
-            "": 1
-          },
-          "Total Projects": 113,
-          "Total Libraries": 13458,
-          "_id": "current"
-        }
-        ```
-
-    Provides list of current stats including total number of workflows that are completed, failed, cancelled, running, total number of projects, and total number of libraries
-    *   Can take in parameters {dateFrom, dateTo} and returns the workflow status totals that apply to that time interval (if no parameters are provided, returns stats for all dates)
-
-*   CurrentStatsByProject
-    *   ```
-        {
-          "6": {
-            "Workflow Status": {
-              "completed": 18
-            },
-            "Project Name": "PancreaticCellLineSequencing",
-            "Project Libraries": 2,
-            "Date From": "Unspecified",
-            "Date To": "2016-02-29 10:07:32"
-          },
-          "_id": "6"
-        }
-        ```
-
-    Organized by projectSWID, provides list of current stats including project name, workflows and their status totals, number of library samples
-    *   Can take in parameters {dateFrom, dateTo} and returns the worklflow status totals that apply to that time interval (if no parameters are provided, returns stats for all dates)
-
-*   DonorInfo
-    *   ```
-        {
-          "BLBC_0001": {
-            "External Name": "6175",
-            "Tissue Types": {
-              "R": 1
-            },
-            "SWID": [
-              "1171"
-            ]
-          },
-          "_id": "BLBC_0001"
-        }
-        ```
-
-    Organized by donor name, provides the external name, number of libraries per tissue type
-
-*   DonorsByProject
-    *   ```
-        {
-          "4": {
-            "Project Name": "ICGCPancreaticCancerSeq",
-            "Donors": [
-              "PCSI_0013",
-              "PCSI_0005",
-              "PCSI_0014",
-              "PCSI_0012",
-              "PCSI_0024",
-              "PCSI_0007",
-              "PCSI_0006"
-            ]
-          },
-          "_id": "4"
-        }
-        ```
-
-    Organized by project SWID, each entry contains the project name and an array of associated donors
-
-*   InstrumentNameByDonor
-    *   ```
-        {
-          "ACC_0002": {
-            "Instruments": [
-              "h801"
-            ],
-            "SWID": [
-              "907",
-              "932"
-            ]
-          },
-          "_id": "ACC_0002"
-        }
-        ```
-
-    Organized by donor name, each entry contains an array of instruments that the donor sample has been seqeunced on
-
-*   LastModifiedProjects
-    *   ```
-        {
-          "63": {
-            "Project Name": "PCSI",
-            "Last Modified": "2016-01-23 07:35:26"
-          },
-          "90": {
-            "Project Name": "CPC-GENE",
-            "Last Modified": "2016-01-11 23:04:34"
-          },
-          "288147": {
-            "Project Name": "HALT",
-            "Last Modified": "2016-01-06 21:06:36"
-          },
-          "327091": {
-            "Project Name": "Rapid_Autopsy_Metastatic_Panc",
-            "Last Modified": "2016-01-01 09:53:40"
-          },
-          "1236599": {
-            "Project Name": "DCIS",
-            "Last Modified": "2016-01-13 22:53:14"
-          },
-          "1349398": {
-            "Project Name": "EPICLiran",
-            "Last Modified": "2016-01-08 21:21:19"
-          },
-          "1753531": {
-            "Project Name": "Liposarcoma_Sequencing",
-            "Last Modified": "2016-01-20 14:40:51"
-          },
-          "1861831": {
-            "Project Name": "GECCOSequencing",
-            "Last Modified": "2016-01-23 09:46:22"
-          },
-          "1988216": {
-            "Project Name": "EACdysplasia",
-            "Last Modified": "2016-01-20 01:08:43"
-          },
-          "2194176": {
-            "Project Name": "test",
-            "Last Modified": "2016-01-23 07:37:52"
-          },
-          "2690872": {
-            "Project Name": "SingleCellRNAMedulloblastoma",
-            "Last Modified": "2016-01-06 00:37:21"
-          },
-          "2904368": {
-            "Project Name": "CatherineOBrienExomes",
-            "Last Modified": "2016-01-13 17:43:55"
-          },
-          "2904369": {
-            "Project Name": "PlycytemiaVera",
-            "Last Modified": "2016-01-22 22:20:26"
-          },
-          "3473424": {
-            "Project Name": "CellLineAML",
-            "Last Modified": "2016-02-29 10:12:52"
-          },
-          "": {
-            "Project Name": "",
-            "Last Modified": "2016-01-23 02:35:08"
-          },
-          "Date": "2016-02-29 10:22:09",
-          "_id": "lastMod_60_days"
-        }
-        ```
-
-    Returns a list of project SWIDs and their project names and last modified dates
-    *   Can take in a date range (i.e., 30 days and will return the list of modified projects in the last 30 days)
-
-*   LibrariesByProject
-    *   ```
-        {
-          "4": {
-            "Project Name": "ICGCPancreaticCancerSeq",
-            "Libraries": [
-              "PCSI_0005_Pa_P_PE_456_WG",
-              "PCSI_0006_Pa_P_PE_450_WG",
-              "PCSI_0006_Pa_C_PE_536_WG",
-              "PCSI_0007_Pa_P_PE_494_WG",
-              "PCSI_0024_Pa_X_MP_405_WG",
-              "PCSI_0024_Pa_C_MP_405_WG",
-              "PCSI_0024_Pa_P_MP_405_WG",
-              "PCSI_0013_Pa_C_MP_405_WG",
-              "PCSI_0024_Pa_X_PE_500_WG",
-              "PCSI_0014_Pa_C_MP_405_WG",
-              "PCSI_0012_Pa_C_MP_405_WG"
-            ]
-          },
-          "_id": "4"
-        }
-        ```
-
-    Organized by project SWID, returns the project name and an array of the associated libraries to that project
-
-*   LibrariesByRun
-    *   ```
-        {
-          "7935": {
-            "Libraries": {
-              "PCSI_0024_Pa_X_MP_405_WG": "95",
-              "PCSI_0024_Pa_P_MP_405_WG": "94"
-            },
-            "Run Name": "100606_i580_61UA6_LT"
-          },
-          "_id": "7935"
-        }
-        ```
-
-    Organized by run SWID, returns the list of libraries on that run and the library sample SWIDs
-
-*   LibraryInfo
-    *   ```
-        {
-          "94": {
-            "Library Name": "PCSI_0024_Pa_P_MP_405_WG",
-            "Library Type": "WG",
-            "Tissue Type": "P",
-            "Tissue Origin": "Pa"
-          },
-          "_id": "94"
-        }
-        ```
-
-    Organized by sample SWID, returns the library name, type, tissue type, origin
-
-*   NumDonorsByProject
-    *   ```
-        {
-          "4": {
-            "Donors": {
-              "PCSI": 7
-            },
-            "Project Name": "ICGCPancreaticCancerSeq"
-          },
-          "_id": "4"
-        }
-        ```
-
-    Organized by project SWID, returns the project name and a list of the libraries associated with that project along with the number of libraries per donor
-
-*   NumLibrariesByProject
-    *   ```
-        {
-          "4": {
-            "Project Name": "ICGCPancreaticCancerSeq",
-            "Libraries": 11
-          },
-          "_id": "4"
-        }
-        ```
-
-    Organized by project SWID, returns the project name and the number of libraries associated with that project
-
-*   NumOfLibraryTypeByDonor
-    *   ```
-        {
-          "OVCA_0006": {
-            "Library Type": {
-              "WT": 1,
-              "EX": 1,
-              "MR": 1
-            },
-            "SWID": [
-              "1741",
-              "1835",
-              "295410"
-            ]
-          },
-          "_id": "OVCA_0006"
-        }
-        ```
-
-    Organized by donor name, returns the number of libraries under each library type
-
-*   RNASeqQCDataByLibraryByRun
-    *   ```
-        {
-          "Run": {
-            "140926_SN802_0204_AC5JLPACXX": {
-              "Library": {
-                "ERNA_0041_nn_C_PE_398_WT": {
-                  "Total Reads (including unaligned)": "153650668",
-                  "Uniq Reads": "407818",
-                  "Reads Per Start Point": "3.37",
-                  "Passed Filter Bases": "30586350",
-                  "Passed Filter Aligned Bases": "30584373",
-                  "Coding Bases": "3919059",
-                  "UTR Bases": "2381864",
-                  "Intronic Bases": "7478793",
-                  "Intergenic Bases": "16804657",
-                  "Correct Strand Reads": "79162",
-                  "Incorrect Strand Reads": "457",
-                  "Proportion Coding Bases": "0.128139",
-                  "Proportion UTR Bases": "0.077878",
-                  "Proportion Intronic Bases": "0.24453",
-                  "Proportion Intergenic Bases": "0.549452",
-                  "Proportion mRNA Bases": "0.206018",
-                  "Proportion Usable Bases": "0.206004",
-                  "Proportion Correct Strand Reads": "0.99426",
-                  "Median CV Coverage": "0.920239",
-                  "Median 5Prime Bias": "0.436754",
-                  "Median 3Prime Bias": "0.809127",
-                  "Median 5Prime to 3Prime Bias": "0.854082",
-                  "rRNA Contamination (%reads aligned)": "0.26"
-                }
-              }
-            }
-          },
-          "_id": "140926_SN802_0204_AC5JLPACXX_ERNA_0041_nn_C_PE_398_WT"
-        }
-        ```
-
-    Organized by run, returns libraries and the RNA details for alignment QC
-    Note: the _id is the runName_library
-
-*   ReportDataByLibraryByLaneByDonor
-    *   ```
-        {
-          "BLBC_0005": {
-            "Lane": {
-              "5": {
-                "Library": {
-                  "BLBC_0005_Ly_R_PE_445_EX": {
-                    "Barcode": "CGATGT",
-                    "Run Name": "110819_SN393_0183_AB02B9ACXX",
-                    "Reads/SP": "2.43",
-                    "Map %": "88.44%",
-                    "Raw Reads": 384666138,
-                    "Raw Yield": 38851191316,
-                    "% on Target": "48.71%",
-                    "Insert Mean": "316.81",
-                    "Insert Stdev": "24.97",
-                    "Read Length": "101,101",
-                    "Coverage (collapsed)": "135.85",
-                    "Coverage (raw)": "330.12"
-                  }
-                }
-              }
-            }
-          },
-          "_id": "BLBC_0005_5_BLBC_0005_Ly_R_PE_445_EX"
-        }
-        ```
-
-    Organized by donor name, returns the lane and the library associated with it and the corresponding wide instrument report data (for the details page)
-    Note: the _id is the donorName_lane_library
-
-*   ReportDataByLibraryByLaneByRun
-    *   ```
-        {
-          "Run": {
-            "110525_SN801_0052_Bb01n6acxx": {
-              "Lane": {
-                "8": {
-                  "Library": {
-                    "PCSI_0069_Ly_R_PE_392_EX": {
-                      "Barcode": "NoIndex",
-                      "Reads/SP": "1.06",
-                      "Map %": "86.55%",
-                      "Raw Reads": 204034290,
-                      "Raw Yield": 20607432365,
-                      "% on Target": "50.35%",
-                      "Insert Mean": "261.11",
-                      "Insert Stdev": "38.08",
-                      "Read Length": "101,101",
-                      "Coverage (collapsed)": "160.78",
-                      "Coverage (raw)": "170.42",
-                      "% Mouse Content": "N/A"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "_id": "110525_SN801_0052_Bb01n6acxx_8_PCSI_0069_Ly_R_PE_392_EX"
-        }
-        ```
-
-    Organized by run name, returns lane, library and wide instrument report data for the library by lane by run details page
-    Note: the _id is the runName_lane_library
-
-*   RunDataByProject
-    *   ```
-        {
-          "6": {
-            "Run": {
-              "610219": {
-                "Donor": {
-                  "PCSI": 1
-                },
-                "Analysis Status": {
-                  "Alignment": {
-                    "completed": 1
-                  },
-                  "Base calling": {
-                    "completed": 1
-                  },
-                  "Quality Control": {
-                    "completed": 7
-                  },
-                  "Variant Calling": {
-                    
-                  }
-                },
-                "Run Name": "130923_M00753_0059_000000000-A42TJ"
-              },
-              "610222": {
-                "Donor": {
-                  "PCSI": 1
-                },
-                "Analysis Status": {
-                  "Alignment": {
-                    "completed": 1
-                  },
-                  "Base calling": {
-                    "completed": 1
-                  },
-                  "Quality Control": {
-                    "completed": 7
-                  },
-                  "Variant Calling": {
-                    
-                  }
-                },
-                "Run Name": "130923_M00146_0029_000000000-A42PY"
-              }
-            },
-            "Last Modified": "2015-08-15 06:52:37",
-            "Project Name": "PancreaticCellLineSequencing"
-          },
-          "_id": "6"
-        }
-        ```
-
-    Organized by project SWID, returns list of runs with run name, associated donors : library count and associated workflow run analysis status count
-
-*   StartDateByProject
-    *   ```
-        {
-          "6": {
-            "Project Name": "PancreaticCellLineSequencing",
-            "Start Date": "2013-08-13"
-          },
-          "_id": "6"
-        }
-        ```
-
-    Organized by project SWID, returns the start date of the project
-
-*   StartEndDateByDonor
-    *   ```
-        {
-          "BLBC_0013": {
-            "SWID": [
-              "957"
-            ],
-            "End Date": "2012-01-06 17:41:35",
-            "Start Date": "2011-03-25"
-          },
-          "_id": "BLBC_0013"
-        }
-        ```
-
-    Organized by donor name and returns start date (date of donor sample in lab) and end date (last modified)
-
-*   WorkflowByLibrary
-    *   ```
-        {
-          "94": {
-            "Library Name": "PCSI_0024_Pa_P_MP_405_WG",
-            "Workflow Run": {
-              "25831": {
-                "File Paths": [
-                  "/oicr/data/archive/i580/100606_I580_61UA6_LT/Data/Intensities/Bustard1.8.0a5_11-06-2010_mchan.2/GERALD_11-06-2010_mchan/s_1_2_sequence.txt.gz",
-                  "/oicr/data/archive/i580/100606_I580_61UA6_LT/Data/Intensities/Bustard1.8.0a5_11-06-2010_mchan.2/GERALD_11-06-2010_mchan/s_3_1_sequence.txt.gz",
-                  "/oicr/data/archive/i580/100606_I580_61UA6_LT/Data/Intensities/Bustard1.8.0a5_11-06-2010_mchan.2/GERALD_11-06-2010_mchan/s_4_1_sequence.txt.gz",
-                  "/oicr/data/archive/i580/100606_I580_61UA6_LT/Data/Intensities/Bustard1.8.0a5_11-06-2010_mchan.2/GERALD_11-06-2010_mchan/s_2_1_sequence.txt.gz",
-                  "/oicr/data/archive/i580/100606_I580_61UA6_LT/Data/Intensities/Bustard1.8.0a5_11-06-2010_mchan.2/GERALD_11-06-2010_mchan/s_3_2_sequence.txt.gz",
-                  "/oicr/data/archive/i580/100606_I580_61UA6_LT/Data/Intensities/Bustard1.8.0a5_11-06-2010_mchan.2/GERALD_11-06-2010_mchan/s_2_2_sequence.txt.gz",
-                  "/oicr/data/archive/i580/100606_I580_61UA6_LT/Data/Intensities/Bustard1.8.0a5_11-06-2010_mchan.2/GERALD_11-06-2010_mchan/s_4_2_sequence.txt.gz",
-                  "/oicr/data/archive/i580/100606_I580_61UA6_LT/Data/Intensities/Bustard1.8.0a5_11-06-2010_mchan.2/GERALD_11-06-2010_mchan/s_1_1_sequence.txt.gz"
-                ],
-                "Workflow Name": "FileImport",
-                "Skip": "false",
-                "End Date": "2012-01-06 17:41:34"
-              }
-            }
-          },
-          "_id": "94"
-        }
-        ```
-
-    Organized by library SWID, returns the library name, list of workflow runs and their associated files, workflow name, skip, and end date
 
 Note: this page is a work in progress
