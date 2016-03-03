@@ -103,15 +103,6 @@ fs.readFile(process.argv[5], 'utf8', function(err, data){
 
 	// functions associated with run key
 	var obj;
-	/*
-	//var libraries = getLibrariesAllRuns(fprDataRun);
-	for (var runSWID in fprDataRun['Run']) {
-		if (fprDataRun['Run'][runSWID]['Run Name'] == '150226_D00331_0124_AC6DP5ANXX') {
-			obj = getReportDataByLibraryByLaneByRun(fprDataRun, runSWID, '7', 'PCSI_0322_Pa_X_PE_611_WG');
-			obj = JSON.stringify(obj);
-			console.log(obj);
-		}
-	}
 	
 	for (var runSWID in fprDataRun['Run']) {
 		//getLibrariesByRun(libraries, runSWID);
@@ -125,7 +116,7 @@ fs.readFile(process.argv[5], 'utf8', function(err, data){
 			}
 		}
 	}
-	/*
+	
 	for (var runSWID in fprDataRun['Run']) {
 		for (var library in fprDataRun['Run'][runSWID]['Library']) {
 			obj = getRNASeqQCDataByLibraryByRun(fprDataRun, runSWID, library);
