@@ -4,9 +4,35 @@
 	<meta charset="utf-8"/>
 	<title>BLAH</title>
 	<script src="fpr.js"></script> 
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-	<script src="https://code.highcharts.com/highcharts.js"></script>
-	<script src="https://code.highcharts.com/modules/exporting.js"></script>
+	<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script type="text/javascript">
+    // Load the Visualization API and the piechart package.
+    google.load('visualization', '1.0', {'packages':['corechart']});
+
+    // Set a callback to run when the Google Visualization API is loaded.
+    //google.setOnLoadCallback(drawChart);
+    google.setOnLoadCallback(drawPieChart);
+    google.setOnLoadCallback(drawLineChart);
+
+    function drawPieChart() {
+		var data = google.visualization.arrayToDataTable({{pieData}});
+		var	options = {{pieOptions}};
+		var chart = new google.visualization.PieChart(document.getElementById('readBreakdownData'));
+		chart.draw(data, options);
+	}
+
+	function drawLineChart() {
+		var insertData = google.visualization.arrayToDataTable({{insertDistributionData}});
+		var insertOptions = {{insertDistributionOptions}};
+		var insertChart = new google.visualization.AreaChart(document.getElementById('insertDistributionData'));
+		insertChart.draw(insertData, insertOptions);
+
+		var data = google.visualization.arrayToDataTable({{softLineData}});
+		var options = {{softLineOptions}};
+		var chart = new google.visualization.AreaChart(document.getElementById('softClipData'));
+		chart.draw(data, options);
+	}
+    </script>
 </head>
 <style>
 	.chart {
@@ -20,12 +46,4 @@
 	<div id="insertDistributionData" class="chart"></div>
 	<div id="softClipData" class="chart"></div>
 </body>
-
-<script> 
-$(function () {
-    $('#readBreakdownData').highcharts({{readBreakdownData}});
-    $('#insertDistributionData').highcharts({{insertDistributionData}});
-    $('#softClipData').highcharts({{softClipData}});
-});
-</script>
 </html> 

@@ -12,8 +12,6 @@ var MongoClient = mongodb.MongoClient;
 var ObjectId = mongodb.ObjectID;
 var url = 'mongodb://127.0.0.1:27017/seqwareBrowser';
 
-var Highcharts = require('highcharts');
-
 var dateNow = new Date();
 var analysisYAML;
 
@@ -109,14 +107,19 @@ fs.readFile(process.argv[5], 'utf8', function(err, data){
 		if (typeof fprDataRun['Run'][runSWID]['Lane'] !== 'undefined') {
 			for (var lane in fprDataRun['Run'][runSWID]['Lane']) {
 				for (var library in fprDataRun['Run'][runSWID]['Lane'][lane]['Library']) {
-					obj = getReportDataByLibraryByLaneByRun(fprDataRun, runSWID, lane, library);
-					obj = JSON.stringify(obj);
-					console.log(obj);
+					//obj = getReportDataByLibraryByLaneByRun(fprDataRun, runSWID, lane, library);
+					//obj = JSON.stringify(obj);
+					//console.log(obj);
+					if (typeof fprDataRun['Run'][runSWID]['Lane'][lane]['Library'][library]['JSON'] !== 'undefined'){
+						obj = generateGraphDataByJSON(fprDataRun['Run'][runSWID]['Lane'][lane]['Library'][library]['JSON']);
+						obj = JSON.stringify(obj);
+						console.log(obj);
+					}
 				}
 			}
 		}
 	}
-	
+	/*
 	for (var runSWID in fprDataRun['Run']) {
 		for (var library in fprDataRun['Run'][runSWID]['Library']) {
 			obj = getRNASeqQCDataByLibraryByRun(fprDataRun, runSWID, library);
@@ -208,7 +211,8 @@ fs.readFile(process.argv[8], 'utf8', function(err, data) {
 	if (err) return console.error(err);
 	console.log('connected');
 	var lines = data.toString().split('\n');
-	
+
+	/*
 	for (var i = 0; i < lines.length - 1; i++){
 		reportData = JSON.parse(lines[i]);
 		for (var key in reportData['Run']) {
@@ -218,6 +222,13 @@ fs.readFile(process.argv[8], 'utf8', function(err, data) {
 					updateData('ReportDataByLibraryByLaneByRun', key + '_' + lane + '_' + library, reportData);
 				}
 			}
+		}
+	}
+	
+	for (var i = 0; i < lines.length - 1; i++) {
+		graphData = JSON.parse(lines[i]);
+		for (var id in graphData) {
+			updateData('GraphData', id, graphData);
 		}
 	}
 	/*
@@ -949,7 +960,7 @@ function getReportDataByLibraryByLaneByDonor(JSONfiles, donor, lane, library) {
 	return returnObj;
 }
 
-// Returns associated JSON file per library per lane per run
+// Returns associated report data based on JSON file per library per lane per run
 function getReportDataByLibraryByLaneByRun(fprData, runSWID, lane, library) {
 	var json = fprData['Run'][runSWID]['Lane'][lane]['Library'][library]['JSON'];
 	var xenomeFile = fprData['Run'][runSWID]['Lane'][lane]['Library'][library]['XenomeFile'];
@@ -969,9 +980,9 @@ function getReportDataByLibraryByLaneByRun(fprData, runSWID, lane, library) {
 	return returnObj;
 }
 
+// Takes in zip files and returns an object of all alignment QC RNA Seq data
 function getRNASeqQCData(zipFile) {
 	var zip = new AdmZip(zipFile);
-	//var zip = new AdmZip('./SWID_3011599_PCSI_0326_Pa_P_PE_328_MR_526_151112_D00331_0145_AC859WANXX_CAGATC_L006_R1_001_rnaqc.report.zip');
 	var zipEntries = zip.getEntries();
 	var dir = zipEntries[0].entryName;
 	var obj = {};
@@ -1083,6 +1094,7 @@ function getRNASeqQCData(zipFile) {
 //var obj = {};
 //obj = getRNASeqQCData('/oicr/data/archive/seqware/seqware_analysis_8/hsqwprod/seqware-results/RNAseqQc_2.3/92922100/140926_SN802_0204_AC5JLPACXX_ERNA_0041_nn_C_PE_398_WT_rnaqc.report.zip');
 
+// Returns all RNA Seq QC data by running the above function getRNASeqQCData
 function getRNASeqQCDataByLibraryByRun(fprData, runSWID, library) {
 	var returnObj = {};
 	returnObj['Run'] = {};
@@ -1095,6 +1107,7 @@ function getRNASeqQCDataByLibraryByRun(fprData, runSWID, library) {
 	return returnObj;
 }
 
+// Takes in jsonFile, xenomeFile (for % mouse content), and an existing object and returns report data to that object
 function getReportData(jsonFile, xenomeFile, obj) {
 	if (typeof jsonFile !== 'undefined') {
 		var jsonString = fs.readFileSync(jsonFile, 'utf8'); 
@@ -1166,68 +1179,44 @@ function getReportData(jsonFile, xenomeFile, obj) {
 	return obj;
 }
 
-function generateGraphsByLibraryByLaneByDonor(json, donor, lane, library) {
+// Takes in json file and generates graph data
+function generateGraphDataByJSON(json) {
+	// Charts generated using Google charts
 	var jsonString = fs.readFileSync(json, 'utf8');
 	var lineObj = JSON.parse(jsonString);
-	var label = lineObj['run name'] + ' Lane: ' + lineObj['lane'] + ' Barcode: ' + lineObj['barcode'] + '\n' + lineObj['library'];
+	if (typeof lineObj['barcode'] === 'undefined'){
+		lineObj['barcode'] = 'NoIndex';
+	}
+	var id = lineObj['run name'] + '_L00' + lineObj['lane'] + '_' + lineObj['barcode'] + '_' + lineObj['library'];
+	var title = lineObj['run name'] + ' Lane: ' + lineObj['lane'] + ' Barcode: ' + lineObj['barcode'] + ' Library: ' + lineObj['library'];
+	var graphData = {};
+	graphData[id] = {};
+	graphData[id]['Read Breakdown'] = {};
+	graphData[id]['Insert Distribution'] = {};
+	graphData[id]['Soft Clip by Cycle'] = {};
+	graphData[id]['Title'] = title;
 
 	// pie chart - read breakdown
-	var pieReadData = [];
-	var pieArray = [];
+	// initialize variables
+	var pieArray = ['Number'];
 	var colors = ['#878BB6', '#4ACAB4', '#FF8153', '#FFEA88'];
-	var labels = ['on target', 'off target', 'repeat/low quality', 'unmapped'];
-	pieArray.push(lineObj['mapped reads']);
+	var labels = ['Reads', 'on target', 'off target', 'repeat/low quality', 'unmapped'];
+	pieArray.push(parseInt(lineObj['mapped reads']));
 	pieArray.push(parseInt(lineObj['mapped reads']) - parseInt(lineObj['reads on target']));
-	pieArray.push(lineObj['qual fail reads']);
-	pieArray.push(lineObj['unmapped reads']);
-	total = lineObj['mapped reads'] + (parseInt(lineObj['mapped reads']) - parseInt(lineObj['reads on target'])) + lineObj['qual fail reads'] + lineObj['unmapped reads'];
+	pieArray.push(parseInt(lineObj['qual fail reads']));
+	pieArray.push(parseInt(lineObj['unmapped reads']));
 
-	var readBreakdownData = {
-        chart: {
-        	borderColor: '#3a3a3a',
-            borderWidth: 1,
-            plotShadow: true,
-            type: 'pie'
-        },
-        title: {
-            text: label + ' Read Breakdown'
-        },
-        tooltip: {
-        	pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
-        },
-        plotOptions: {
-        	pie: {
-        		allowPointSelect: true,
-        		cursor: 'pointer',
-        		dataLabels: {
-        			enabled: true,
-                    format: '<b>{point.name}</b>: {point.percentage:.1f} %',
-                    style: {
-                        color: (Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black'
-                    }        			
-        		}
-        	}
-        },
-        series: [{
-            name: 'Read Breakdown',
-            colorByPoint: true,
-            data: []
-        }],
-    };
-	for (var i = 0; i < pieArray.length; i++) {
-		var obj = {};
-		obj['name'] = labels[i];
-		obj['y'] = pieArray[i]/total;
-		readBreakdownData.series[0].data.push(obj);
-	}
-
-	// line chart - insert distribution
-	var xValInsert = [];
-	var yValInsert = [];
-	var insertColors = {};
-	var red = 'rgb(255, 102, 102)';
-	var yellow = 'rgb(255, 255, 102)';
-	var green = 'rgb(179, 255, 102)';
+	graphData[id]['Read Breakdown']['Colors'] = colors;
+	graphData[id]['Read Breakdown']['Labels'] = labels;
+	graphData[id]['Read Breakdown']['Data'] = pieArray;
+	
+	// area chart - insert distribution
+	var xValInsert = [{label: 'Insert size', id: 'Insert size', type: 'number'}];
+	var yValInsert = [{label: 'Pairs', id: 'Pairs', type: 'number'}];
+	var insertColors = [{type: 'string', role: 'style'}];
+	var red = 'rgb(255, 77, 77)';
+	var yellow = 'rgb(255, 255, 77)';
+	var green = 'rgb(166, 255, 77)';
 	var insertMean = parseInt(lineObj['insert mean']);
 	var histObj = lineObj['insert histogram'];
 	var insertMax = 650;
@@ -1238,81 +1227,21 @@ function generateGraphsByLibraryByLaneByDonor(json, donor, lane, library) {
 			yValInsert.push(histObj[i]);
 		}
 	}
-	if ((xValInsert[0] < (insertMean - (2 * insertStep))) || (xValInsert[0] > (insertMean + (2 * insertStep)))) {
-		var iColor = red;
-	} else if ((xValInsert[0] < (insertMean - insertStep)) || (xValInsert[0] > (insertMean + insertStep))) {
-		var iColor = yellow;
-	} else {
-		var iColor = green
-	}
-	for (var i = 1; i < xValInsert.length; i++) {
-		xValInsert[i] = parseInt(xValInsert[i]);
+	for (var i = 0; i < xValInsert.length; i++) {
 		if ((xValInsert[i] < (insertMean - (2 * insertStep))) || (xValInsert[i] > (insertMean + (2 * insertStep)))) {
-			var color = red;
-		} else if ((xValInsert[i] < (insertMean - insertStep)) || (xValInsert[i] > (insertMean + insertStep))){
-			var color = yellow;
+			insertColors.push(red);
+		} else if ((xValInsert[i] < (insertMean - insertStep)) || (xValInsert[i] > (insertMean + insertStep))) {
+			insertColors.push(yellow);
 		} else {
-			var color = green;
-		}
-		if (color !== iColor) {
-			insertColors[i] = iColor;
-			iColor = color;
-		}
-		if (i == xValInsert.length - 1) {
-			insertColors[i] = iColor;
+			insertColors.push(green);
 		}
 	}
-	var zones = [];
-	for (var value in insertColors) {
-		var obj = {};
-		obj['value'] = value;
-		obj['fillColor'] = insertColors[value];
-		obj['color'] = insertColors[value];
-		zones.push(obj);
-	}
-	var insertDistributionData = {
-		chart: {
-			borderColor: '#3a3a3a',
-            borderWidth: 1,
-			type: 'area'
-		},
-        title: {
-            text: label + ' Insert Distribution',
-            x: -20 //center
-        },
-        plotOptions: {
-        	area:{
-        		pointStart: 0
-        	}
-        },
-        legend: {
-        	enabled: false
-        },
-        xAxis: {
-        	title: {
-        		text: 'Insert Size (bp)'
-        	},
-        	tickInterval: 50
-            //categories: xValInsert
-        },
-        yAxis: {
-            title: {
-                text: 'Pairs'
-            }
-        },
-        tooltip: {
-            valueSuffix: ' bp'
-        },
-        series: [{
-            name: 'Insert Distribution',
-            zoneAxis: 'x',
-        	zones: zones,
-            data: yValInsert
 
-        }]
-    };
+    graphData[id]['Insert Distribution']['x values'] = xValInsert;
+    graphData[id]['Insert Distribution']['y values'] = yValInsert;
+    graphData[id]['Insert Distribution']['Colors'] = insertColors;
 
-	// bar chart - soft clip by cycle
+    // area chart - soft clip by cycle
 	// initialize objects
 	var readArray = ['read 1', 'read 2', 'read ?'];
 	var alignedObj = {};
@@ -1323,14 +1252,16 @@ function generateGraphsByLibraryByLaneByDonor(json, donor, lane, library) {
 		alignedObj[readArray[i]] = lineObj[readArray[i] + ' aligned by cycle'];
 		insertObj[readArray[i]] = lineObj[readArray[i] + ' insertion by cycle'];
 	}
-	var xValSoft = [];
-	var yValSoft = [];
-	var read1max = 0;
 
+	var xValSoft = [{label: 'Cycle', id: 'Cycle', type: 'number'}];
+	var yValSoft = [{label: '% Bases Soft Clipped', id: '% Bases Soft Clipped', type: 'number'}];
+	var read1max = 0;
+	var errorObj;
 	for (var i = 0; i < readArray.length; i++) {
-		if (typeof lineObj[readArray[i] + ' soft clip by cycle'] !== 'undefined') {
-			var errorObj = lineObj[readArray[i] + ' soft clip by cycle'];
+		if (Object.keys(lineObj[readArray[i] + ' soft clip by cycle']).length > 0) {
+			errorObj = lineObj[readArray[i] + ' soft clip by cycle'];
 			for (var j in errorObj) {
+				j = parseInt(j);
 				if (lineObj['number of ends'] === 'single end'){
 					xValSoft.push(j);
 				} else {
@@ -1355,67 +1286,101 @@ function generateGraphsByLibraryByLaneByDonor(json, donor, lane, library) {
 		}
 	}
 
-	var softClipData = {
-		chart: {
-			borderColor: '#3a3a3a',
-            borderWidth: 1,
-			type: 'area'
-		},
-        title: {
-            text: label + ' Soft Clips by Cycle',
-            x: -20 //center
-        },
-        plotOptions: {
-        	area:{
-        		pointStart: 0
-        	}
-        },
-        legend: {
-        	enabled: false
-        },
-        xAxis: {
-        	title: {
-        		text: 'Cycles', 
-        	},
-        	min: 0,
-        	startOnTick: true,
-        	tickInterval: 50,
-            //categories: xValSoft
-        },
-        yAxis: {
-            title: {
-                text: '% Bases Soft Clipped'
-            },
-            max: 100
-        },
-        series: [{
-            name: 'Soft Clips By Cycle',
-            data: yValSoft,
-            color: 'rgb(255, 102, 102)',
-            fillColor: 'rgb(255, 102, 102)'
-        }]
-	};
+	graphData[id]['Soft Clip by Cycle']['x values'] = xValSoft;
+	graphData[id]['Soft Clip by Cycle']['y values'] = yValSoft;
+
+	// Update in mongodb
+	//updateData('GraphData', id, graphData);
+	return graphData;
+}
+
+// Draws graphs by reading data produced by generateGraphDataByJSON and adding data to html given sample id which is in format: runName_lane_barcode_library
+function drawGraphsById(id) {
+	// Retrieve mongodb data
+	var pieValues;
+	var pieOptions;
+	var softLineValues;
+	var softLineOptions;
+	var insertLineValues;
+	var insertLineOptions;
+
+	MongoClient.connect(url, function(err, db) {
+		if (err) return console.error(err);
+		console.log('connect');
+
+		db.collection('GraphData').findOne({"_id": id}, function (err, item){
+			pieValues = _.zip(item[id]['Read Breakdown']['Labels'], item[id]['Read Breakdown']['Data']);
+			pieOptions = {
+				title: item[id]['Title'] + ' Read Breakdown', 
+				width: 600, height: 400, 
+				colors: item[id]['Read Breakdown']['Colors']
+			};
+			insertLineValues = _.zip(item[id]['Insert Distribution']['x values'], item[id]['Insert Distribution']['y values'], item[id]['Insert Distribution']['Colors']);
+			insertLineOptions = {
+				title: item[id]['Title'] + ' Insert Distribution', 
+				width: 600, 
+				height: 400, 
+				lineWidth: 1, 
+				hAxis: {
+					title: 'Insert Size (bp)', 
+					minValue: 0, 
+					viewWindow: {
+						min: 0
+					}
+				}, 
+				vAxis: {
+					title: 'Pairs'
+				}, 
+				legend: {
+					position: 'none'
+				}
+			};
+			softLineValues = _.zip(item[id]['Soft Clip by Cycle']['x values'], item[id]['Soft Clip by Cycle']['y values']);
+			softLineOptions = {
+				title: item[id]['Title'] + ' Soft Clips by Cycle', 
+				width: 600, 
+				height: 400, 
+				lineWidth: 1, 
+				hAxis: {
+					title: 'Cycle', 
+					viewWindow: {
+						min: 0
+					}
+				}, 
+				vAxis: {
+					title: '% Bases Soft Clipped', 
+					maxValue: 100
+				}, 
+				colors: ['red'], 
+				legend: {
+					position: 'none'
+				}
+			};
+		});			
+	});
 
 	// Output to html
 	fs.readFile('./graphTest.html', 'utf8', function (err, data) {
 		if (err) return console.error(err);
 		http.createServer(function (request, response) {
 			response.writeHead(200, {'Content-Type': 'text/html'});
-		    data = data.replace('{{readBreakdownData}}', JSON.stringify(readBreakdownData));
-		    data = data.replace('{{insertDistributionData}}', JSON.stringify(insertDistributionData));
-		    data = data.replace('{{softClipData}}', JSON.stringify(softClipData));
+			
+		    data = data.replace('{{pieData}}', JSON.stringify(pieValues));
+		    data = data.replace('{{pieOptions}}', JSON.stringify(pieOptions));
+		    data = data.replace('{{softLineData}}', JSON.stringify(softLineValues));
+		    data = data.replace('{{softLineOptions}}', JSON.stringify(softLineOptions));
+		    data = data.replace('{{insertDistributionData}}', JSON.stringify(insertLineValues));
+		    data = data.replace('{{insertDistributionOptions}}', JSON.stringify(insertLineOptions));
+		    
 		    response.write(data);
 		    response.end();
 	    }).listen(8081);
 	});
-
 	console.log('Server running at http://127.0.0.1:8081/');
 }
-
-//getMouseData('SWID_1506799_PCSI_0322_Pa_X_PE_611_WG_526_150226_D00331_0124_AC6DP5ANXX_NoIndex_L007.log');
 //Test graph
-//generateGraphsByLibraryByLaneByDonor('SWID_3165537_PV_0001_Bm_P_PE_423_EX_3_151216_D00331_0149_AC8L3CANXX_AACGTGAT_L001_R1_001.annotated.bam.BamQC.json');
-//generateGraphsByLibraryByLaneByDonor('SWID_3574804_PCSI_0633_Ly_R_PE_667_WG_160209_D00353_0127_AC8T56ANXX_CCGTCC_L006_R1_001.annotated.bam.BamQC.json');
+//generateGraphDataByJSON('SWID_3165537_PV_0001_Bm_P_PE_423_EX_3_151216_D00331_0149_AC8L3CANXX_AACGTGAT_L001_R1_001.annotated.bam.BamQC.json');
+//drawGraphsById('110216_h239_0107_A81CHGABXX_L008_NoIndex_PCSI_0019_Pa_P_PE_224_EX');
 
 //// General Analysis Status
 // general template to get workflow run analysis status based on category (either project or library)
@@ -1529,7 +1494,7 @@ function updateData(collection, id, data) {
 		if (err) return console.error(err);
 		console.log('connected');
 
-		// Return updated info, insert if not already in db
+		// Return updated info to mongodb, insert if not already in db
 		db.collection(collection).updateOne({_id: data['_id']}, data, {upsert: true}, function (err) {
 			if (err) return console.error(err);
 			db.close();

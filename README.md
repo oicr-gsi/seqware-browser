@@ -171,7 +171,83 @@ All _ids for datasets within each collection is the [SWID of the base field] or 
     ```
 
     Organized by project SWID, each entry contains the project name and an array of associated donors
+*   GraphData
+    ```
+    {
+      "110608_SN801_0054_BC00ECACXX_L007_NoIndex_PCSI_0069_Ly_R_PE_392_EX": {
+        "Read Breakdown": {
+          "Colors": [
+            "#878BB6",
+            "#4ACAB4",
+            "#FF8153",
+            "#FFEA88"
+          ],
+          "Labels": [
+            "Reads",
+            "on target",
+            "off target",
+            "repeat/low quality",
+            "unmapped"
+          ],
+          "Data": [
+            "Number",
+            194716095,
+            96689095,
+            23698765,
+            3501616
+          ]
+        },
+        "Insert Distribution": {
+          "x values": [
+            {
+              "label": "Insert size",
+              "id": "Insert size",
+              "type": "number"
+            },
+            [x-data-values]
+          ],
+          "y values": [
+            {
+              "label": "Pairs",
+              "id": "Pairs",
+              "type": "number"
+            },
+            [y-data-values]
+          ],
+          "Colors": [
+            {
+              "type": "string",
+              "role": "style"
+            },
+            [color-values]
+          ]
+        },
+        "Soft Clip by Cycle": {
+          "x values": [
+            {
+              "label": "Cycle",
+              "id": "Cycle",
+              "type": "number"
+            },
+            [x-data-values]
+          ],
+          "y values": [
+            {
+              "label": "% Bases Soft Clipped",
+              "id": "% Bases Soft Clipped",
+              "type": "number"
+            },
+            [y-data-values]
+          ]
+        },
+        "Title": "110608_SN801_0054_BC00ECACXX Lane: 7 Barcode: NoIndex Library: PCSI_0069_Ly_R_PE_392_EX"
+      },
+      "_id": "110608_SN801_0054_BC00ECACXX_L007_NoIndex_PCSI_0069_Ly_R_PE_392_EX"
+    }
+    ```
+    Organized by an id consisting of the runName_lane_barcode_library, each entry provides data on graphing, called by the method drawGraphsById, which draws three graphs in html5 using Google Charts
 
+    For readability purposes, the x and y values, and the color values have been replaced by an object [], representing an array of data values
 *   InstrumentNameByDonor
     ```
     {
