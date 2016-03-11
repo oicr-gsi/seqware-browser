@@ -36,9 +36,10 @@ All _ids for datasets within each collection is the [SWID of the base field] or 
 *   AnalysisStatusByLibrary
     ```
     {
-      "94": {
+      "197": {
         "Workflow Runs": [
-          "FileImport"
+          "CASAVA",
+          "FastQC"
         ],
         "Analysis Status": {
           "Alignment": {
@@ -48,16 +49,18 @@ All _ids for datasets within each collection is the [SWID of the base field] or 
             "completed": 1
           },
           "Quality Control": {
-            
+            "completed": 1
           },
           "Variant Calling": {
             
           }
         },
-        "Library Name": "PCSI_0024_Pa_P_MP_405_WG",
-        "Last Modified": "2012-01-06 17:41:34"
+        "Barcode": "ATCACG",
+        "Lane": "6",
+        "Library Name": "FCSN_0022_nn_P_PE_425_EX",
+        "Last Modified": "2013-10-26 13:42:34"
       },
-      "_id": "94"
+      "_id": "197"
     }
     ```
 
@@ -66,29 +69,35 @@ All _ids for datasets within each collection is the [SWID of the base field] or 
 *   AnalysisStatusByProject
     ```
     {
-      "4": {
+      "41": {
         "Workflow Runs": [
-          "FileImport",
+          "CASAVA",
+          "GenomicAlignmentNovoalign",
+          "CASAVA-RTA",
+          "BamQC",
+          "FastQC",
+          "FingerprintCollector",
+          "SeqControl",
           ""
         ],
         "Analysis Status": {
           "Alignment": {
-            
+            "completed": 88
           },
           "Base calling": {
-            "completed": 2
+            "completed": 5
           },
           "Quality Control": {
-            
+            "completed": 514
           },
           "Variant Calling": {
             
           }
         },
-        "Project Name": "ICGCPancreaticCancerSeq",
-        "Last Modified": "2012-01-18 16:40:08"
+        "Project Name": "IPSCellLineReprogramming",
+        "Last Modified": "2015-11-14 18:36:15"
       },
-      "_id": "4"
+      "_id": "41"
     }
     ```
 
@@ -365,14 +374,34 @@ All _ids for datasets within each collection is the [SWID of the base field] or 
 *   LibrariesByRun
     ```
     {
-      "7935": {
-        "Libraries": {
-          "PCSI_0024_Pa_X_MP_405_WG": "95",
-          "PCSI_0024_Pa_P_MP_405_WG": "94"
+      "8186": {
+        "Library Totals": {
+          "FPS": 11,
+          "PCSI": 7
         },
-        "Run Name": "100606_i580_61UA6_LT"
+        "Libraries": {
+          "220": "FPS_0001_Pa_P_PE_350_EX",
+          "221": "FPS_0002_Pa_P_PE_350_EX",
+          "222": "FPS_0003_Pa_P_PE_350_EX",
+          "223": "FPS_0004_Pa_P_PE_450_EX",
+          "225": "FPS_0006_Pa_P_PE_450_EX",
+          "226": "FPS_0007_Pa_P_PE_450_EX",
+          "227": "FPS_0008_Pa_P_PE_450_EX",
+          "228": "FPS_0009_Pa_P_PE_450_EX",
+          "229": "FPS_0010_Pa_P_PE_450_EX",
+          "230": "FPS_0011_Pa_P_PE_450_EX",
+          "231": "FPS_0012_Pa_P_PE_350_EX",
+          "403": "PCSI_0001_Ly_R_PE_500_WG",
+          "404": "PCSI_0001_Ly_R_PE_600_WG",
+          "405": "PCSI_0020_Pa_X_PE_500_WG",
+          "406": "PCSI_0018_Pa_X_PE_500_WG",
+          "407": "PCSI_0018_Pa_X_PE_600_WG",
+          "408": "PCSI_0016_Sp_R_PE_500_WG",
+          "409": "PCSI_0016_Sp_R_PE_600_WG"
+        },
+        "Run Name": "101102_I280_00024_709JU_AP"
       },
-      "_id": "7935"
+      "_id": "8186"
     }
     ```
 
@@ -636,27 +665,30 @@ All _ids for datasets within each collection is the [SWID of the base field] or 
 *   WorkflowByLibrary
     ```
     {
-      "94": {
-        "Library Name": "PCSI_0024_Pa_P_MP_405_WG",
+      "12999": {
         "Workflow Run": {
           "25831": {
             "File Paths": [
-              "/oicr/data/archive/i580/100606_I580_61UA6_LT/Data/Intensities/Bustard1.8.0a5_11-06-2010_mchan.2/GERALD_11-06-2010_mchan/s_1_2_sequence.txt.gz",
-              "/oicr/data/archive/i580/100606_I580_61UA6_LT/Data/Intensities/Bustard1.8.0a5_11-06-2010_mchan.2/GERALD_11-06-2010_mchan/s_3_1_sequence.txt.gz",
-              "/oicr/data/archive/i580/100606_I580_61UA6_LT/Data/Intensities/Bustard1.8.0a5_11-06-2010_mchan.2/GERALD_11-06-2010_mchan/s_4_1_sequence.txt.gz",
-              "/oicr/data/archive/i580/100606_I580_61UA6_LT/Data/Intensities/Bustard1.8.0a5_11-06-2010_mchan.2/GERALD_11-06-2010_mchan/s_2_1_sequence.txt.gz",
-              "/oicr/data/archive/i580/100606_I580_61UA6_LT/Data/Intensities/Bustard1.8.0a5_11-06-2010_mchan.2/GERALD_11-06-2010_mchan/s_3_2_sequence.txt.gz",
-              "/oicr/data/archive/i580/100606_I580_61UA6_LT/Data/Intensities/Bustard1.8.0a5_11-06-2010_mchan.2/GERALD_11-06-2010_mchan/s_2_2_sequence.txt.gz",
-              "/oicr/data/archive/i580/100606_I580_61UA6_LT/Data/Intensities/Bustard1.8.0a5_11-06-2010_mchan.2/GERALD_11-06-2010_mchan/s_4_2_sequence.txt.gz",
-              "/oicr/data/archive/i580/100606_I580_61UA6_LT/Data/Intensities/Bustard1.8.0a5_11-06-2010_mchan.2/GERALD_11-06-2010_mchan/s_1_1_sequence.txt.gz"
+              "/oicr/data/archive/i580/100219_I580_6157CA_AW/Data/C1-202_Firecrest1.6.0_07-03-2010_rdeborja/Bustard1.6.0_07-03-2010_rdeborja/GERALD_07-03-2010_rdeborja/s_7_1_sequence.txt.gz",
+              "/oicr/data/archive/i580/100219_I580_6157CA_AW/Data/C1-202_Firecrest1.6.0_07-03-2010_rdeborja/Bustard1.6.0_07-03-2010_rdeborja/GERALD_07-03-2010_rdeborja/s_7_2_sequence.txt.gz"
             ],
             "Workflow Name": "FileImport",
             "Skip": "false",
-            "End Date": "2012-01-06 17:41:34"
+            "End Date": "2012-01-06 17:40:56"
+          },
+          "33247": {
+            "File Paths": [
+              "/oicr/data/archive/projects/PCSI/analysis/PCSI0022/PCSI0022R/wgs/novoalign/hg19_random/libraries/PE/bam/100219_I580_6157CA_AW_s_7_sequence_PE_novoalign.sam.sorted.bam"
+            ],
+            "Workflow Name": "FileImport",
+            "Skip": "false",
+            "End Date": "2012-01-11 16:08:25"
           }
-        }
+        },
+        "Library Name": "PCSI_0022_Ly_R_PE_252_WG",
+        "Num of workflow runs": 2
       },
-      "_id": "94"
+      "_id": "12999"
     }
     ```
 
