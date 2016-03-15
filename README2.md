@@ -4,109 +4,11 @@ API code for next gen seqware browser
 
 Redocumentation
 
+All collection entries are organized by their respective SWID (expect for donor which is organized by name)
+
 ### Collections:
 
-
-*   AnalysisStatusByLibrary
-	```
-	{
-	  "148": {
-	    "Workflow Runs": [
-	      "FileImport"
-	    ],
-	    "Analysis Status": {
-	      "Alignment": {
-	        
-	      },
-	      "Base calling": {
-	        "completed": 2
-	      },
-	      "Quality Control": {
-	        
-	      },
-	      "Variant Calling": {
-	        
-	      }
-	    },
-	    "Barcode": "ATCACG",
-	    "Lane": "2",
-	    "Library Name": "CELS_0001_Wm_R_PE_464_WG",
-	    "Last Modified": "2012-12-14 09:41:33"
-	  },
-	  "_id": "148"
-	}
-	```
-
-	Wireframe: 6a, 9a
-
-*	RunInfo
-	```
-	{
-	  "8327": {
-	    "Library Totals": {
-	      "OCBN": 15,
-	      "PCSI": 4
-	    },
-	    "Donors": {
-	      "OCBN_0011": 4,
-	      "OCBN_0015": 4,
-	      "OCBN_0012": 4,
-	      "OCBN_0013": 3,
-	      "PCSI_0045": 1,
-	      "PCSI_0046": 1,
-	      "PCSI_0044": 1,
-	      "PCSI_0014": 1
-	    },
-	    "Donor Totals": {
-	      "OCBN": 4,
-	      "PCSI": 4
-	    },
-	    "Tissue Types": {
-	      "X": 17,
-	      "P": 2
-	    },
-	    "Library Types": {
-	      "EX": 19
-	    },
-	    "Libraries": {
-	      "8329": "OCBN_0011_Ov_X_PE_474_EX",
-	      "8332": "OCBN_0015_Ov_X_PE_474_EX",
-	      "8338": "OCBN_0012_Ov_X_PE_474_EX",
-	      "8340": "OCBN_0011_Ov_X_PE_474_EX",
-	      "8342": "OCBN_0011_Ov_X_PE_474_EX",
-	      "8344": "OCBN_0011_Ov_X_PE_474_EX",
-	      "8345": "OCBN_0012_Ov_X_PE_474_EX",
-	      "8346": "OCBN_0012_Ov_X_PE_474_EX",
-	      "8347": "OCBN_0012_Ov_X_PE_474_EX",
-	      "8348": "OCBN_0013_Ov_X_PE_474_EX",
-	      "8349": "OCBN_0013_Ov_X_PE_474_EX",
-	      "8350": "OCBN_0013_Ov_X_PE_474_EX",
-	      "8351": "OCBN_0015_Ov_X_PE_474_EX",
-	      "8352": "OCBN_0015_Ov_X_PE_474_EX",
-	      "8353": "OCBN_0015_Ov_X_PE_474_EX",
-	      "9044": "PCSI_0045_Pa_X_PE_395_EX",
-	      "9114": "PCSI_0046_Pa_P_PE_214_EX",
-	      "9120": "PCSI_0044_Pa_P_PE_242_EX",
-	      "9351": "PCSI_0014_Pa_X_PE_429_EX"
-	    },
-	    "Run Name": "110519_h239_0115_B808BJABXX",
-	    "Num of libraries": 19
-	  },
-	  "_id": "8327"
-	}
-	```
-
-	Wireframe: 6a, 6b, 7a
-
-*	StartDateByRun
-	```
-	{
-	  "120125_h802_0076_BC0FWAACXX": "2012-01-27 16:00:25",
-	  "_id": "120125_h802_0076_BC0FWAACXX"
-	}
-	```
-
-	Wireframe: 6a, 6b, 7a
+#### By Project (Project SWID)
 
 *	RunDataByProject
 	```
@@ -284,6 +186,196 @@ Redocumentation
 
 	Wireframe: 6b
 
+*	LibrariesByProject
+	```
+	{
+	  "83": {
+	    "Project Name": "TorontoLungCancerResequencing",
+	    "Libraries": {
+	      "9732": "TLCR_4C12_nn_n_PE_500_WG",
+	      "9734": "TLCR_4C12_nn_n_PE_500_WG",
+	      "9735": "TLCR_4C11_nn_n_PE_500_WG",
+	      "9736": "TLCR_4C11_nn_n_PE_500_WG",
+	      "9737": "TLCR_4C10_nn_n_PE_500_WG",
+	      "9738": "TLCR_4C10_nn_n_PE_500_WG",
+	      "9739": "TLCR_4C9_nn_n_PE_500_WG",
+	      "9740": "TLCR_4C9_nn_n_PE_500_WG",
+	      "9741": "TLCR_4C8_nn_n_PE_500_WG",
+	      "9742": "TLCR_4C8_nn_n_PE_500_WG",
+	      "9743": "TLCR_4C7_nn_n_PE_500_WG",
+	      "9744": "TLCR_4C7_nn_n_PE_500_WG",
+	      "9745": "TLCR_4C6_nn_n_PE_500_WG",
+	      "9746": "TLCR_4C6_nn_n_PE_500_WG",
+	      "9747": "TLCR_4C5_nn_n_PE_500_WG",
+	      "9750": "TLCR_4C4_nn_n_PE_500_WG",
+	      "9751": "TLCR_4C3_nn_n_PE_500_WG",
+	      "9752": "TLCR_4C3_nn_n_PE_500_WG",
+	      "9753": "TLCR_4C2_nn_n_PE_500_WG",
+	      "9754": "TLCR_4C2_nn_n_PE_500_WG",
+	      "9755": "TLCR_4C1_nn_n_PE_500_WG",
+	      "9757": "TLCR_4R12_nn_n_PE_500_WG",
+	      "9759": "TLCR_4R12_nn_n_PE_500_WG",
+	      "9760": "TLCR_4R11_nn_n_PE_500_WG",
+	      "9761": "TLCR_4R11_nn_n_PE_500_WG",
+	      "9762": "TLCR_4R10_nn_n_PE_500_WG",
+	      "9763": "TLCR_4R10_nn_n_PE_500_WG",
+	      "9765": "TLCR_4R9_nn_n_PE_500_WG",
+	      "9766": "TLCR_4R8_nn_n_PE_500_WG",
+	      "9767": "TLCR_4R8_nn_n_PE_500_WG",
+	      "9768": "TLCR_4R7_nn_n_PE_500_WG",
+	      "9769": "TLCR_4R7_nn_n_PE_500_WG",
+	      "9770": "TLCR_4R6_nn_n_PE_500_WG",
+	      "9771": "TLCR_4R6_nn_n_PE_500_WG",
+	      "9772": "TLCR_4R5_nn_n_PE_500_WG",
+	      "9773": "TLCR_4R5_nn_n_PE_500_WG",
+	      "9774": "TLCR_4R4_nn_n_PE_500_WG",
+	      "9776": "TLCR_4R3_nn_n_PE_500_WG",
+	      "9777": "TLCR_4R3_nn_n_PE_500_WG",
+	      "9778": "TLCR_4R2_nn_n_PE_500_WG",
+	      "9779": "TLCR_4R2_nn_n_PE_500_WG",
+	      "9780": "TLCR_4R1_nn_n_PE_500_WG",
+	      "9781": "TLCR_4R1_nn_n_PE_500_WG",
+	      "10776": "TLCR_1C9_nn_n_PE_500_WG",
+	      "10778": "TLCR_1C11_nn_n_PE_500_WG",
+	      "10779": "TLCR_1C12_nn_n_PE_500_WG",
+	      "10780": "TLCR_1R1_nn_n_PE_500_WG",
+	      "10781": "TLCR_1R2_nn_n_PE_500_WG",
+	      "10782": "TLCR_1R3_nn_n_PE_500_WG",
+	      "10783": "TLCR_1R4_nn_n_PE_500_WG"
+	    },
+	    "Num Libraries": 50
+	  },
+	  "_id": "83"
+	}
+	```
+
+	Wireframe: 5a, 8
+
+*	DonorsByProject
+	```
+	{
+	  "10851": {
+	    "Donors": [
+	      "TYER_0012",
+	      "TYER_0010",
+	      "TYER_0007",
+	      "TYER_0006",
+	      "TYER_0002",
+	      "TYER_0009",
+	      "TYER_0008",
+	      "TYER_0005",
+	      "TYER_0004",
+	      "TYER_0003",
+	      "TYER_0001"
+	    ],
+	    "Donor Totals": {
+	      "TYER": 11
+	    },
+	    "Project Name": "DIA2_Yeast"
+	  },
+	  "_id": "10851"
+	}
+	```
+
+	Wireframe: 5a, 8, 9a
+
+*	StartDateByProject
+	```
+	{
+	  "ACC": "2011-05-18 11:18:44",
+	  "_id": "ACC"
+	}
+	```
+
+	Wireframe: 8
+
+#### By RunSWID (Sequencer Run SWID)
+
+*	RunInfo
+	```
+	{
+	  "8327": {
+	    "Library Totals": {
+	      "OCBN": 15,
+	      "PCSI": 4
+	    },
+	    "Donors": {
+	      "OCBN_0011": 4,
+	      "OCBN_0015": 4,
+	      "OCBN_0012": 4,
+	      "OCBN_0013": 3,
+	      "PCSI_0045": 1,
+	      "PCSI_0046": 1,
+	      "PCSI_0044": 1,
+	      "PCSI_0014": 1
+	    },
+	    "Donor Totals": {
+	      "OCBN": 4,
+	      "PCSI": 4
+	    },
+	    "Tissue Types": {
+	      "X": 17,
+	      "P": 2
+	    },
+	    "Library Types": {
+	      "EX": 19
+	    },
+	    "Libraries": {
+	      "8329": "OCBN_0011_Ov_X_PE_474_EX",
+	      "8332": "OCBN_0015_Ov_X_PE_474_EX",
+	      "8338": "OCBN_0012_Ov_X_PE_474_EX",
+	      "8340": "OCBN_0011_Ov_X_PE_474_EX",
+	      "8342": "OCBN_0011_Ov_X_PE_474_EX",
+	      "8344": "OCBN_0011_Ov_X_PE_474_EX",
+	      "8345": "OCBN_0012_Ov_X_PE_474_EX",
+	      "8346": "OCBN_0012_Ov_X_PE_474_EX",
+	      "8347": "OCBN_0012_Ov_X_PE_474_EX",
+	      "8348": "OCBN_0013_Ov_X_PE_474_EX",
+	      "8349": "OCBN_0013_Ov_X_PE_474_EX",
+	      "8350": "OCBN_0013_Ov_X_PE_474_EX",
+	      "8351": "OCBN_0015_Ov_X_PE_474_EX",
+	      "8352": "OCBN_0015_Ov_X_PE_474_EX",
+	      "8353": "OCBN_0015_Ov_X_PE_474_EX",
+	      "9044": "PCSI_0045_Pa_X_PE_395_EX",
+	      "9114": "PCSI_0046_Pa_P_PE_214_EX",
+	      "9120": "PCSI_0044_Pa_P_PE_242_EX",
+	      "9351": "PCSI_0014_Pa_X_PE_429_EX"
+	    },
+	    "Run Name": "110519_h239_0115_B808BJABXX",
+	    "Num of libraries": 19
+	  },
+	  "_id": "8327"
+	}
+	```
+
+	Wireframe: 6a, 6b, 7a, 7c
+
+*	StartDateByRun
+	```
+	{
+	  "120125_h802_0076_BC0FWAACXX": "2012-01-27 16:00:25",
+	  "_id": "120125_h802_0076_BC0FWAACXX"
+	}
+	```
+
+	Wireframe: 6a, 6b, 7a
+
+*	NumCompletedWorkflowsForRunByDate
+	```
+	{
+	  "8058": {
+	    "Completed Workflows": 134,
+	    "Completed Libraries": 8,
+	    "Run Name": "110819_SN393_0183_AB02B9ACXX"
+	  },
+	  "_id": "8058"
+	}
+	```
+
+	Wireframe: 6a, 6b
+	
+#### By Library (IUSSWID)
+
 *	LibraryInfo
 	```
 	{
@@ -302,35 +394,73 @@ Redocumentation
 	}
 	```
 
-	Wireframe: 7a, 11
+	Wireframe: 6a, 7a, 7c, 9a, 9b, 10a, 11
+
+*   AnalysisStatusByLibrary
+	```
+	{
+	  "148": {
+	    "Workflow Runs": [
+	      "FileImport"
+	    ],
+	    "Analysis Status": {
+	      "Alignment": {
+	        
+	      },
+	      "Base calling": {
+	        "completed": 2
+	      },
+	      "Quality Control": {
+	        
+	      },
+	      "Variant Calling": {
+	        
+	      }
+	    },
+	    "Barcode": "ATCACG",
+	    "Lane": "2",
+	    "Library Name": "CELS_0001_Wm_R_PE_464_WG",
+	    "Last Modified": "2012-12-14 09:41:33"
+	  },
+	  "_id": "148"
+	}
+	```
+
+	Wireframe: 6a, 9a
 
 *	WorkflowByLibrary
 	```
 	{
-	  "8010": {
+	  "8199": {
 	    "Workflow Run": {
 	      "25831": {
 	        "File Paths": [
-	          "/oicr/data/archive/h801/110525_SN801_0052_Bb01n6acxx/Data/Intensities/BaseCalls/qseq/demultiplex/unknown/GERALD_09-06-2011_fyousif/s_3_1_sequence.txt.gz",
-	          "/oicr/data/archive/h801/110525_SN801_0052_Bb01n6acxx/Data/Intensities/BaseCalls/qseq/demultiplex/unknown/GERALD_09-06-2011_fyousif/s_3_2_sequence.txt.gz"
+	          "/oicr/data/archive/h803/110522_SN803_0046_AC01MAABXX/Data/Intensities/BaseCalls/qseq/demultiplex2/003/GERALD_06-06-2011_fyousif/s_6_2_sequence.txt.gz",
+	          "/oicr/data/archive/h803/110522_SN803_0046_AC01MAABXX/Data/Intensities/BaseCalls/qseq/demultiplex2/002/GERALD_06-06-2011_fyousif/s_6_1_sequence.txt.gz",
+	          "/oicr/data/archive/h803/110522_SN803_0046_AC01MAABXX/Data/Intensities/BaseCalls/qseq/demultiplex2/001/GERALD_06-06-2011_fyousif/s_4_2_sequence.txt.gz",
+	          "/oicr/data/archive/h803/110522_SN803_0046_AC01MAABXX/Data/Intensities/BaseCalls/qseq/demultiplex2/004/GERALD_06-06-2011_fyousif/s_5_2_sequence.txt.gz",
+	          "/oicr/data/archive/h803/110522_SN803_0046_AC01MAABXX/Data/Intensities/BaseCalls/qseq/demultiplex2/004/GERALD_06-06-2011_fyousif/s_1_2_sequence.txt.gz"
 	        ],
 	        "Workflow Name": "FileImport",
 	        "Skip": "false",
-	        "End Date": "2012-01-06 17:41:31"
+	        "End Date": "2012-01-06 17:40:40",
+	        "Analysis Type": "Base calling"
 	      },
-	      "457904": {
+	      "394365": {
 	        "File Paths": [
-	          "/oicr/data/archive/seqware/seqware_analysis_6/sqwprod/seqware-results/seqware-0.12.5_Workflow_Bundle_FastQC/1.0/50361300/data/s_3_2_sequence_fastqc.zip"
+	          "/oicr/data/archive/h803/110522_SN803_0046_AC01MAABXX/Data/Intensities/BaseCalls/qseq/demultiplex2/unknown/GERALD_06-06-2011_fyousif/s_3_1_sequence.txt.gz",
+	          "/oicr/data/archive/h803/110522_SN803_0046_AC01MAABXX/Data/Intensities/BaseCalls/qseq/demultiplex2/002/GERALD_06-06-2011_fyousif/s_5_2_sequence.txt.gz"
 	        ],
-	        "Workflow Name": "FastQC",
+	        "Workflow Name": "FileImport",
 	        "Skip": "false",
-	        "End Date": "2013-01-01 13:11:15"
+	        "End Date": "2012-12-14 09:41:33",
+	        "Analysis Type": "Base calling"
 	      }
 	    },
-	    "Library Name": "ACC_0002_Ki_P_PE_342_WG",
+	    "Library Name": "FPS_0017_Ly_R_PE_479_EX",
 	    "Num of workflow runs": 2
 	  },
-	  "_id": "8010"
+	  "_id": "8199"
 	}
 	```
 
@@ -399,158 +529,6 @@ Redocumentation
 
 	Wireframe: 7c, 10b
 
-*	LibrariesByProject
-	```
-	{
-	  "83": {
-	    "Project Name": "TorontoLungCancerResequencing",
-	    "Libraries": {
-	      "9732": "TLCR_4C12_nn_n_PE_500_WG",
-	      "9734": "TLCR_4C12_nn_n_PE_500_WG",
-	      "9735": "TLCR_4C11_nn_n_PE_500_WG",
-	      "9736": "TLCR_4C11_nn_n_PE_500_WG",
-	      "9737": "TLCR_4C10_nn_n_PE_500_WG",
-	      "9738": "TLCR_4C10_nn_n_PE_500_WG",
-	      "9739": "TLCR_4C9_nn_n_PE_500_WG",
-	      "9740": "TLCR_4C9_nn_n_PE_500_WG",
-	      "9741": "TLCR_4C8_nn_n_PE_500_WG",
-	      "9742": "TLCR_4C8_nn_n_PE_500_WG",
-	      "9743": "TLCR_4C7_nn_n_PE_500_WG",
-	      "9744": "TLCR_4C7_nn_n_PE_500_WG",
-	      "9745": "TLCR_4C6_nn_n_PE_500_WG",
-	      "9746": "TLCR_4C6_nn_n_PE_500_WG",
-	      "9747": "TLCR_4C5_nn_n_PE_500_WG",
-	      "9750": "TLCR_4C4_nn_n_PE_500_WG",
-	      "9751": "TLCR_4C3_nn_n_PE_500_WG",
-	      "9752": "TLCR_4C3_nn_n_PE_500_WG",
-	      "9753": "TLCR_4C2_nn_n_PE_500_WG",
-	      "9754": "TLCR_4C2_nn_n_PE_500_WG",
-	      "9755": "TLCR_4C1_nn_n_PE_500_WG",
-	      "9757": "TLCR_4R12_nn_n_PE_500_WG",
-	      "9759": "TLCR_4R12_nn_n_PE_500_WG",
-	      "9760": "TLCR_4R11_nn_n_PE_500_WG",
-	      "9761": "TLCR_4R11_nn_n_PE_500_WG",
-	      "9762": "TLCR_4R10_nn_n_PE_500_WG",
-	      "9763": "TLCR_4R10_nn_n_PE_500_WG",
-	      "9765": "TLCR_4R9_nn_n_PE_500_WG",
-	      "9766": "TLCR_4R8_nn_n_PE_500_WG",
-	      "9767": "TLCR_4R8_nn_n_PE_500_WG",
-	      "9768": "TLCR_4R7_nn_n_PE_500_WG",
-	      "9769": "TLCR_4R7_nn_n_PE_500_WG",
-	      "9770": "TLCR_4R6_nn_n_PE_500_WG",
-	      "9771": "TLCR_4R6_nn_n_PE_500_WG",
-	      "9772": "TLCR_4R5_nn_n_PE_500_WG",
-	      "9773": "TLCR_4R5_nn_n_PE_500_WG",
-	      "9774": "TLCR_4R4_nn_n_PE_500_WG",
-	      "9776": "TLCR_4R3_nn_n_PE_500_WG",
-	      "9777": "TLCR_4R3_nn_n_PE_500_WG",
-	      "9778": "TLCR_4R2_nn_n_PE_500_WG",
-	      "9779": "TLCR_4R2_nn_n_PE_500_WG",
-	      "9780": "TLCR_4R1_nn_n_PE_500_WG",
-	      "9781": "TLCR_4R1_nn_n_PE_500_WG",
-	      "10776": "TLCR_1C9_nn_n_PE_500_WG",
-	      "10778": "TLCR_1C11_nn_n_PE_500_WG",
-	      "10779": "TLCR_1C12_nn_n_PE_500_WG",
-	      "10780": "TLCR_1R1_nn_n_PE_500_WG",
-	      "10781": "TLCR_1R2_nn_n_PE_500_WG",
-	      "10782": "TLCR_1R3_nn_n_PE_500_WG",
-	      "10783": "TLCR_1R4_nn_n_PE_500_WG"
-	    },
-	    "Num Libraries": 50
-	  },
-	  "_id": "83"
-	}
-	```
-
-	Wireframe: 8
-
-*	DonorsByProject
-	```
-	{
-	  "10851": {
-	    "Donors": [
-	      "TYER_0012",
-	      "TYER_0010",
-	      "TYER_0007",
-	      "TYER_0006",
-	      "TYER_0002",
-	      "TYER_0009",
-	      "TYER_0008",
-	      "TYER_0005",
-	      "TYER_0004",
-	      "TYER_0003",
-	      "TYER_0001"
-	    ],
-	    "Donor Totals": {
-	      "TYER": 11
-	    },
-	    "Project Name": "DIA2_Yeast"
-	  },
-	  "_id": "10851"
-	}
-	```
-
-	Wireframe: 8
-
-*	StartDateByProject
-	```
-	{
-	  "ACC": "2011-05-18 11:18:44",
-	  "_id": "ACC"
-	}
-	```
-
-	Wireframe: 8
-
-*	DonorInfo
-	```
-	{
-	  "External Name": "A549xeno #106-0811 Exp 52 Frozen",
-	  "Institute": "University Health Network",
-	  "MISO_0018": {
-	    "Libraries": [
-	      {
-	        "352616": "MISO_0018_Lu_X_SE_146_SM"
-	      }
-	    ],
-	    "Library Total": 1,
-	    "External Name": "A549xeno #106-0811 Exp 52 Frozen",
-	    "Library Types": {
-	      "SM": 1
-	    },
-	    "Tissue Types": {
-	      "X": 1
-	    },
-	    "SWID": [
-	      "352428"
-	    ]
-	  },
-	  "_id": "MISO_0018"
-	}
-	```
-
-	Wireframe: 9a, 9b, 10a, 10b
-
-*	LibraryInfo
- 	```
- 	{
-	  "566868": {
-	    "Run": {
-	      "566858": "130618_h803_0127_BD2941ACXX"
-	    },
-	    "Library Name": "CPCG_0223_Pr_P_PE_745_WG",
-	    "Lane": "2",
-	    "Barcode": "NoIndex",
-	    "Library Type": "WG",
-	    "Tissue Type": "P",
-	    "Tissue Origin": "Pr"
-	  },
-	  "_id": "566868"
-	}
-	```
-
-	Wireframe: 9a, 9b, 10a
-
 *	SequencingStatusByLibrary
 	```
 	{
@@ -565,6 +543,87 @@ Redocumentation
 
 	Wireframe: 9a
 
+#### By Donor (Donor Name)
+
+*	DonorInfo
+	```
+	{
+	  "PCSI_0103": {
+	    "External Name": "63256",
+	    "Institute": "Ontario Institute for Cancer Research",
+	    "Libraries": [
+	      {
+	        "9598": "PCSI_0103_Pa_P_PE_435_EX"
+	      },
+	      {
+	        "17242": "PCSI_0103_Ly_R_PE_425_EX"
+	      },
+	      {
+	        "902686": "PCSI_0103_Pa_P_PE_673_WG"
+	      },
+	      {
+	        "902688": "PCSI_0103_Pa_P_PE_614_WG"
+	      },
+	      {
+	        "903695": "PCSI_0103_Si_R_PE_606_WG"
+	      },
+	      {
+	        "903697": "PCSI_0103_Si_R_PE_628_WG"
+	      },
+	      {
+	        "912422": "PCSI_0103_Pa_P_PE_673_WG"
+	      },
+	      {
+	        "912424": "PCSI_0103_Pa_P_PE_673_WG"
+	      },
+	      {
+	        "912426": "PCSI_0103_Pa_P_PE_614_WG"
+	      },
+	      {
+	        "912428": "PCSI_0103_Pa_P_PE_614_WG"
+	      },
+	      {
+	        "912448": "PCSI_0103_Si_R_PE_606_WG"
+	      },
+	      {
+	        "912450": "PCSI_0103_Si_R_PE_628_WG"
+	      },
+	      {
+	        "962707": "PCSI_0103_Pa_P_PE_614_WG"
+	      },
+	      {
+	        "1278518": "RDBR_0002_nn_n_PE_300_TS"
+	      },
+	      {
+	        "3065060": "PCSI_0103_Pa_P_PE_294_MR"
+	      }
+	    ],
+	    "Library Total": 15,
+	    "Library Types": {
+	      "EX": 2,
+	      "WG": 11,
+	      "TS": 1,
+	      "MR": 1
+	    },
+	    "SWID": [
+	      "6271",
+	      "902409",
+	      "1278258",
+	      "3064315"
+	    ],
+	    "Tissue Types": {
+	      "P": 9,
+	      "R": 5,
+	      "n": 1
+	    }
+	  },
+	  "_id": "PCSI_0103"
+	}
+	```
+
+	Wireframe: 9a, 9b, 10a, 10b
+
+#### By Run (Pinery run id - DIFFERENT FROM RUNSWID)
 *	PipelineStatus
 	```
 	{
@@ -616,4 +675,62 @@ Redocumentation
 	}
 	```
 
-	Wireframe:5a
+	Wireframe: 5a, 7a
+
+#### By Date
+*	WorkflowStatusLibrariesByDate
+	```
+	{
+	  "2012-11-08": {
+	    "Libraries": {
+	      "8297": {
+	        "Library Name": "OVCA_0005_Ov_C_PE_400_EX",
+	        "Last Modified Workflow": "2012-11-08 11:47:33"
+	      },
+	      "8299": {
+	        "Library Name": "OVCA_0006_Ov_C_PE_400_EX",
+	        "Last Modified Workflow": "2012-11-08 11:47:33"
+	      },
+	      "8301": {
+	        "Library Name": "OVCA_0008_Ov_C_PE_300_EX",
+	        "Last Modified Workflow": "2012-11-08 11:47:33"
+	      },
+	      "8303": {
+	        "Library Name": "OVCA_0011_Ov_C_PE_300_EX",
+	        "Last Modified Workflow": "2012-11-08 11:47:33"
+	      },
+	      "288480": {
+	        "Library Name": "CPCG_0158_Pr_P_PE_620_WG",
+	        "Last Modified Workflow": "2012-11-08 03:46:18"
+	      },
+	      "288495": {
+	        "Library Name": "CPCG_0117_Pr_P_PE_638_WG",
+	        "Last Modified Workflow": "2012-11-08 04:42:19"
+	      },
+	      "288497": {
+	        "Library Name": "CPCG_0117_Pr_P_PE_638_WG",
+	        "Last Modified Workflow": "2012-11-08 00:10:11"
+	      },
+	      "298622": {
+	        "Library Name": "CPCG_0154_Pr_P_PE_641_WG",
+	        "Last Modified Workflow": "2012-11-08 03:41:54"
+	      },
+	      "298624": {
+	        "Library Name": "CPCG_0206_Pr_P_PE_683_WG",
+	        "Last Modified Workflow": "2012-11-08 04:28:17"
+	      },
+	      "298634": {
+	        "Library Name": "CPCG_0166_Ly_R_PE_626_WG",
+	        "Last Modified Workflow": "2012-11-08 04:44:08"
+	      },
+	      "298984": {
+	        "Library Name": "CME_0004_St_R_PE_392_EX",
+	        "Last Modified Workflow": "2012-11-08 02:19:53"
+	      }
+	    }
+	  },
+	  "_id": "2012-11-08"
+	}
+	```
+
+	Wireframe: 6a, 6b, 9a, 9b

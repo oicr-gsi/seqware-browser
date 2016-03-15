@@ -88,6 +88,7 @@ while (!$fprHandle->eof()) {
 	$fprData{"Run"}{$sequencerRunSWID}{"Run Name"} = $runName;
 	$fprData{"Run"}{$sequencerRunSWID}{"Library"}{$IUSSWID}{"Library Name"} = $libraryName;
 	$fprData{"Run"}{$sequencerRunSWID}{"Lane"}{$lane}{"Library"}{$IUSSWID}{"Library Name"} = $libraryName;
+	$fprData{"Run"}{$sequencerRunSWID}{"Lane"}{$lane}{"Library"}{$IUSSWID}{"Barcode"} = $barcode;
 
 	# By Library
 	$fprData{"Library"}{$IUSSWID}{"Library Name"} = $libraryName;

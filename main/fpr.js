@@ -53,7 +53,7 @@ fs.readFile(process.argv[4], 'utf8', function(err, data){
 	//var status = getAnalysisStatusAllProjects(fprDataProject, null, analysisYAML);
 	//var numDonors = getNumDonorsAllProjects(fprDataProject);
 	//var runData = getRunDataAllProjects(fprDataProject, '', '', analysisYAML);
-	
+	//updateProjectAcronym(fprDataProject);
 	for (var projectSWID in fprDataProject['Project']) {
 		//getCurrentStatsByProject(fprDataProject, new Date().setDate(dateNow.getDate() - 7), '', projectSWID);
 		//getAnalysisStatusByProject(status, projectSWID);
@@ -77,9 +77,10 @@ fs.readFile(process.argv[5], 'utf8', function(err, data){
 
 	// functions associated with run key
 	var obj;
-	var runInfo = getRunInfo(fprDataRun);
+	//var runInfo = getRunInfo(fprDataRun);
+	updateLibrariesPerLaneByRun(fprDataRun);
 	for (var runSWID in fprDataRun['Run']) {
-		updateRunInfoBySWID(runInfo, runSWID);
+		//updateRunInfoBySWID(runInfo, runSWID);
 		/*
 		if (typeof fprDataRun['Run'][runSWID]['Lane'] !== 'undefined') {
 			for (var lane in fprDataRun['Run'][runSWID]['Lane']) {
@@ -121,17 +122,17 @@ fs.readFile(process.argv[7], 'utf8', function(err, data){
 
 	//functions associated with donor key
 	var obj = {};
-	//var donorInfo = getDonorInfo(fprDataDonor);
+	var donorInfo = getDonorInfo(fprDataDonor);
 	//var numLibraries = getNumLibrariesPerTissueAllDonors(fprDataDonor);
 	//var numLibTypes = getNumOfLibraryTypeAllDonors(fprDataDonor);
-	var dates = getStartEndDateAllDonors(fprDataDonor);
+	//var dates = getStartEndDateAllDonors(fprDataDonor);
 	//var instruments = getInstrumentNamesAllDonors(fprDataDonor);
 
 	for (var i = 0; i < donors.length; i++){
-		//updateDonorInfoByName(donorInfo, donors[i]);
+		updateDonorInfoByName(donorInfo, donors[i]);
 		//getNumLibrariesPerTissueByDonor(numLibraries, donors[i]);
 		//getNumOfLibraryTypeByDonor(numLibTypes, donors[i]);
-		updateStartEndDateByDonor(dates, donors[i]);
+		//updateStartEndDateByDonor(dates, donors[i]);
 		//getInstrumentNamesByDonor(instruments, donors[i]);
 	}
 
@@ -141,7 +142,7 @@ fs.readFile(process.argv[7], 'utf8', function(err, data){
 	}
 });
 
-/*
+
 // read fpr-Library JSON
 fs.readFile(process.argv[6], 'utf8', function(err, data){
 	if (err) return console.error(err);
@@ -151,26 +152,37 @@ fs.readFile(process.argv[6], 'utf8', function(err, data){
 	// functions associated with library key
 	var obj;
 	//var status = getAnalysisStatusAllLibraries(fprDataLibrary, null, analysisYAML);
-	var libraryInfo = getLibraryInfo(fprDataLibrary);
+	//var libraryInfo = getLibraryInfo(fprDataLibrary);
 	//var workflows = getWorkflowAllLibraries(fprDataLibrary, analysisYAML);
-	//obj = getRunStatusStatsAllDates(status);
-	//getReportDataByLibrary(fprDataLibrary);
-	//getRNASeqQCDataByLibrary(fprDataLibrary);
-
+	//updateWorkflowStatusLibrariesAllDates(fprDataLibrary);
+	//updateReportDataByLibrary(fprDataLibrary);
+	//updateRNASeqQCDataByLibrary(fprDataLibrary);
+	updateLaneDetailsTotalsByRun(fprDataLibrary);
 	for (var IUSSWID in fprDataLibrary['Library']) {
 		//updateAnalysisStatusByLibrary(status, IUSSWID);
-		updateLibraryInfoBySWID(libraryInfo, IUSSWID);
+		//updateLibraryInfoBySWID(libraryInfo, IUSSWID);
 		//updateWorkflowByLibrary(workflows, IUSSWID);
 
 	}
 
 	if (typeof obj !== 'undefined') {
-		//obj = JSON.stringify(obj);
+		obj = JSON.stringify(obj);
 		console.log(obj);
 	}
 });
+*/
+// num of completed workflows and libraries by run (requires fprDataRun and fprDataLibrary)
+readMultipleFiles([process.argv[5], process.argv[6]], 'utf8', function (err, data) {
+	if (err) return console.error(err);
+	console.log("starting run-library");
 
+	fprDataRun = JSON.parse(data[0]);
+	fprDataLibrary = JSON.parse(data[1]);
 
+	updateNumCompletedWorkflowsForRunByDate(fprDataRun, fprDataLibrary);
+
+});
+/*
 // read pinery output files
 readMultipleFiles([process.argv[8], process.argv[9], process.argv[10], process.argv[11]], 'utf8', function(err, data){
 	if (err) return console.error(err);
@@ -182,19 +194,18 @@ readMultipleFiles([process.argv[8], process.argv[9], process.argv[10], process.a
 
 	var obj;
 	//obj = getInstrumentIDs(instData);
-	updatePipelineStatus(sequencerData, sampleData);
+	//updatePipelineStatus(sequencerData, sampleData);
 	//obj = updateStartDateAllRuns(sequencerData);
 	//obj = updateStartDateAllProjects(projectData);
 	//updateSequencingStatusAllLibraries(sequencerData, sampleData);
-	//updateExternalNameAndInstituteAllDonors(sampleData);
+	updateExternalNameAndInstituteAllDonors(sampleData);
 
 	if (typeof obj !== 'undefined') {
 		obj = JSON.stringify(obj);
 		console.log(obj);
 	}
-})
+});
 
-/*
 // can only run getReportData in the cluster sinces files are in the cluster, 
 // return json file and parse it back into mongo using this func
 fs.readFile(process.argv[12], 'utf8', function(err, data) {
@@ -465,6 +476,16 @@ function updateRunDataByProject (runData, projectSWID) {
 	updateData('RunDataByProject', projectSWID, returnObj);
 
 	return returnObj;
+}
+
+function updateProjectAcronym (fprData) {
+	var projObj = {};
+	projObj['4'] = {};
+	projObj['4']['Project Name'] = 'ICGCPancreaticCancerSeq';
+	for (var projectSWID in fprData['Project']) {
+		console.log(projectSWID);
+		console.log(fprData['Project'][projectSWID]['Project Name']);
+	}
 }
 
 //// By Run
@@ -771,7 +792,7 @@ function getWorkflowAllLibraries (fprData, analysisYAML) {
 			returnObj[IUSSWID]['Workflow Run'][workflowSWID]['Skip'] = fprData['Library'][IUSSWID]['Workflow Run'][workflowSWID]['Skip'];
 			returnObj[IUSSWID]['Workflow Run'][workflowSWID]['End Date'] = getDateTimeString(fprData['Library'][IUSSWID]['Workflow Run'][workflowSWID]['Last Modified']);
 			for (var analysisType in analysisYAML) {
-				if (returnObj[IUSSWID]['Workflow Run'][workflowSWID]['Workflow Name'] == analysisYAML[analysisType]) {
+				if (returnObj[IUSSWID]['Workflow Run'][workflowSWID]['Workflow Name'] in analysisYAML[analysisType]) {
 					returnObj[IUSSWID]['Workflow Run'][workflowSWID]['Analysis Type'] = analysisType;
 				}
 			}
@@ -795,7 +816,7 @@ function updateWorkflowByLibrary (workflows, IUSSWID) {
 	return returnObj;
 }
 
-//// CUT REPORTING FUNCTIONS TO ONE BECAUSE YOU CAN MAKE DONOR->LIBRARY CONNECTIONS ELSEWHERE, etc
+//// CUT REPORTING FUNCTIONS TO JUST ONE BECAUSE YOU CAN MAKE DONOR->LIBRARY CONNECTIONS ELSEWHERE, etc
 //// Reporting Functions (detailed pages)
 /*
 // Returns associated JSON file per library per lane per donor
@@ -866,6 +887,27 @@ function getReportDataByLibraryByLaneByRun(fprData, runSWID, lane, library) {
 	return returnObj;
 }
 */
+function updateLibrariesPerLaneByRun(fprData) {
+	for (var runSWID in fprData['Run']) {
+		var obj = {};
+		obj[runSWID] = {};
+		obj[runSWID]['Run Name'] = fprData['Run'][runSWID]['Run Name'];
+		obj[runSWID]['Lane'] = {};
+		for (var lane in fprData['Run'][runSWID]['Lane']) {
+			if (typeof obj[runSWID]['Lane'][lane] === 'undefined') {
+				obj[runSWID]['Lane'][lane] = {};
+				obj[runSWID]['Lane'][lane]['Library'] = {};
+			}
+			for (var IUSSWID in fprData['Run'][runSWID]['Lane'][lane]['Library']) {
+				obj[runSWID]['Lane'][lane]['Library'][IUSSWID] = fprData['Run'][runSWID]['Lane'][lane]['Library'][IUSSWID];
+			}
+		}
+
+		//Update in mongodb
+		updateData('LibrariesPerLaneByRun', runSWID, obj);
+	}
+}
+
 // Takes in jsonFile, xenomeFile (for % mouse content), and an existing object and returns report data to that object
 function getReportData(jsonFile, xenomeFile) {
 	var obj = {};
@@ -876,6 +918,12 @@ function getReportData(jsonFile, xenomeFile) {
 		// Initialize
 		var readsSP = parseFloat(lineObj['reads per start point']).toFixed(2);
 		var onTargetRate = lineObj['reads on target']/lineObj['mapped reads'];
+
+		// Run Name
+		obj['Run Name'] = lineObj['run name'];
+
+		// Lane
+		obj['Lane'] = lineObj['lane'];
 
 		// Barcode
 		if (typeof lineObj['barcode'] === 'undefined') {
@@ -892,12 +940,12 @@ function getReportData(jsonFile, xenomeFile) {
 
 		if (rawReads > 0) {
 			obj['Map %'] = ((lineObj['mapped reads']/rawReads)*100).toFixed(2) + '%';
-			obj['Raw Reads'] = rawReads;
-			obj['Raw Yield'] = parseInt(rawReads*lineObj['average read length']);
+			obj['Reads'] = rawReads;
+			obj['Yield'] = parseInt(rawReads*lineObj['average read length']);
 		} else {
 			obj['Map %'] = 0;
-			obj['Raw Reads'] = 0;
-			obj['Raw Yield'] = 0;
+			obj['Reads'] = 0;
+			obj['Yield'] = 0;
 		}
 
 		// % on Target
@@ -939,19 +987,23 @@ function getReportData(jsonFile, xenomeFile) {
 	return obj;
 }
 
-function getReportDataByLibrary(fprData) {
+function updateReportDataByLibrary(fprData) {
+	// ALL DATA BASED ON REPORTS FROM JSON FILES
+
+	// Individual library report data
 	for (var IUSSWID in fprData['Library']) {
 		var json = fprData['Library'][IUSSWID]['JSON'];
 		var xenomeFile = fprData['Library'][IUSSWID]['XenomeFile'];
-		var returnObj = {};
-		returnObj[IUSSWID] = {};
-		returnObj[IUSSWID]['Library Name'] = fprData['Library'][IUSSWID]['Library Name'];
-		returnObj[IUSSWID]['Data'] = getReportData(json, xenomeFile);
+		var obj = {};
+		obj[IUSSWID] = {};
+		obj[IUSSWID]['Library Name'] = fprData['Library'][IUSSWID]['Library Name'];
+		obj[IUSSWID]['Data'] = getReportData(json, xenomeFile);
 
 		//Update in mongodb
-		//updateData('ReportDataByLibrary', IUSSWID, returnObj);
+		//updateData('ReportDataByLibrary', IUSSWID, obj);
 
-		console.log(JSON.stringify(returnObj));
+		console.log(JSON.stringify(obj));
+
 	}
 }
 
@@ -1021,14 +1073,15 @@ function getRNASeqQCData(zipFile) {
 	var MEDIAN_5PRIME_TO_3PRIME_BIAS=metrics[21];
 
 	// Add to object
-	obj['Total Reads (including unaligned)'] = TOTAL_READS;
+	obj['Total Reads'] = TOTAL_READS; // including unaligned
 	obj['Uniq Reads'] = UNIQ_READS;
+	// Reads per start point
 	if (START_POINTS != 0) {
-		obj['Reads Per Start Point'] = (UNIQ_READS/START_POINTS).toFixed(2);
+		obj['Reads/SP'] = (UNIQ_READS/START_POINTS).toFixed(2);
 	} else {
-		obj['Reads Per Start point'] = '#Start Points Job Failed -> rerun!'
+		obj['Reads/SP'] = '#Start Points Job Failed -> rerun!'
 	}
-	obj['Passed Filter Bases'] = PF_BASES;
+	obj['Yield'] = PF_BASES; // Passed Filter Bases
 	obj['Passed Filter Aligned Bases'] = PF_ALIGNED_BASES;
 	obj['Coding Bases'] = CODING_BASES;
 	obj['UTR Bases'] = UTR_BASES;
@@ -1059,30 +1112,120 @@ function getRNASeqQCData(zipFile) {
 	obj['Median 5Prime Bias'] = MEDIAN_5PRIME_BIAS;
 	obj['Median 3Prime Bias'] = MEDIAN_3PRIME_BIAS;
 	obj['Median 5Prime to 3Prime Bias'] = MEDIAN_5PRIME_TO_3PRIME_BIAS;
+	// rRNA Contamination (%reads aligned)
 	if (TOTAL_READS != 0) {
-		obj['rRNA Contamination (%reads aligned)'] = ((RIBOSOMAL_READS/TOTAL_READS)*100).toFixed(2);
+		obj['% rRNA Content'] = ((RIBOSOMAL_READS/TOTAL_READS)*100).toFixed(2);
 	} else {
-		obj['rRNA Contamination (%reads algined)'] = 'Total Reads Job Failed -> re-run report';
+		obj['% rRNA Content'] = 'Total Reads Job Failed -> re-run report';
 	}
 	return obj;
 }
+
 //var obj = {};
 //obj = getRNASeqQCData('/oicr/data/archive/seqware/seqware_analysis_8/hsqwprod/seqware-results/RNAseqQc_2.3/92922100/140926_SN802_0204_AC5JLPACXX_ERNA_0041_nn_C_PE_398_WT_rnaqc.report.zip');
 
 // Returns all RNA Seq QC data by running the above function getRNASeqQCData
-function getRNASeqQCDataByLibrary(fprData) {
+function updateRNASeqQCDataByLibrary(fprData) {
 	for (var IUSSWID in fprData['Library']) {
 		if (typeof fprData['Library'][IUSSWID]['RNAZipFile'] !== 'undefined') {
-			var returnObj = {};
-			returnObj[IUSSWID] = {};
-			returnObj[IUSSWID]['Library Name'] = fprData['Library'][IUSSWID]['Library Name'];
-			returnObj[IUSSWID]['Data'] = getRNASeqQCData(fprData['Library'][IUSSWID]['RNAZipFile']);
+			var obj = {};
+			obj[IUSSWID] = {};
+			obj[IUSSWID]['Library Name'] = fprData['Library'][IUSSWID]['Library Name'];
+			obj[IUSSWID]['Data'] = getRNASeqQCData(fprData['Library'][IUSSWID]['RNAZipFile']);
+			for (var runSWID in fprData['Library'][IUSSWID]['Run']) {
+				obj[IUSSWID]['Data']['Run Name'] = fprData['Library'][IUSSWID]['Run'][runSWID];
+			}
+			obj[IUSSWID]['Data']['Lane'] = fprData['Library'][IUSSWID]['Lane'];
 
 			//Update in mongodb
-			//updateData('RNASeqQCDataByLibrary', IUSSWID, returnObj);
+			//updateData('RNASeqQCDataByLibrary', IUSSWID, obj);
 		
-			console.log(JSON.stringify(returnObj));
+			console.log(JSON.stringify(obj));
 		}
+	}
+}
+
+function updateLaneDetailsTotalsByRun(fprData) {
+	var laneObj = {};
+	var runObj = {};
+
+	for (var IUSSWID in fprData['Library']) {
+		if (typeof fprData['Library'][IUSSWID]['JSON'] !== 'undefined') {
+			MongoClient.connect(url, function(err, db) {
+				if (err) return console.error(err);
+				//console.log('connect');
+
+				db.collection('ReportDataByLibrary').findOne({"_id": IUSSWID}, function(err, item){
+					
+					var run = item[IUSSWID]['Data']['Run Name'];
+					var lane = item[IUSSWID]['Data']['Lane'];
+					if (typeof laneObj[run] === 'undefined') {
+						laneObj[run] = {};
+						laneObj[run]['Lane'] = {};
+					}
+					if (typeof laneObj[run]['Lane'][lane] === 'undefined') {
+						laneObj[run]['Lane'][lane] = {};
+						laneObj[run]['Lane'][lane]['Raw Reads'] = 0;
+						laneObj[run]['Lane'][lane]['Raw Yield'] = 0;
+					}
+					if (typeof runObj[run] === 'undefined') {
+						runObj[run] = {};
+						runObj[run]['% on Target'] = 0;
+						runObj[run]['Reads'] = 0;
+						runObj[run]['Yield'] = 0;
+					}
+					laneObj[run]['Lane'][lane]['Raw Reads'] += item[IUSSWID]['Data']['Reads'];
+					laneObj[run]['Lane'][lane]['Raw Yield'] += item[IUSSWID]['Data']['Yield'];
+					if (/(\d*.?\d*)%/.test(item[IUSSWID]['Data']['% on Target'])) {
+						var match = /(\d*.?\d*)%/.exec(item[IUSSWID]['Data']['% on Target']);
+						runObj[run]['% on Target'] = match[1];
+					}
+					runObj[run]['Reads'] += item[IUSSWID]['Data']['Reads'];
+					runObj[run]['Yield'] += item[IUSSWID]['Data']['Yield'];
+				});
+			});
+		}
+		if (typeof fprData['Library'][IUSSWID]['RNAZipFile'] !== 'undefined') {
+			MongoClient.connect(url, function(err, db) {
+				if (err) return console.error(err);
+				//console.log('connect');
+
+				db.collection('RNASeqQCDataByLibrary').findOne({"_id": IUSSWID}, function(err, item){
+					var run = item[IUSSWID]['Data']['Run Name'];
+					var lane = item[IUSSWID]['Data']['Lane'];
+					if (typeof laneObj[run] === 'undefined') {
+						laneObj[run] = {};
+						laneObj[run]['Lane'] = {};
+					}
+					if (typeof laneObj[run]['Lane'][lane] === 'undefined') {
+						laneObj[run]['Lane'][lane] = {};
+						laneObj[run]['Lane'][lane]['Raw Reads'] = 0;
+						laneObj[run]['Lane'][lane]['Raw Yield'] = 0;
+					}
+					if (typeof runObj[run] === 'undefined') {
+						runObj[run] = {};
+						runObj[run]['% on Target'] = 0;
+						runObj[run]['Reads'] = 0;
+						runObj[run]['Yield'] = 0;
+					}
+					laneObj[run]['Lane'][lane]['Raw Reads'] += item[IUSSWID]['Data']['Total Reads'];
+					laneObj[run]['Lane'][lane]['Raw Yield'] += item[IUSSWID]['Data']['Yield'];
+					runObj[run]['Reads'] += item[IUSSWID]['Data']['Total Reads'];
+					runObj[run]['Yield'] += item[IUSSWID]['Data']['Yield'];
+				});
+			});
+		}
+	}
+
+	for (var run in laneObj) {
+		var obj = {};
+		obj[run] = laneObj[run];
+		updateData('LaneDetailsTotalsByRun', run, obj);
+	}
+	for (var run in runObj) {
+		var obj = {};
+		obj[run] = runObj[run];
+		updateData('RunDetailsTotals', run, obj);
 	}
 }
 
@@ -1366,20 +1509,65 @@ function getSeqWareStatsAllDates(fprData) {
 }
 
 // Takes in output from getAnalysisStatusAllLibraries(fprData, null, analysisYAML)
-function getRunStatusStatsAllDates(status) {
+function updateWorkflowStatusLibrariesAllDates(fprData) {
 	var returnObj = {};
 	
-	for (var IUSSWID in status) {
-		if (/(.*?) /.test(status[IUSSWID]['Last Modified'])) {
-			var match = /(.*?) /.exec(status[IUSSWID]['Last Modified']);
-			var date = match[1];
+	for (var IUSSWID in fprData['Library']) {
+		for (var workflowSWID in fprData['Library'][IUSSWID]['Workflow Run']) {
+			if (/(.*?) /.test(fprData['Library'][IUSSWID]['Workflow Run'][workflowSWID]['Last Modified'])) {
+				var match = /(.*?) /.exec(fprData['Library'][IUSSWID]['Workflow Run'][workflowSWID]['Last Modified']);
+				var date = match[1];
+
+				if (typeof returnObj[date] === 'undefined') {
+					returnObj[date] = {};
+					returnObj[date]['Libraries'] = {};
+				}
+				returnObj[date]['Libraries'][IUSSWID] = {};
+				returnObj[date]['Libraries'][IUSSWID]['Library Name'] = fprData['Library'][IUSSWID]['Library Name'];
+				returnObj[date]['Libraries'][IUSSWID]['Last Modified Workflow'] = getDateTimeString(fprData['Library'][IUSSWID]['Workflow Run'][workflowSWID]['Last Modified']);
+			}
 		}
-		if (typeof returnObj[date] === 'undefined') {
-			returnObj[date] = {};
-			returnObj[date]['Libraries'] = {};
-		}
-		returnObj[date]['Libraries'][IUSSWID] = status[IUSSWID];
 	}
+
+	for (var date in returnObj) {
+		var obj = {};
+		obj[date] = returnObj[date];
+		updateData('WorkflowStatusLibrariesByDate', date, obj);
+	}
+
+	return returnObj;
+}
+
+function updateNumCompletedWorkflowsForRunByDate(fprDataRun, fprDataLibrary) {
+	var returnObj = {};
+
+	for (var runSWID in fprDataRun['Run']) {
+		if(typeof returnObj[runSWID] === 'undefined') {
+			returnObj[runSWID] = {};
+			returnObj[runSWID]['Completed Workflows'] = 0;
+			returnObj[runSWID]['Completed Libraries'] = 0;
+		}
+		returnObj[runSWID]['Run Name'] = fprDataRun['Run'][runSWID]['Run Name'];
+		for (var IUSSWID in fprDataRun['Run'][runSWID]['Library']) {
+			var complete = true;
+			for (var workflowSWID in fprDataLibrary['Library'][IUSSWID]['Workflow Run']) {
+				if (fprDataLibrary['Library'][IUSSWID]['Workflow Run'][workflowSWID]['Status'] == 'completed') {
+					returnObj[runSWID]['Completed Workflows']++;
+				} else {
+					complete = false;
+				}
+			}
+			if (complete) {
+				returnObj[runSWID]['Completed Libraries']++;
+			}
+		}
+	}
+	for (var runSWID in returnObj) {
+		var obj = {};
+		obj[runSWID] = returnObj[runSWID];
+		updateData('NumCompletedWorkflowsForRunByDate', runSWID, obj);
+	}
+
 	return returnObj;
 }
 
@@ -1637,14 +1825,19 @@ function updateExternalNameAndInstituteAllDonors(sampleData) {
 	}
 
 	for (var donor in returnObj) {
-		updateDataField('DonorInfo', donor, 
-			{
-				$set: {'External Name' : returnObj[donor]['External Name'], 
-						'Institute' : returnObj[donor]['Institute']}
-			});
+		var setMod = { $set: {} };
+		setMod.$set[donor + '.External Name'] = returnObj[donor]['External Name'];
+		setMod.$set[donor + '.Institute'] = returnObj[donor]['Institute'];
+		updateDataField('DonorInfo', donor, setMod);
 	}
 	return returnObj;
 }
+
+function updateRunningSequencerRuns(sequencerData) {
+
+}
+
+
 
 
 // ETC
