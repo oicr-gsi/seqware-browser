@@ -289,7 +289,7 @@ All collection entries are organized by their respective SWID (expect for donor 
 
 	Wireframe: 8
 
-#### By RunSWID (Sequencer Run SWID)
+#### By Run (Sequencer Run SWID)
 
 *	RunInfo
 	```
@@ -360,20 +360,45 @@ All collection entries are organized by their respective SWID (expect for donor 
 
 	Wireframe: 6a, 6b, 7a
 
-*	NumCompletedWorkflowsForRunByDate
+*	NumCompletedWorkflowsEachDateByRun
 	```
 	{
-	  "8058": {
-	    "Completed Workflows": 134,
-	    "Completed Libraries": 8,
-	    "Run Name": "110819_SN393_0183_AB02B9ACXX"
+	  "8576": {
+	    "2012-01-06": {
+	      "Completed Workflows": 8,
+	      "Completed Libraries": 8,
+	      "Libraries": {
+	        "8578": "PCSI_0002_Ly_R_PE_350_WG",
+	        "8580": "PCSI_0002_Ly_R_PE_500_WG",
+	        "8582": "PCSI_0002_Pa_X_PE_350_WG",
+	        "8584": "PCSI_0002_Pa_X_PE_500_WG",
+	        "8586": "PCSI_0002_Pa_P_PE_350_WG",
+	        "8588": "PCSI_0002_Pa_P_PE_500_WG",
+	        "15691": "PCSI_0028_Pa_C_PE_350_WG",
+	        "15693": "PCSI_0028_Pa_C_PE_500_WG"
+	      },
+	      "Run Name": "100506_i320_612NC_LT"
+	    },
+	    "2012-01-11": {
+	      "Completed Workflows": 6,
+	      "Completed Libraries": 6,
+	      "Libraries": {
+	        "8578": "PCSI_0002_Ly_R_PE_350_WG",
+	        "8580": "PCSI_0002_Ly_R_PE_500_WG",
+	        "8582": "PCSI_0002_Pa_X_PE_350_WG",
+	        "8584": "PCSI_0002_Pa_X_PE_500_WG",
+	        "8586": "PCSI_0002_Pa_P_PE_350_WG",
+	        "8588": "PCSI_0002_Pa_P_PE_500_WG"
+	      },
+	      "Run Name": "100506_i320_612NC_LT"
+	    }
 	  },
-	  "_id": "8058"
+	  "_id": "8576"
 	}
 	```
 
 	Wireframe: 6a, 6b
-	
+
 #### By Library (IUSSWID)
 
 *	LibraryInfo
@@ -734,3 +759,29 @@ All collection entries are organized by their respective SWID (expect for donor 
 	```
 
 	Wireframe: 6a, 6b, 9a, 9b
+
+#### By Template id (the id that connects pinery to SeqWare Database)
+*	NumSkipSeqPerLibraryByTemplateID
+	```
+	{
+	  "2417": {
+	    "Library Name": "POP_019_Li_C_PE_300_MR",
+	    "Skip": 0
+	  },
+	  "_id": "2417"
+	}
+	{
+	  "2418": {
+	    "Library Name": "PCSI_0024_Ly_R_PE_357_EX",
+	    "Skip": 1,
+	    "Skipped Libs": [
+	      {
+	        "PCSI_0024_Ly_R_PE_357_EX": "100428_I581_61P4C_LT_lane_8"
+	      }
+	    ]
+	  },
+	  "_id": "2418"
+	}
+	```
+
+	Wireframe: 7a, 7b, 10a
