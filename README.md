@@ -174,7 +174,7 @@ Runs a query in seqware database for all workflow runs with status = 'running' a
 #### Failed Workflow Runs
 > db.FailedWorkflowRuns.find()
 ```
-
+n/a
 ```
 Displays all workflow runs that have gone from running > failed.
 
