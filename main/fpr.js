@@ -6,260 +6,19 @@ var YAML = require('yamljs');
 var readMultipleFiles = require('read-multiple-files');
 var http = require("http");
 var AdmZip = require('adm-zip');
+var config = require('./config.js');
 
 var	mongodb = require('mongodb');
 var MongoClient = mongodb.MongoClient;
-var url = 'mongodb://10.30.128.97:27017/seqwareBrowser';
+var url = 'mongodb://' + config.mongo.host + '/' + config.mongo.database;
+
+var pg = require('pg');
+var cp = config.postgres;
+var client = new pg.Client('postgres://' + cp.username + ':' + cp.password + '@' + cp.host + ':' + cp.port + '/' + cp.database);
 
 var dateNow = new Date();
 var analysisYAML;
 
-/*
-// read fpr-Project/fpr-Workflow/fpr-Library JSON created by associated perl script
-//TODO: Maybe create a separate JSON just for this?
-readMultipleFiles([process.argv[3], process.argv[4], process.argv[6]], 'utf8', function(err, data){
-	if (err) return console.error(err);
-	console.log("starting project-workflow-library");
-	fprData = _.extend(JSON.parse(data[0]), JSON.parse(data[1]));
-	fprData = _.extend(fprData, JSON.parse(data[2]));
-
-	// function requiring project, workflow, library information
-
-	var obj;
-	//obj = getCurrentStats(fprData, '', '');
-	obj = getSeqWareStatsAllDates(fprData);
-
-	if (typeof obj !== 'undefined') {
-		obj = JSON.stringify(obj);
-		console.log(obj);
-	}
-});
-
-// read fpr-Project
-fs.readFile(process.argv[4], 'utf8', function(err, data){
-	if (err) return console.error(err);
-	console.log("starting project");
-	fprDataProject = JSON.parse(data);
-
-	// functions associated with project key
-	
-	var obj;
-
-	// Mongodb functions
-
-	//getLastModifiedProjects(fprDataProject, 60);
-
-	//var status = getAnalysisStatusAllProjects(fprDataProject, null, analysisYAML);
-	//var numDonors = getNumDonorsAllProjects(fprDataProject);
-	//var runData = getRunDataAllProjects(fprDataProject, '', '', analysisYAML);
-	//updateProjectAcronym(fprDataProject);
-	for (var projectSWID in fprDataProject['Project']) {
-		//getCurrentStatsByProject(fprDataProject, new Date().setDate(dateNow.getDate() - 7), '', projectSWID);
-		//getAnalysisStatusByProject(status, projectSWID);
-		//updateNumDonorsByProject(numDonors, projectSWID);
-		//updateDonorsByProject(fprDataProject, projectSWID);
-		//updateLibrariesByProject(fprDataProject, projectSWID);
-		//updateRunDataByProject(runData, projectSWID);
-	}
-	
-	if (typeof obj !== 'undefined') {
-		obj = JSON.stringify(obj);
-		console.log(obj);
-	}
-});
-/*
-// read fpr-Run JSON
-fs.readFile(process.argv[5], 'utf8', function(err, data){
-	if (err) return console.error(err);
-	//console.log("starting run");
-	fprDataRun = JSON.parse(data);
-
-	// functions associated with run key
-	var obj;
-	//var runInfo = getRunInfo(fprDataRun);
-	updateLibrariesPerLaneByRun(fprDataRun);
-	for (var runSWID in fprDataRun['Run']) {
-		//updateRunInfoBySWID(runInfo, runSWID);
-		/*
-		if (typeof fprDataRun['Run'][runSWID]['Lane'] !== 'undefined') {
-			for (var lane in fprDataRun['Run'][runSWID]['Lane']) {
-				for (var library in fprDataRun['Run'][runSWID]['Lane'][lane]['Library']) {
-					//obj = getReportDataByLibraryByLaneByRun(fprDataRun, runSWID, lane, library);
-					//obj = JSON.stringify(obj);
-					//console.log(obj);
-					if (typeof fprDataRun['Run'][runSWID]['Lane'][lane]['Library'][library]['JSON'] !== 'undefined'){
-						obj = generateGraphDataByJSON(fprDataRun['Run'][runSWID]['Lane'][lane]['Library'][library]['JSON']);
-						obj = JSON.stringify(obj);
-						console.log(obj);
-					}
-				}
-			}
-		}
-		
-	}
-	
-	if (typeof obj !== 'undefined') {
-		obj = JSON.stringify(obj);
-		//console.log(obj);
-	}
-});
-
-
-// read fpr-Donor JSON
-fs.readFile(process.argv[7], 'utf8', function(err, data){
-	if (err) return console.error(err);
-	console.log("starting donor");
-	fprDataDonor = JSON.parse(data);
-
-	// remove duplicates
-	var donors = [];
-	for (var donorSWID in fprDataDonor['Donor']) {
-		donors.push(fprDataDonor['Donor'][donorSWID]['Donor Name']);
-
-	}
-	donors = _.uniq(donors);
-
-	//functions associated with donor key
-	var obj = {};
-	var donorInfo = getDonorInfo(fprDataDonor);
-	//var numLibraries = getNumLibrariesPerTissueAllDonors(fprDataDonor);
-	//var numLibTypes = getNumOfLibraryTypeAllDonors(fprDataDonor);
-	//var dates = getStartEndDateAllDonors(fprDataDonor);
-	//var instruments = getInstrumentNamesAllDonors(fprDataDonor);
-
-	for (var i = 0; i < donors.length; i++){
-		updateDonorInfoByName(donorInfo, donors[i]);
-		//getNumLibrariesPerTissueByDonor(numLibraries, donors[i]);
-		//getNumOfLibraryTypeByDonor(numLibTypes, donors[i]);
-		//updateStartEndDateByDonor(dates, donors[i]);
-		//getInstrumentNamesByDonor(instruments, donors[i]);
-	}
-
-	if (typeof obj !== 'undefined') {
-		obj = JSON.stringify(obj);
-		//console.log(obj);
-	}
-});
-
-
-// read fpr-Library JSON
-fs.readFile(process.argv[6], 'utf8', function(err, data){
-	if (err) return console.error(err);
-	console.log("starting library");
-	fprDataLibrary = JSON.parse(data);
-
-	// functions associated with library key
-	var obj;
-	//var status = getAnalysisStatusAllLibraries(fprDataLibrary, null, analysisYAML);
-	//var libraryInfo = getLibraryInfo(fprDataLibrary);
-	var workflows = getWorkflowAllLibraries(fprDataLibrary, analysisYAML);
-	//updateWorkflowStatusLibrariesAllDates(fprDataLibrary);
-	//updateReportDataByLibrary(fprDataLibrary);
-	//updateRNASeqQCDataByLibrary(fprDataLibrary);
-	//updateLaneDetailsTotalsByRun(fprDataLibrary);
-	//updateIUSSWIDByLibraryName(fprDataLibrary);
-	for (var IUSSWID in fprDataLibrary['Library']) {
-		//updateAnalysisStatusByLibrary(status, IUSSWID);
-		//updateLibraryInfoBySWID(libraryInfo, IUSSWID);
-		//updateWorkflowByLibrary(workflows, IUSSWID);
-
-	}
-
-	if (typeof obj !== 'undefined') {
-		obj = JSON.stringify(obj);
-		console.log(obj);
-	}
-});
-
-/*
-// num of completed workflows and libraries by run (requires fprDataRun and fprDataLibrary)
-readMultipleFiles([process.argv[5], process.argv[6]], 'utf8', function (err, data) {
-	if (err) return console.error(err);
-	console.log("starting run-library");
-
-	fprDataRun = JSON.parse(data[0]);
-	fprDataLibrary = JSON.parse(data[1]);
-
-	updateNumCompletedWorkflowsEachDateByRun(fprDataRun, fprDataLibrary);
-
-});
-
-// read pinery output files
-readMultipleFiles([process.argv[8], process.argv[9], process.argv[10], process.argv[11]], 'utf8', function(err, data){
-	if (err) return console.error(err);
-	console.log("starting pinery files");
-	sequencerData = JSON.parse(data[0])
-	instData = JSON.parse(data[1]);
-	sampleData = JSON.parse(data[2]);
-	projectData = JSON.parse(data[3]);
-
-	var obj;
-	//obj = getInstrumentIDs(instData);
-	//updatePipelineStatus(sequencerData, sampleData);
-	//obj = updateStartDateAllRuns(sequencerData);
-	//obj = updateStartDateAllProjects(projectData);
-	//updateSequencingStatusAllLibraries(sequencerData, sampleData);
-	//updateExternalNameAndInstituteAllDonors(sampleData);
-	//updateSamplePrepLibraryDatesByTemplateID(sampleData);
-	updateLibraryTemplateIDByLibraryName(sampleData);
-
-	if (typeof obj !== 'undefined') {
-		obj = JSON.stringify(obj);
-		console.log(obj);
-	}
-});
-
-// can only run certain functions in the cluster sinces files are in the cluster, 
-// return json file and parse it back into mongo using this func
-fs.readFile(process.argv[12], 'utf8', function(err, data) {
-	if (err) return console.error(err);
-	console.log('connected');
-	var lines = data.toString().split('\n');
-	console.log(lines.length);
-	/*
-	for (var i = 0; i < lines.length - 1; i++){
-		reportData = JSON.parse(lines[i]);
-		for (var key in reportData) {
-			updateData('ReportDataByLibrary', key, reportData);
-		}
-	}
-	
-	for (var i = 0; i < lines.length - 1; i++) {
-		graphData = JSON.parse(lines[i]);
-		for (var id in graphData) {
-			updateData('GraphData', id, graphData);
-		}
-	}
-	
-	for (var i = 0; i < lines.length - 1; i++){
-		reportData = JSON.parse(lines[i]);
-		for (var IUSSWID in reportData) {
-			updateData('RNASeqQCDataByLibrary', IUSSWID, reportData);
-		}
-	}
-});
-
-
-// this is used to read json files produced by the seqware database
-fs.readFile(process.argv[12], 'utf8', function(err, data) {
-	if (err) return console.error(err);
-	console.log('connected');
-	jsonData = JSON.parse(data);
-
-	//updateSampleReceiveDatesBySampleID(jsonData);
-	//updateNumSkipSeqPerLibraryByTemplateID(jsonData);
-	updateWorkflowInfo(jsonData);
-});
-
-
-// read YAML containing info on workflows and their analysis type
-fs.readFile(process.argv[2], 'utf8', function(err, data){
-	if (err) return console.error(err);
-	console.log("reading yaml");
-	analysisYAML = YAML.parse(data);
-	//console.log(analysisYAML);
-});
-*/
 /////////////////////////////// Functions ///////////////////////////////
 
 // returns current stats such as workflow run status, total projects, total libraries
@@ -376,511 +135,1062 @@ function getLastModifiedProjects (fprData, dateRange) {
 	return returnObj;
 }
 
-// for each project, returns workflow run analysis status (complete, failed, running, cancelled) based on type of workflow
-function getAnalysisStatusAllProjects (fprData, dateRange, analysisYAML) {
-	return getAnalysisStatusAllCategory('Project', fprData, dateRange, analysisYAML);
-}
+///////////////////////////////// ProjectInfo /////////////////////////////
+// returns a list of projects and associated info
+// _id: project name
+exports.updateProjectInfo = function (sequencerData, sampleData, projectData) {
+	MongoClient.connect(url, function(err, db) {
+		var batch = db.collection('ProjectInfo').initializeUnorderedBulkOp();
+		var sampleIDInfo = getSampleIDInfo(sampleData);
+		var projectInfo = getProjectDataInfo(projectData);
+		var returnObj = {};
 
-function getAnalysisStatusByProject (analysisCategories, projectSWID) {
-	return getAnalysisStatusByCategory('Project', analysisCategories, projectSWID);
-}
+		// Get all project info
+		for (var project in projectInfo) {
+			returnObj[project] = {};
+			returnObj[project]['_id'] = project;
+			returnObj[project]['start_date'] = getDateTimeString(projectInfo[project]['Start Date']);
+			returnObj[project]['last_mod'] = getDateTimeString(projectInfo[project]['Last Modified']);
+		}
 
-// returns the donors for a specified project SWID
-exports.updateDonorsByProject = function (fprData, projectSWID) {
-	var returnObj = {};
-	returnObj[projectSWID] = {};
-	returnObj[projectSWID]['Donors'] = [];
-	returnObj[projectSWID]['Donor Totals'] = {};
-	returnObj[projectSWID]['Project Name'] = fprData['Project'][projectSWID]['Project Name'];
-	for (var donorSWID in fprData['Project'][projectSWID]['Donor']) {
-		returnObj[projectSWID]['Donors'].push(fprData['Project'][projectSWID]['Donor'][donorSWID]);
-	}
-	returnObj[projectSWID]['Donors'] = _.uniq(returnObj[projectSWID]['Donors']);
-	for (var i = 0; i < returnObj[projectSWID]['Donors'].length; i++) {
-		if (/^(.*?)_.*/.test(returnObj[projectSWID]['Donors'][i])) {
-			var match = /^(.*?)_.*/.exec(returnObj[projectSWID]['Donors'][i]);
-			var donorHead = match[1];
-
-			if (typeof returnObj[projectSWID]['Donor Totals'][donorHead] === 'undefined'){
-				returnObj[projectSWID]['Donor Totals'][donorHead] = 1;
-			} else {
-				returnObj[projectSWID]['Donor Totals'][donorHead]++;
+		// NOTE: Donors are all samples with sample_type: Identity or the first two fields in library name
+		// Get all donor info
+		for (var id in sampleIDInfo) {
+			var project = sampleIDInfo[id]['Project Name'];
+			var libraryName = sampleIDInfo[id]['Library Name'];
+			var donor;
+			if (typeof returnObj[project] !== 'undefined') {
+				if (typeof returnObj[project]['DonorInfo_id'] === 'undefined') {
+					returnObj[project]['DonorInfo_id'] = [];
+				}
+				// Get all samples with sample_type: Identity
+				if (sampleIDInfo[id]['Sample Type'] === 'Identity') {
+					if (/(.*?_.*?)_/.test(libraryName)) {
+						var match = /(.*?_.*?)_/.exec(libraryName);
+						donor = match[1];
+					} else {
+						donor = libraryName;
+					}
+				// Get all library heads
+				} else if (/(.*?_.*?)_/.test(libraryName)) {
+					var match = /(.*?_.*?)_/.exec(libraryName);
+					donor = match[1];
+				}
+				returnObj[project]['DonorInfo_id'].push(donor);
 			}
 		}
-	}
-	
-	// Update in mongodb
-	updateData('DonorsByProject', projectSWID, returnObj);
 
-	return returnObj;
-}
-
-// returns the libraries for a specified project SWID
-exports.updateLibrariesByProject = function (fprData, projectSWID) {
-	var returnObj = {};
-	returnObj[projectSWID] = {};
-	returnObj[projectSWID]['Project Name'] = fprData['Project'][projectSWID]['Project Name'];
-	returnObj[projectSWID]['Libraries'] = fprData['Project'][projectSWID]['Library'];
-	returnObj[projectSWID]['Num Libraries'] = Object.keys(fprData['Project'][projectSWID]['Library']).length;
-
-	// Update in mongodb
-	updateData('LibrariesByProject', projectSWID, returnObj);
-
-	return returnObj;
-}
-
-// for each project, returns the donor and analysis status of workflows for each run, last modified date in specified time frame
-exports.getRunDataAllProjects = function (fprData, dateFrom, dateTo, analysisYAML) {
-	var returnObj = {};
-	var dates = convertToDateObject(dateFrom, dateTo);
-	dateFrom = dates[0];
-	dateTo = dates[1];
-	
-	for (var projectSWID in fprData['Project']) {
-		var date = new Date(fprData['Project'][projectSWID]['Last Modified']);
-		if (date <= dateTo && date >= dateFrom && date !== 'undefined') {
-			returnObj[projectSWID] = {};
-			returnObj[projectSWID]['Run'] = {};
-			returnObj[projectSWID]['Last Modified'] = getDateTimeString(fprData['Project'][projectSWID]['Last Modified']);
-			returnObj[projectSWID]['Project Name'] = fprData['Project'][projectSWID]['Project Name'];
-			for (var sequencerRunSWID in fprData['Project'][projectSWID]['Run']) {
-				returnObj[projectSWID]['Run'][sequencerRunSWID] = {};
-				returnObj[projectSWID]['Run'][sequencerRunSWID]['Donor'] = {};
-				returnObj[projectSWID]['Run'][sequencerRunSWID]['Analysis Status'] = {};		
-				returnObj[projectSWID]['Run'][sequencerRunSWID]['Run Name'] = fprData['Project'][projectSWID]['Run'][sequencerRunSWID]['Run Name'];
-				// List of donors
-				for (var donor in fprData['Project'][projectSWID]['Run'][sequencerRunSWID]['Donor Name']) {
-					if (/^(.*?)_.*/.test(donor)) {
-						var match = /^(.*?)_.*/.exec(donor);
-						if (typeof returnObj[projectSWID]['Run'][sequencerRunSWID]['Donor'][match[1]] === 'undefined') {
-							returnObj[projectSWID]['Run'][sequencerRunSWID]['Donor'][match[1]] = 1;
-						} else {
-							returnObj[projectSWID]['Run'][sequencerRunSWID]['Donor'][match[1]]++;
+		// Get all library seq info
+		for (var i = 0; i < sequencerData.length; i++) {
+			// Pooled Sample
+			if (Object.prototype.toString.call(sequencerData[i].positions) === '[object Array]') {
+				for (var j = 0; j < sequencerData[i].positions.length; j++) {
+					for (var k = 0; k < sequencerData[i].positions[j].samples.length; k++) {
+						var id = sequencerData[i].positions[j].samples[k].id;
+						if (/Library Seq$/.test(sampleIDInfo[id]['Sample Type'])) {
+							var projectName = sampleIDInfo[id]['Project Name'];
+							if (typeof returnObj[projectName]['LibraryInfo_id'] === 'undefined') {
+								returnObj[projectName]['LibraryInfo_id'] = [];
+								//returnObj[projectName]['library_names'] = [];
+								returnObj[projectName]['RunInfo_id'] = [];
+							}
+							returnObj[projectName]['LibraryInfo_id'].push(sequencerData[i].name + '||' + sequencerData[i].positions[j].position + '||' + id); // uniq template (library seq)
+							returnObj[projectName]['RunInfo_id'].push(sequencerData[i].name);
+							//returnObj[projectName]['library_names'].push(sampleIDInfo[id]['Library Name']);
 						}
 					}
 				}
-				
-				// List of analysis types and status count
-				for (var workflowSWID in fprData['Project'][projectSWID]['Run'][sequencerRunSWID]['Workflow']) {
-					for (var analysisType in analysisYAML) {
-						if (typeof returnObj[projectSWID]['Run'][sequencerRunSWID]['Analysis Status'][analysisType] === 'undefined') {
-							returnObj[projectSWID]['Run'][sequencerRunSWID]['Analysis Status'][analysisType] = {};
-						}
-						if (fprData['Project'][projectSWID]['Run'][sequencerRunSWID]['Workflow'][workflowSWID]['Workflow Name'] in analysisYAML[analysisType]) {
-							if (typeof returnObj[projectSWID]['Run'][sequencerRunSWID]['Analysis Status'][analysisType][fprData['Project'][projectSWID]['Run'][sequencerRunSWID]['Workflow'][workflowSWID]['Status']] === 'undefined') {
-								returnObj[projectSWID]['Run'][sequencerRunSWID]['Analysis Status'][analysisType][fprData['Project'][projectSWID]['Run'][sequencerRunSWID]['Workflow'][workflowSWID]['Status']] = 1;
+
+			// Single Sample
+			} else if (typeof sequencerData[i].positions !== 'undefined') {
+				var id = sequencerData[i].positions.id;
+				var projectName = sampleIDInfo[id]['Library Name'];
+				if (typeof returnObj[projectName] === 'undefined') {
+					returnObj[projectName]['LibraryInfo_id'] = [];
+					//returnObj[projectName]['library_names'] = [];
+					returnObj[projectName]['RunInfo_id'] = [];
+				}
+				returnObj[projectName]['LibraryInfo_id'].push(sequencerData[i].name + '||' + sequencerData[i].positions[j].position + '||' + id); // uniq template (library seq)
+				returnObj[projectName]['RunInfo_id'].push(sequencerData[i].name);
+				//returnObj[projectName]['library_names'].push(sampleIDInfo[id]['Library Name']);
+
+				// no samples (some failed runs)
+			} else {
+				//console.log(sequencerData[i]);
+			}
+		}
+
+		// Get library, run, donor totals and remove duplicates
+		for (var project in returnObj) {
+			if (typeof returnObj[project]['RunInfo_id'] !== 'undefined') {
+				returnObj[project]['RunInfo_id'] = _.uniq(returnObj[project]['RunInfo_id']);
+				returnObj[project]['num_runs'] = returnObj[project]['RunInfo_id'].length;
+			} else {
+				returnObj[project]['num_runs'] = 0;
+			}
+			if (typeof returnObj[project]['LibraryInfo_id'] !== 'undefined') {
+				//returnObj[project]['LibraryInfo_id'] = _.uniq(returnObj[project]['LibraryInfo_id']);
+				//returnObj[project]['library_names'] = _.uniq(returnObj[project]['library_names']);
+				returnObj[project]['num_libraries'] = returnObj[project]['LibraryInfo_id'].length;
+			} else {
+				returnObj[project]['num_libraries'] = 0;
+			}
+			if (typeof returnObj[project]['DonorInfo_id'] !== 'undefined') {
+				returnObj[project]['donor_totals'] = {};
+				returnObj[project]['DonorInfo_id'] = _.uniq(returnObj[project]['DonorInfo_id']);
+				returnObj[project]['num_donors'] = returnObj[project]['DonorInfo_id'].length;
+			} else { 
+				returnObj[project]['num_donors'] = 0;
+			}
+			for (var j = 0; j < returnObj[project]['DonorInfo_id'].length; j++) {
+				var donor = returnObj[project]['DonorInfo_id'][j];
+				if(/(.*?)_/.test(donor)) {
+					var match = /(.*?)_/.exec(donor);
+					var donorHead = match[1];
+					if (typeof returnObj[project]['donor_totals'][donorHead] === 'undefined') {
+						returnObj[project]['donor_totals'][donorHead] = 1;
+					} else {
+						returnObj[project]['donor_totals'][donorHead]++;
+					}
+				}
+			}
+			batch.find({_id: project}).upsert().updateOne(returnObj[project]);
+		}
+		batch.execute(function(err, result) {
+			if (err) console.dir(err);
+			db.close();
+		});
+	});
+}
+
+///////////////////////////////// RunInfo /////////////////////////////////////////
+// returns a list of runs and associated info
+// _id: run name
+exports.updateRunInfo = function (sequencerData, sampleData) {
+	MongoClient.connect(url, function(err, db) {
+		var batch = db.collection('RunInfo').initializeUnorderedBulkOp();
+		var sampleIDInfo = getSampleIDInfo(sampleData);
+
+		for (var i = 0; i < sequencerData.length; i++) {
+			var returnObj = {};
+			returnObj['_id'] = sequencerData[i].name;
+			returnObj['start_date'] = getDateTimeString(sequencerData[i].created_date);
+			returnObj['status'] = sequencerData[i].state;
+			returnObj['LibraryInfo_id'] = [];
+			// Pooled Sample
+			if (Object.prototype.toString.call(sequencerData[i].positions) === '[object Array]') {
+				returnObj['library_types'] = {};
+				returnObj['tissue_types'] = {};
+				returnObj['library_totals'] = {};
+				returnObj['donors'] = {};
+				returnObj['donor_totals'] = {};
+				returnObj['libraries'] = []
+				returnObj['projects'] = {};
+				for (var j = 0; j < sequencerData[i].positions.length; j++) {
+					for (var k = 0; k < sequencerData[i].positions[j].samples.length; k++) {
+						var id = sequencerData[i].positions[j].samples[k].id;
+						if (/Library Seq$/.test(sampleIDInfo[id]['Sample Type'])) {
+							var libraryName = sampleIDInfo[id]['Library Name'];
+							if (/.*_(.*?)$/.test(libraryName)) {
+								var match = /.*_(.*?)$/.exec(libraryName);
+								if (typeof returnObj['library_types'][match[1]] === 'undefined'){
+									returnObj['library_types'][match[1]] = 1;
+								} else {
+									returnObj['library_types'][match[1]]++;
+								}
+							}
+							if (/.*?_.*?_.*?_(.*?)_/.test(libraryName)) {
+								var match = /.*?_.*?_.*?_(.*?)_/.exec(libraryName);
+								if (typeof returnObj['tissue_types'][match[1]] === 'undefined') {
+									returnObj['tissue_types'][match[1]] = 1;						
+								} else {
+									returnObj['tissue_types'][match[1]]++;
+								}
+							}
+							if (/(.*?)_/.test(libraryName)) {
+								var match = /(.*?)_/.exec(libraryName);
+								if (typeof returnObj['library_totals'][match[1]] === 'undefined') {
+									returnObj['library_totals'][match[1]] = 1;
+								} else {
+									returnObj['library_totals'][match[1]]++;
+								}
+							}
+							// Determine donors
+							var donor;
+							if (sampleIDInfo[id]['Sample Type'] === 'Identity') {
+								if (/(.*?_.*?)_/.test(libraryName)) {
+									var match = /(.*?_.*?)_/.exec(libraryName);
+									donor = match[1];
+								} else {
+									donor = libraryName;
+								}
+							} else if (/(.*?_.*?)_/.test(libraryName)) {
+								var match = /(.*?_.*?)_/.exec(libraryName);
+								donor = match[1];
+							}
+							if (typeof donor !== 'undefined') {
+								if (typeof returnObj['donors'][donor] === 'undefined') {
+									returnObj['donors'][donor] = 1;
+								} else {
+									returnObj['donors'][donor]++;
+								}	
+							}
+
+							//Determine projects
+							var project = sampleIDInfo[id]['Project Name'];
+							if (typeof returnObj['projects'][project] === 'undefined') {
+								returnObj['projects'][project] = 1;
 							} else {
-								returnObj[projectSWID]['Run'][sequencerRunSWID]['Analysis Status'][analysisType][fprData['Project'][projectSWID]['Run'][sequencerRunSWID]['Workflow'][workflowSWID]['Status']]++;
+								returnObj['projects'][project]++;
+							}
+							returnObj['LibraryInfo_id'].push(sequencerData[i].name + '||' + sequencerData[i].positions[j].position + '||' + id);
+							returnObj['libraries'].push(libraryName);
+						}
+					}
+				}
+			// Single Sample
+			} else if (typeof sequencerData[i].positions !== 'undefined') {
+				returnObj['library_types'] = {};
+				returnObj['tissue_types'] = {};
+				returnObj['library_totals'] = {};
+				returnObj['donors'] = {};
+				returnObj['donor_totals'] = {};
+				returnObj['libraries'] = [];
+				returnObj['projects'] = {};
+				var id = sequencerData[i].positions.id;
+				if (/Library Seq$/.test(sampleIDInfo[id]['Sample Type'])) {
+					var libraryName = sampleIDInfo[id]['Library Name'];
+					if (/.*_(.*?)$/.test(libraryName)) {
+						var match = /.*_(.*?)$/.exec(libraryName);
+						if (typeof returnObj['library_types'][match[1]] === 'undefined'){
+							returnObj['library_types'][match[1]] = 1;
+						} else {
+							returnObj['library_types'][match[1]]++;
+						}
+					}
+					if (/.*?_.*?_.*?_(.*?)_/.test(libraryName)) {
+						var match = /.*?_.*?_.*?_(.*?)_/.exec(libraryName);
+						if (typeof returnObj['tissue_types'][match[1]] === 'undefined') {
+							returnObj['tissue_types'][match[1]] = 1;						
+						} else {
+							returnObj['tissue_types'][match[1]]++;
+						}
+					}
+					if (/(.*?)_/.test(libraryName)) {
+						var match = /(.*?)_/.exec(libraryName);
+						if (typeof returnObj['library_totals'][match[1]] === 'undefined') {
+							returnObj['library_totals'][match[1]] = 1;
+						} else {
+							returnObj['library_totals'][match[1]]++;
+						}
+					}
+
+					// Determine donor
+					var donor;
+					if (sampleIDInfo[id]['Sample Type'] === 'Identity') {
+						if (/(.*?_.*?)_/.test(libraryName)) {
+							var match = /(.*?_.*?)_/.exec(libraryName);
+							donor = match[1];
+						} else {
+							donor = libraryName;
+						}
+					} else if (/(.*?_.*?)_/.test(libraryName)) {
+						var match = /(.*?_.*?)_/.exec(libraryName);
+						donor = match[1];
+					}
+					if (typeof donor !== 'undefined') {
+						if (typeof returnObj['donors'][donor] === 'undefined') {
+							returnObj['donors'][donor] = 1;
+						} else {
+							returnObj['donors'][donor]++;
+						}	
+					}
+
+					//Determine projects
+					var project = sampleIDInfo[id]['Project Name'];
+					if (typeof returnObj['projects'][project] === 'undefined') {
+						returnObj['projects'][project] = 1;
+					} else {
+						returnObj['projects'][project]++;
+					}
+					returnObj['LibraryInfo_id'].push(sequencerData[i].name + '||' + sequencerData[i].positions[j].position + '||' + id);
+					returnObj['libraries'].push(libraryName);
+				}
+				// no samples (some failed runs)
+			} else {
+				//console.log(sequencerData[i]);
+			}
+			// Number of donors by project (donor totals)
+			for (var donor in returnObj['donors']) {
+				if(/(.*?)_/.test(donor)) {
+					var match = /(.*?)_/.exec(donor);
+					var donorHead = match[1];
+					if (typeof returnObj['donor_totals'][donorHead] === 'undefined') {
+						returnObj['donor_totals'][donorHead] = 1;
+					} else {
+						returnObj['donor_totals'][donorHead]++;
+					}
+				}
+			}
+			returnObj['num_libraries'] = returnObj['LibraryInfo_id'].length;
+			batch.find({_id: returnObj['_id']}).upsert().updateOne(returnObj);
+		}
+		batch.execute(function(err, result) {
+			if (err) console.dir(err);
+			db.close();
+		});
+	});
+}
+
+///////////////////////////////// DonorInfo //////////////////////////////////////////
+// returns a list of donors heads and associated info
+// _id: donor head
+// TODO: start date, end date
+exports.updateDonorInfo = function (sequencerData, sampleData) {
+	MongoClient.connect(url, function(err, db) {
+		var batch = db.collection('DonorInfo').initializeUnorderedBulkOp();
+		var sampleIDInfo = getSampleIDInfo(sampleData);
+		var returnObj = {};
+
+		// Get all the donors (even if samples don't exist -> identity)
+		for (var id in sampleIDInfo) {
+			var donor;
+			// Get all samples with sample_type: Identity
+			if (sampleIDInfo[id]['Sample Type'] === 'Identity') {
+				if (/(.*?_.*?)_/.test(sampleIDInfo[id]['Library Name'])) {
+					var match = /(.*?_.*?)_/.exec(sampleIDInfo[id]['Library Name']);
+					donor = match[1];
+				} else {
+					donor = sampleIDInfo[id]['Library Name'];
+				}
+			// Get all library heads
+			} else if (/(.*?_.*?)_/.test(sampleIDInfo[id]['Library Name'])) {
+				var match = /(.*?_.*?)_/.exec(sampleIDInfo[id]['Library Name']);
+				donor = match[1];
+			}
+			if (typeof donor !== 'undefined') {
+				returnObj[donor] = {};
+				returnObj[donor]['_id'] = donor;
+			}
+		}
+
+		// Get all libraries per donor
+		for (var i = 0; i < sequencerData.length; i++) {
+			// Pooled Sample
+			if (Object.prototype.toString.call(sequencerData[i].positions) === '[object Array]') {
+				for (var j = 0; j < sequencerData[i].positions.length; j++) {
+					for (var k = 0; k < sequencerData[i].positions[j].samples.length; k++) {
+						var id = sequencerData[i].positions[j].samples[k].id;
+						if (/Library Seq$/.test(sampleIDInfo[id]['Sample Type'])) {
+							if (/(.*?_.*?)_/.test(sampleIDInfo[id]['Library Name'])) {
+								var match = /(.*?_.*?)_/.exec(sampleIDInfo[id]['Library Name']);
+								var donor = match[1];
+								if (typeof returnObj[donor]['LibraryInfo_id'] === 'undefined') {
+									returnObj[donor]['LibraryInfo_id'] = [];
+									returnObj[donor]['libraries'] = [];
+								}
+								returnObj[donor]['LibraryInfo_id'].push(sequencerData[i].name + '||' + sequencerData[i].positions[j].position + '||' + id);
+								returnObj[donor]['libraries'].push(sampleIDInfo[id]['Library Name']);
+								if (typeof sampleIDInfo[donor] !== 'undefined') {
+									returnObj[donor]['institute'] = sampleIDInfo[donor]['Institute'];
+								}
+								returnObj[donor]['status'] = sequencerData[i].state;
+							}
+						}
+						if (typeof sampleIDInfo[id]['External Name'] !== 'undefined') {
+							if (/(.*?_.*?)_/.test(sampleIDInfo[id]['Library Name'])) {
+								var match = /(.*?_.*?)_/.exec(sampleIDInfo[id]['Library Name']);
+								var donor = match[1];
+								returnObj[donor]['external_name'] = sampleIDInfo[id]['External Name'];
+							}
+						}
+					}
+				}
+			} else if (typeof sequencerData[i].positions !== 'undefined') {
+				var id = sequencerData[i].positions.id;
+				if (/Library Seq$/.test(sampleIDInfo[id]['Sample Type'])) {
+					if (/(.*?_.*?)_/.test(sampleIDInfo[id]['Library Name'])) {
+						var match = /(.*?_.*?)_/.exec(sampleIDInfo[id]['Library Name']);
+						var donor = match[1];
+						if (typeof returnObj[donor]['LibraryInfo_id'] === 'undefined') {
+							returnObj[donor]['LibraryInfo_id'] = [];
+							returnObj[donor]['libraries'] = [];
+						}
+						returnObj[donor]['LibraryInfo_id'].push(sequencerData[i].name + '||' + sequencerData[i].positions[j].position + '||' + id);
+						returnObj[donor]['libraries'].push(sampleIDInfo[id]['Library Name']);
+						if (typeof sampleIDInfo[donor] !== 'undefined') {
+							returnObj[donor]['institute'] = sampleIDInfo[donor]['Institute'];
+						}
+						returnObj[donor]['status'] = sequencerData[i].state;
+					}
+				}
+				if (typeof sampleIDInfo[id]['External Name'] !== 'undefined') {
+					if (/(.*?_.*?)_/.test(sampleIDInfo[id]['Library Name'])) {
+						var match = /(.*?_.*?)_/.exec(sampleIDInfo[id]['Library Name']);
+						var donor = match[1];
+						returnObj[donor]['external_name'] = sampleIDInfo[id]['External Name'];
+					}
+				}
+			}
+		}
+
+		// Get all library info for donor
+		for (var donor in returnObj) {
+			if (typeof returnObj[donor]['libraries'] !== 'undefined') {
+				returnObj[donor]['library_total'] = returnObj[donor]['LibraryInfo_id'].length;
+				for (var i = 0; i < returnObj[donor]['libraries'].length; i++) {
+					//Determine number of library types
+					if (/.*_(.*?)$/.test(returnObj[donor]['libraries'][i])) {
+						if (typeof returnObj[donor]['library_types'] === 'undefined') {
+							returnObj[donor]['library_types'] = {};
+						}
+						var match = /.*_(.*?)$/.exec(returnObj[donor]['libraries'][i]);
+						var libraryType = match[1];
+						if (typeof returnObj[donor]['library_types'][libraryType] === 'undefined') {
+							returnObj[donor]['library_types'][libraryType] = 1;
+						} else {
+							returnObj[donor]['library_types'][libraryType]++;
+						}
+					}
+					// Determine number of tissue types
+					if (/.*?_.*?_.*?_(.?)/.test(returnObj[donor]['libraries'][i])) {
+						if (typeof returnObj[donor]['tissue_types'] === 'undefined') {
+							returnObj[donor]['tissue_types'] = {};
+						}
+						var match = /.*?_.*?_.*?_(.?)/.exec(returnObj[donor]['libraries'][i]);
+						var tissueType = match[1];
+						if (typeof returnObj[donor]['tissue_types'][tissueType] === 'undefined') {
+							returnObj[donor]['tissue_types'][tissueType] = 1;
+						} else {
+							returnObj[donor]['tissue_types'][tissueType]++;
+						}
+					}	
+				}
+			} else {
+				returnObj[donor]['library_total'] = 0;
+				returnObj[donor]['library_types'] = 'n/a';
+				returnObj[donor]['tissue_types'] = 'n/a';
+			}
+			
+			batch.find({_id: donor}).upsert().updateOne(returnObj[donor]);
+		}
+		batch.execute(function(err, result) {
+			if (err) console.dir(err);
+			db.close();
+		});
+	});
+}
+
+///////////////////////////////// LibraryInfo /////////////////////////////////
+// Updates library information mongodb and inserts if it isn't in the collection
+// _id: library_id (run.name-lane-template.id)
+exports.updateLibraryInfo = function (sequencerData, sampleData) {
+	MongoClient.connect(url, function(err, db) {
+		var batch = db.collection('LibraryInfo').initializeUnorderedBulkOp();
+		var sampleIDInfo = getSampleIDInfo(sampleData);
+		var sampleDateInfo = getLibraryCreatePrepDates(sampleData);
+		var libraries = {};
+
+		for (var i = 0; i < sequencerData.length; i++) {
+			if (Object.prototype.toString.call(sequencerData[i].positions) === '[object Array]') {
+				for (var j = 0; j < sequencerData[i].positions.length; j++) {
+					for (var k = 0; k < sequencerData[i].positions[j].samples.length; k++) {
+						var id = sequencerData[i].positions[j].samples[k].id;
+						var _id = sequencerData[i].name + '||' + sequencerData[i].positions[j].position + '||' + id;
+						if (/Library Seq$/.test(sampleIDInfo[id]['Sample Type'])) {
+							var libraryName = sampleIDInfo[id]['Library Name'];
+							libraries[_id] = {};
+							libraries[_id]._id = _id;
+							libraries[_id].template_id = id;
+							libraries[_id].library_name = sampleIDInfo[id]['Library Name'];
+							libraries[_id].ProjectInfo_id = sampleIDInfo[id]['Project Name'];
+							libraries[_id].RunInfo_id = sequencerData[i].name;
+							libraries[_id].lane = sequencerData[i].positions[j].position;
+							libraries[_id].status = sequencerData[i].state;
+							if (typeof sampleDateInfo[id] !== 'undefined') {
+								libraries[_id].create_date = sampleDateInfo[id]['create_date'];
+								libraries[_id].prep_date = sampleDateInfo[id]['prep_date'];
+							} else {
+								libraries[_id].create_date = 'n/a';
+								libraries[_id].prep_date = 'n/a';
+							}
+
+
+							if (/^.*?_.*?_.*?_.*?_.*?_.*?_.*?[^_]$/.test(libraryName)) {
+								if (/.*_(.*?)$/.test(libraryName)) {
+								var match = /.*_(.*?)$/.exec(libraryName);
+								libraries[_id].library_type = match[1];
+								}
+								if (/.*?_.*?_.*?_(.*?)_/.test(libraryName)) {
+									var match = /.*?_.*?_.*?_(.*?)_/.exec(libraryName);
+									libraries[_id].tissue_type = match[1];
+								}
+							}
+							// Assume all samples come from the same donor
+							if (/(.*?_.*?)_/.test(sampleIDInfo[id]['Library Name'])) {
+								var match = /(.*?_.*?)_/.exec(sampleIDInfo[id]['Library Name']);
+								var donor = match[1];
+								libraries[_id].DonorInfo_id = donor;
+								if (typeof sampleIDInfo[donor] !== 'undefined') {
+									if (typeof sampleIDInfo[donor]['Institute'] !== 'undefined') {
+										libraries[_id].institute = sampleIDInfo[donor]['Institute'];
+									} else {
+										libraries[_id].institute = 'n/a';
+									}
+									if (typeof sampleIDInfo[donor]['Tissue Origin'] !== 'undefined') {
+										libraries[_id].tissue_origin = sampleIDInfo[donor]['Tissue Origin'];
+									} else {
+										libraries[_id].tissue_origin = 'n/a';
+									}
+								}
+							}
+
+							if (typeof sequencerData[i].positions[j].samples[k].barcode !== 'undefined') {
+								libraries[_id].barcode = sequencerData[i].positions[j].samples[k].barcode;
+							} else {
+								libraries[_id].barcode = 'noIndex';
+							}
+						}
+					}
+				}
+			} else if (typeof sequencerData[i].positions !== 'undefined') {
+				var id = sequencerData[i].positions.id;
+				var _id = sequencerData[i].name + '||' + sequencerData[i].positions[j].position + '||' + id;
+				if (/Library Seq$/.test(sampleIDInfo[id]['Sample Type'])) {
+					var libraryName = sampleIDInfo[id]['Library Name'];
+					libraries[_id] = {};
+					libraries[_id]._id = _id;
+					libraries[_id].template_id = id;
+					libraries[_id].library_name = libraryName;
+					libraries[_id].ProjectInfo_id = sampleIDInfo[id]['Project Name'];
+					libraries[_id].RunInfo_id = sequencerData[i].name;
+					libraries[_id].lane = sequencerData[i].positions.position;
+					libraries[_id].status = sequencerData[i].state;
+					if (typeof sampleDateInfo[id] !== 'undefined') {
+						libraries[_id].create_date = sampleDateInfo[id]['create_date'];
+						libraries[_id].prep_date = sampleDateInfo[id]['prep_date'];
+					} else {
+						libraries[_id].create_date = 'n/a';
+						libraries[_id].prep_date = 'n/a';
+					}
+
+					if (/^.*?_.*?_.*?_.*?_.*?_.*?_.*?[^_]$/.test(libraryName)) {
+						if (/.*_(.*?)$/.test(libraryName)) {
+						var match = /.*_(.*?)$/.exec(libraryName);
+						libraries[_id].library_type = match[1];
+						}
+						if (/.*?_.*?_.*?_(.*?)_/.test(libraryName)) {
+							var match = /.*?_.*?_.*?_(.*?)_/.exec(libraryName);
+							libraries[_id].tissue_type = match[1];
+						}
+					}
+					
+					// Assume all samples come from the same donor
+					if (/(.*?_.*?)_/.test(sampleIDInfo[id]['Library Name'])) {
+						var match = /(.*?_.*?)_/.exec(sampleIDInfo[id]['Library Name']);
+						var donor = match[1];
+						libraries[_id].DonorInfo_id = donor;
+						if (typeof sampleIDInfo[donor] !== 'undefined') {
+							if (typeof sampleIDInfo[donor]['Institute'] !== 'undefined') {
+								libraries[_id].institute = sampleIDInfo[donor]['Institute'];
+							} else {
+								libraries[_id].institute = 'n/a';
+							}
+							if (typeof sampleIDInfo[donor]['Tissue Origin'] !== 'undefined') {
+								libraries[_id].tissue_origin = sampleIDInfo[donor]['Tissue Origin'];
+							} else {
+								libraries[_id].tissue_origin = 'n/a';
+							}
+						}
+					}
+
+					if (typeof sequencerData[i].positions.barcode !== 'undefined') {
+						libraries[_id].barcode = sequencerData[i].positions.barcode;
+					} else {
+						libraries[_id].barcode = 'noIndex';
+					}
+				}
+			}
+		}
+		for (var id in libraries) {
+			batch.find({_id: id}).upsert().updateOne(libraries[id]);
+		}
+		batch.execute(function(err, result) {
+			if (err) console.dir(err);
+			db.close();
+		});
+	});
+}
+
+// Updates the sample prep and library creation dates by template ID
+function getLibraryCreatePrepDates(sampleData) {
+	var IUSsampleObj = {};
+	var parentObj = {};
+	var returnObj = {};
+
+	for (var i = 0; i < sampleData.length; i++) {
+		var id = sampleData[i].id;
+		// If the sample name is affiliated and doesn't have children, get the parents (this is for IUS Sample Parents)
+		if (/Library Seq$/.test(sampleData[i].sample_type) && typeof sampleData[i].parents !== 'undefined') { 
+			IUSsampleObj[id] = {};
+			IUSsampleObj[id]['IUS Sample Name'] = sampleData[i].name;
+			IUSsampleObj[id]['Create Date'] = getDateTimeString(sampleData[i].created_date);
+
+			if (/\/(\d*)$/.test(sampleData[i].parents[0])) {
+				var match = /\/(\d*)$/.exec(sampleData[i].parents[0]);
+				IUSsampleObj[id]['Parent ID'] = match[1];
+			}
+		} else {
+			parentObj[id] = {};
+			parentObj[id]['Parent Library Name'] = sampleData[i].name;
+			parentObj[id]['Create Date'] = getDateTimeString(sampleData[i].created_date);
+			parentObj[id]['Sample Type'] = sampleData[i].sample_type;
+			if (typeof sampleData[i].parents !== 'undefined') {
+				if (/\/(\d*)$/.test(sampleData[i].parents[0])) {
+					var match = /\/(\d*)$/.exec(sampleData[i].parents[0]);
+					parentObj[id]['Parent ID'] = match[1];
+				}
+			} else {
+				parentObj[id]['Parent ID'] = 'Identity';
+			}
+		}
+	}
+
+	// Check if IUS library seq parent is the sample right before the IUS library in the sample hierarchy
+	// Library Date
+	for (var id in IUSsampleObj) {
+		var parentID = IUSsampleObj[id]['Parent ID'];
+		returnObj[id] = {};
+		//returnObj[id]['name'] = IUSsampleObj[id]['IUS Sample Name'];
+		if (typeof parentObj[parentID] === 'undefined') { // If the parent is from an IUS sample
+			returnObj[id]['create_date'] = IUSsampleObj[parentID]['Create Date'];
+			parentID = IUSsampleObj[parentID]['Parent ID'];
+		} else {
+			returnObj[id]['create_date'] = parentObj[parentID]['Create Date'];
+		}
+		// Determine Prep date by climbing up sample hierarchy
+		if (parentObj[parentID]['Parent ID'] === 'Identity') {
+			returnObj[id]['prep_date'] = parentObj[parentID]['Create Date'];
+		} else {
+			// Keep iterating through hierarchy until the sample type does not end with 'Library'
+			while (/Library$/.test(parentObj[parentID]['Sample Type']) && parentObj[parentID]['Parent ID'] !== 'Identity') {
+				parentID = parentObj[parentID]['Parent ID'];
+				//console.log(parentObj[parentID]);
+			}
+			returnObj[id]['prep_date'] = parentObj[parentID]['Create Date'];
+		}
+	}
+
+	return returnObj;
+}
+
+// Maybe merge the query for sample receive dates with num skip (below)
+// TODO: Fix the query
+function updateSampleReceiveDatesBySampleID(jsonData) {
+	for (var i = 0; i < jsonData.length; i++) {
+		if (/(.*?_.*?_.*?_.?)/.test(jsonData[i].name) && /_1$/.test(jsonData[i].name)) {
+			var match = /(.*?_.*?_.*?_.?)/.exec(jsonData[i].name);
+			jsonData[i].head = match[1];
+			updateDataField('SampleReceiveDatesBySampleTemplateID', jsonData[i].value, jsonData[i]);
+		}
+	}
+}
+
+// TODO: Make it for library_id, but need to fix the seqware db query
+function updateNumSkipSeqPerLibraryByTemplateID(jsonData) {
+	var obj = {};
+	for (var i = 0; i < jsonData.length; i++) {
+		if (typeof obj[jsonData[i].template_id] === 'undefined') {
+			obj[jsonData[i].template_id] = {};
+			obj[jsonData[i].template_id]['skip'] = 0;
+		}
+		if (jsonData[i].skip == true) {
+			if (typeof obj[jsonData[i].template_id]['skip_libraries'] === 'undefined') {
+				obj[jsonData[i].template_id]['skip_libraries'] = [];
+			}
+			obj[jsonData[i].template_id]['skip_libraries'].push(jsonData[i].run_lane);
+			obj[jsonData[i].template_id]['skip']++;
+		}
+	}
+	for (var id in obj) {
+		var setMod = { $set: obj[id] }
+		updateDataField('LibraryInfo', {template_id: id}, setMod);
+	}
+}
+
+///////////////////////////////// WorkflowInfo /////////////////////////////////
+// Takes in data from seqware database and updates mongodb
+// _id: workflowSWID
+exports.updateWorkflowInfo = function (jsonData, analysisYAML) {
+	MongoClient.connect(url, function(err, db) {
+		var libBatch = db.collection('LibraryInfo').initializeUnorderedBulkOp();
+		var runBatch = db.collection('RunInfo').initializeUnorderedBulkOp();
+		var dateBatch = db.collection('DateInfo').initializeUnorderedBulkOp();
+		var wfBatch = db.collection('WorkflowInfo').initializeUnorderedBulkOp();
+
+		var analysisStatus = {};
+		var runAnalysisStatus = {};
+		var dateObj = {};
+
+		for (var i = 0; i < jsonData.length; i++) {
+			// Update WorkflowInfo
+			var workflowName = jsonData[i].name;
+			var WorkflowInfo_id = parseInt(jsonData[i]._id);
+			for (var analysisType in analysisYAML) {
+				if (workflowName in analysisYAML[analysisType]) {
+					jsonData[i].analysis_type = analysisType;
+				}
+			}
+			jsonData[i].create_tstmp = getDateTimeString(jsonData[i].create_tstmp);
+			jsonData[i].last_modified = getDateTimeString(jsonData[i].last_modified);
+			wfBatch.find({'_id':jsonData[i]._id}).upsert().updateOne(jsonData[i]);
+
+			// Update workflows, libraries, runs for each date
+			if (/(.*?) /.test(jsonData[i].last_modified)) {
+				var dates = /(.*?) /.exec(jsonData[i].last_modified);
+				var date = dates[1];
+				if (typeof dateObj[date] === 'undefined') {
+					dateObj[date] = {};
+					dateObj[date]._id = date;
+					dateObj[date].LibraryInfo_id = [];
+					dateObj[date].RunInfo_id = [];
+				}
+				dateObj[date].RunInfo_id = dateObj[date].RunInfo_id.concat(jsonData[i].sequencer_run_names);
+				for (var j = 0; j < jsonData[i].library_id.length; j++) {
+					var seq = /(.*?\|\|.*?\|\|.*?)\|\|.*?$/.exec(jsonData[i].library_id[j]);
+					var librarySeq_id = seq[1];
+					dateObj[date]['LibraryInfo_id'].push(librarySeq_id);
+				}
+			}
+			for (var j = 0; j < jsonData[i].library_id.length; j++) {
+				// Parse out ids from library_id
+				var match = /((.*?)\|\|.*?\|\|.*?)\|\|(.*?)$/.exec(jsonData[i].library_id[j]);
+				var librarySeq_id = match[1];
+				var runName = match[2];
+				var iusswid = match[3];
+
+				// Update workflow info library ids to library seq ids
+				jsonData[i].library_id[j] = librarySeq_id;
+
+				//updateDataField('WorkflowIdLookup', {_id: idObj._id}, idObj); // Just add all workflow ids to the sample (statement below)
+				// Nevermind, can't use these iusswids because only for libraries with workflows 
+				//TODO? COMMENT IT OUT?
+
+				// Update workflows for each library id
+				if (typeof analysisStatus[librarySeq_id] === 'undefined') {
+					analysisStatus[librarySeq_id] = {};
+					analysisStatus[librarySeq_id]['WorkflowInfo_id'] = [];
+					analysisStatus[librarySeq_id]['iusswid'] = iusswid;
+				}
+				analysisStatus[librarySeq_id]['WorkflowInfo_id'].push(WorkflowInfo_id);
+
+				if (jsonData[i].status !== 'submitted_cancel') {
+					if (typeof analysisStatus[librarySeq_id]['analysis_total'] === 'undefined') {
+						analysisStatus[librarySeq_id]['analysis_total'] = {};
+					}
+					for (var analysisType in analysisYAML) {
+						if (workflowName in analysisYAML[analysisType]) {
+							// Sample
+							if (typeof analysisStatus[librarySeq_id]['analysis_total'][analysisType] === 'undefined') {
+								analysisStatus[librarySeq_id]['analysis_total'][analysisType] = {};
+							}
+							if (typeof analysisStatus[librarySeq_id]['analysis_total'][analysisType][jsonData[i].status] === 'undefined') {
+								analysisStatus[librarySeq_id]['analysis_total'][analysisType][jsonData[i].status] = 1;
+							} else {
+								analysisStatus[librarySeq_id]['analysis_total'][analysisType][jsonData[i].status]++;	
+							}
+						}
+					}
+				}
+			}
+			// Update Run Analysis totals
+			for (var j = 0; j < jsonData[i].sequencer_run_names.length; j++) {
+				var runName = jsonData[i].sequencer_run_names[j];
+				if (jsonData[i].status !== 'submitted_cancel') {
+					for (var analysisType in analysisYAML) {
+						if (workflowName in analysisYAML[analysisType]) {
+							if (typeof runAnalysisStatus[runName] === 'undefined') {
+								runAnalysisStatus[runName] = {};
+							}
+							if (typeof runAnalysisStatus[runName][analysisType] === 'undefined') {
+								runAnalysisStatus[runName][analysisType] = {};
+							}
+							if (typeof runAnalysisStatus[runName][analysisType][jsonData[i].status] === 'undefined') {
+								runAnalysisStatus[runName][analysisType][jsonData[i].status] = 1;
+							} else {
+								runAnalysisStatus[runName][analysisType][jsonData[i].status]++;	
 							}
 						}
 					}
 				}
 			}
 		}
-		returnObj[projectSWID]['Num of Runs'] = Object.keys(returnObj[projectSWID]['Run']).length;
-	}
-	
-	return returnObj;
-}
 
-// takes in run data from getRunDataAllProjects
-exports.updateRunDataByProject = function (runData, projectSWID) {
-	var returnObj = {};
-	returnObj[projectSWID] = runData[projectSWID];
-
-	// Update in mongodb
-	updateData('RunDataByProject', projectSWID, returnObj);
-
-	return returnObj;
-}
-
-function updateProjectAcronym (fprData) {
-	var projObj = {};
-	projObj['4'] = {};
-	projObj['4']['Project Name'] = 'ICGCPancreaticCancerSeq';
-	for (var projectSWID in fprData['Project']) {
-		console.log(projectSWID);
-		console.log(fprData['Project'][projectSWID]['Project Name']);
-	}
-}
-
-//// By Run
-
-// for each run, returns a list of libraries and their SWID
-exports.getRunInfo = function (fprData) {
-	var returnObj = {};
-	
-	for (var runSWID in fprData['Run']) {
-		returnObj[runSWID] = {};
-		returnObj[runSWID]['Library Totals'] = {};
-		returnObj[runSWID]['Donors'] = {};
-		returnObj[runSWID]['Donor Totals'] = {};
-		returnObj[runSWID]['Tissue Types'] = {};
-		returnObj[runSWID]['Library Types'] = {};
-		returnObj[runSWID]['Libraries'] = {};
-		returnObj[runSWID]['Run Name'] = fprData['Run'][runSWID]['Run Name'];
-		for (var IUSSWID in fprData['Run'][runSWID]['Library']) {
-			returnObj[runSWID]['Libraries'][IUSSWID] = fprData['Run'][runSWID]['Library'][IUSSWID]['Library Name'];
+		// Sets the analysis status of workflows totals in LibraryInfo collection
+		for (var librarySeq_id in analysisStatus) {
+			var setMod = { $set:{} };
+			setMod.$set = analysisStatus[librarySeq_id];
+			console.log(setMod);
+			libBatch.find({_id: librarySeq_id}).upsert().updateOne(setMod);
 		}
-		returnObj[runSWID]['Num of libraries'] = Object.keys(returnObj[runSWID]['Libraries']).length;
-	}
 
-	// Determine library totals, tissue type totals, library type totals
-	for (var runSWID in returnObj) {
-		for (var IUSSWID in returnObj[runSWID]['Libraries']) {
-			if (/(.*?)_/.test(returnObj[runSWID]['Libraries'][IUSSWID])) {
-				var match = /(.*?)_/.exec(returnObj[runSWID]['Libraries'][IUSSWID]);
-				var sampleHead = match[1];
-				if (typeof returnObj[runSWID]['Library Totals'][sampleHead] === 'undefined') {
-					returnObj[runSWID]['Library Totals'][sampleHead] = 1;
-				} else {
-					returnObj[runSWID]['Library Totals'][sampleHead]++;
-				}
-			}
-			if (/.*?_.*?_.*?_(.?)/.test(returnObj[runSWID]['Libraries'][IUSSWID])) {
-				var match = /.*?_.*?_.*?_(.?)/.exec(returnObj[runSWID]['Libraries'][IUSSWID]);
-				var tissueType = match[1];
-				if (typeof returnObj[runSWID]['Tissue Types'][tissueType] === 'undefined') {
-					returnObj[runSWID]['Tissue Types'][tissueType] = 1;
-				} else {
-					returnObj[runSWID]['Tissue Types'][tissueType]++;
-				}
-			}
-			if (/.*_(.*?)$/.test(returnObj[runSWID]['Libraries'][IUSSWID])) {
-				var match = /.*_(.*?)$/.exec(returnObj[runSWID]['Libraries'][IUSSWID]);
-				var libraryType = match[1];
-				if (typeof returnObj[runSWID]['Library Types'][libraryType] === 'undefined') {
-					returnObj[runSWID]['Library Types'][libraryType] = 1;
-				} else {
-					returnObj[runSWID]['Library Types'][libraryType]++;
-				}
-			}
-			if (/(.*?_.*?)_/.test(returnObj[runSWID]['Libraries'][IUSSWID])) {
-				var match = /(.*?_.*?)_/.exec(returnObj[runSWID]['Libraries'][IUSSWID]);
-				var donor = match[1];
-				if (typeof returnObj[runSWID]['Donors'][donor] === 'undefined') {
-					returnObj[runSWID]['Donors'][donor] = 1;
-				} else {
-					returnObj[runSWID]['Donors'][donor]++;
-				}
-			}
-		}
-		for (var donor in returnObj[runSWID]['Donors']) {
-			if(/(.*?)_/.test(donor)) {
-				var match = /(.*?)_/.exec(donor);
-				var donorHead = match[1];
-				if (typeof returnObj[runSWID]['Donor Totals'][donorHead] === 'undefined') {
-					returnObj[runSWID]['Donor Totals'][donorHead] = 1;
-				} else {
-					returnObj[runSWID]['Donor Totals'][donorHead]++;
-				}
-			}
-		}
-	}
-	
-	return returnObj;
-}
-
-// takes in libraries from getLibrariesAllRuns
-exports.updateRunInfoBySWID = function (runInfo, runSWID) {
-	var returnObj = {};
-	returnObj[runSWID] = runInfo[runSWID];
-
-	// Update in mongodb
-	updateData('RunInfo', runSWID, returnObj);
-
-	return returnObj;
-}
-
-//// By Donor
-// for each donor, returns the external name, (TODO: institute), number of libraries per tissue type
-function getDonorInfo (fprData) {
-	var returnObj = {};
-
-	for (var donorSWID in fprData['Donor']) {
-		// to remove duplicates (because multiple donorSWIDs for a donor)
-		var donorName = fprData['Donor'][donorSWID]['Donor Name'];
-		if (typeof returnObj[donorName] === 'undefined') {
-			returnObj[donorName] = {};
-			returnObj[donorName]['Libraries'] = [];
-			returnObj[donorName]['Library Total'] = {};
-			returnObj[donorName]['External Name'] = {};
-			returnObj[donorName]['Library Types'] = {};
-			returnObj[donorName]['Tissue Types'] = {};
-			returnObj[donorName]['SWID'] = [];
-		}
-		// Determine donor external name
-		if (/external_name.*=(.*?);/.test(fprData['Donor'][donorSWID]['Donor Attributes'])) {
-			var match = /external_name.*=(.*?);/.exec(fprData['Donor'][donorSWID]['Donor Attributes']);
-			returnObj[donorName]['External Name'] = match[1];
-		}
-		for (var IUSSWID in fprData['Donor'][donorSWID]['Library']) {
-			var lib = {};
-			lib[IUSSWID] = fprData['Donor'][donorSWID]['Library'][IUSSWID]['Library Name'];
-			returnObj[donorName]['Libraries'].push(lib);
+		// Sets the analysis status of workflows totals in RunInfo collection
+		for (var runName in runAnalysisStatus) {
+			var setMod = { $set: {analysis_total: {} } };
+			setMod.$set.analysis_total = runAnalysisStatus[runName];
+			runBatch.find({_id: runName}).upsert().updateOne(setMod);
 		}
 		
-		
-		//returnObj[donorName]['Tissue Types'] = donors[fprData['Donor'][donorSWID]['Donor Name']]['Tissue'];
-		// keep track of SWIDs for a donor
-		returnObj[donorName]['SWID'].push(donorSWID);
-	}
+		// Updates the date info collection with libraries, runs occurring on each date
+		for (var date in dateObj) {
+			dateObj[date].RunInfo_id = _.uniq(dateObj[date].RunInfo_id);
+			dateObj[date].LibraryInfo_id = _.uniq(dateObj[date].LibraryInfo_id);
+			dateBatch.find({_id: date}).upsert().updateOne(dateObj[date]);
+		}
+		wfBatch.execute(function(err, result) {
+			if (err) console.dir(err);
+		})
+		libBatch.execute(function(err, result) {
+			if (err) console.dir(err);
+		});
+		runBatch.execute(function(err, result) {
+			if (err) console.dir(err);
+		});
+		dateBatch.execute(function(err, result) {
+			if (err) console.dir(err);
+			db.close();
+		});
+	});
+}
 
-	for (var donor in returnObj) {
-		returnObj[donor]['Library Total'] = returnObj[donor]['Libraries'].length;
-		for (var i = 0; i < returnObj[donor]['Libraries'].length; i++) {
-			for (var IUSSWID in returnObj[donor]['Libraries'][i]) {
-				// Determine number of library types
-				if (/.*_(.*?)$/.test(returnObj[donor]['Libraries'][i][IUSSWID])) {
-					var match = /.*_(.*?)$/.exec(returnObj[donor]['Libraries'][i][IUSSWID]);
-					var libraryType = match[1];
-					if (typeof returnObj[donor]['Library Types'][libraryType] === 'undefined') {
-						returnObj[donor]['Library Types'][libraryType] = 1;
-					} else {
-						returnObj[donor]['Library Types'][libraryType]++;
+///////////////////////////////// FilesInfo ////////////////////////////////////
+// updates mongodb list of files and links to associated WorkflowInfo_id
+// _id: fileSWID
+exports.updateFilesInfo = function (fprData) {
+	MongoClient.connect(url, function (err, db) {
+		var batch = db.collection('FilesInfo').initializeUnorderedBulkOp();
+		for (var fileSWID in fprData['File']) {
+			var obj = {};
+			obj['_id'] = fileSWID;
+			obj['file_path'] = fprData['File'][fileSWID]['Path'];
+			obj['WorkflowInfo_id'] = fprData['File'][fileSWID]['WorkflowSWID'];
+
+			batch.find({_id: fileSWID}).upsert().updateOne(obj);
+		}
+		batch.execute(function(err, result) {
+			if (err) console.dir(err);
+			db.close();
+		});
+	});
+}
+
+
+
+
+//// Dynamic Info
+
+// Checks for running sequencer runs using seqware db sequencer runs and pinery sequencer runs
+// Does a check for existing sequencer runs in mongodb
+exports.updateRunningSequencerRuns = function (sequencerData, jsonData) {
+	MongoClient.connect(url, function(err, db) {
+		if (err) return console.error(err);
+		var currentRunBatch = db.collection('CurrentSequencerRuns').initializeUnorderedBulkOp();
+		var runBatch = db.collection('RunInfo').initializeUnorderedBulkOp();
+		var running = [];
+		var complete = [];
+		var docs = [];
+		findAllDocuments(docs, 'CurrentSequencerRuns', db, function() {
+			for (var i = 0; i < sequencerData.length; i++) {
+				// Check if exisitng documents are completed, then remove from collection
+				if (isInArray(sequencerData[i].name, docs)) {
+					if (sequencerData[i].state === 'Completed'){
+						currentRunBatch.find({_id: sequencerData[i].name}).removeOne();
+						runBatch.find({_id: sequencerData[i].name}).upsert().updateOne({ $set: {status: 'Completed'} });
 					}
 				}
-				// Determine number of tissue types
-				if (/.*?_.*?_.*?_(.?)/.test(returnObj[donor]['Libraries'][i][IUSSWID])) {
-					var match = /.*?_.*?_.*?_(.?)/.exec(returnObj[donor]['Libraries'][i][IUSSWID]);
-					var tissueType = match[1];
-					if (typeof returnObj[donor]['Tissue Types'][tissueType] === 'undefined') {
-						returnObj[donor]['Tissue Types'][tissueType] = 1;
-					} else {
-						returnObj[donor]['Tissue Types'][tissueType]++;
-					}
-				}	
-			}
-		}
-	}
-	
-	return returnObj;
-}
-
-// takes in data from getDonorInfo
-function updateDonorInfoByName (info, donor) {
-	var returnObj = {};
-	returnObj[donor] = info[donor];
-
-	// Update in mongodb
-	updateData('DonorInfo', donor, returnObj);
-
-	return returnObj;
-}
-
-// for each donor, returns the start date (date received) and end date (complete analysis)
-function getStartEndDateAllDonors (fprData) {
-	var returnObj = {};
-
-	for (var donorSWID in fprData['Donor']){
-		if (typeof returnObj[fprData['Donor'][donorSWID]['Donor Name']] === 'undefined') {
-			returnObj[fprData['Donor'][donorSWID]['Donor Name']] = {};
-			returnObj[fprData['Donor'][donorSWID]['Donor Name']]['SWID'] = [];
-		}
-		returnObj[fprData['Donor'][donorSWID]['Donor Name']]['SWID'].push(donorSWID);
-		returnObj[fprData['Donor'][donorSWID]['Donor Name']]['End Date'] = getDateTimeString(fprData['Donor'][donorSWID]['Last Modified']);
-		if (/receive_date.*?=(.*?);/.test(fprData['Donor'][donorSWID]['Donor Attributes'])) {
-			var match = /receive_date.*?=(.*?);/.exec(fprData['Donor'][donorSWID]['Donor Attributes']);
-			if (typeof returnObj[fprData['Donor'][donorSWID]['Donor Name']]['Start Date'] === 'undefined') {
-				returnObj[fprData['Donor'][donorSWID]['Donor Name']]['Start Date'] = match[1];
-			}
-		} else { 
-			// If donor attribute doesn't contain start date, state "Unspecified"
-			if (typeof returnObj[fprData['Donor'][donorSWID]['Donor Name']]['Start Date'] === 'undefined') {
-				returnObj[fprData['Donor'][donorSWID]['Donor Name']]['Start Date'] = "Unspecified";
-			}
-		}
-	}
-
-	return returnObj;
-}
-
-// takes in dates from getStartEndDateAllDonors
-function updateStartEndDateByDonor (dates, donor) {
-	var returnObj = {};
-	returnObj[donor] = dates[donor];
-
-	// Update in mongodb
-	updateData('StartEndDateByDonor', donor, returnObj);
-	return returnObj;
-}
-
-// returns all instruments associated with each donor
-function getInstrumentNamesAllDonors (fprData) {
-	var returnObj = {};
-
-	for (var donorSWID in fprData['Donor']) {
-		if (typeof returnObj[fprData['Donor'][donorSWID]['Donor Name']] === 'undefined') {
-			returnObj[fprData['Donor'][donorSWID]['Donor Name']] = {};
-			returnObj[fprData['Donor'][donorSWID]['Donor Name']]['Instruments'] = [];
-			returnObj[fprData['Donor'][donorSWID]['Donor Name']]['SWID'] = [];
-		}		
-		for (var sequencerRunSWID in fprData['Donor'][donorSWID]['Run']) {
-			if(/.*?_(.*?)_.*/.test(fprData['Donor'][donorSWID]['Run'][sequencerRunSWID]['Run Name'])) {
-				var match = /.*?_(.*?)_.*/.exec(fprData['Donor'][donorSWID]['Run'][sequencerRunSWID]['Run Name']);
-				match[1] = match[1].replace(/SN700/, "h");
-				match[1] = match[1].replace(/SN/, "h");
-				match[1] = match[1].replace(/I/, "i");
-				returnObj[fprData['Donor'][donorSWID]['Donor Name']]['Instruments'].push(match[1]);
-			}
-		}
-		returnObj[fprData['Donor'][donorSWID]['Donor Name']]['SWID'].push(donorSWID);
-	}
-	for (var donor in returnObj) {
-		returnObj[donor]['Instruments'] = _.uniq(returnObj[donor]['Instruments']);
-	}
-
-	return returnObj;
-}
-
-// takes in instruments from getInstrumentNamesAllDonors
-function getInstrumentNamesByDonor (instruments, donor) {
-	var returnObj = {};
-	returnObj[donor] = instruments[donor];
-
-	//Update in mongodb
-	updateData('InstrumentNamesByDonor', donor, returnObj);
-	return returnObj;
-}
-
-//// By Library
-// for each library, returns workflow run analysis status (complete, failed, running, cancelled) based on type of workflow
-exports.getAnalysisStatusAllLibraries = function (fprData, dateRange, analysisYAML) {
-	return getAnalysisStatusAllCategory('Library', fprData, dateRange, analysisYAML);
-}
-
-exports.updateAnalysisStatusByLibrary = function (analysisCategories, IUSSWID) {
-	return getAnalysisStatusByCategory('Library', analysisCategories, IUSSWID);
-}
-
-// for each library, returns the library types, tissue types, tissue origins
-exports.getLibraryInfo = function (fprData) {
-	var returnObj = {};
-
-	for (var IUSSWID in fprData['Library']) {
-		returnObj[IUSSWID] = {};
-		returnObj[IUSSWID]['Run'] = {};
-		returnObj[IUSSWID]['Library Name'] = fprData['Library'][IUSSWID]['Library Name'];
-		returnObj[IUSSWID]['Lane'] = fprData['Library'][IUSSWID]['Lane'];
-		returnObj[IUSSWID]['Barcode'] = fprData['Library'][IUSSWID]['Barcode'];
-		if (/library_source_template_type=(.*?)?/.test(fprData['Library'][IUSSWID]['Sample Attributes'])) {
-			var match = /library_source_template_type=(.*?);/.exec(fprData['Library'][IUSSWID]['Sample Attributes']);
-			returnObj[IUSSWID]['Library Type'] = match[1];
-		}
-		if (/tissue_type=(.*?)?/.test(fprData['Library'][IUSSWID]['Sample Attributes'])) {
-			var match = /tissue_type=(.*?)?/.exec(fprData['Library'][IUSSWID]['Sample Attributes']);
-			returnObj[IUSSWID]['Tissue Type'] = match[1];
-		}
-		if (/tissue_origin=(.*?);/.test(fprData['Library'][IUSSWID]['Sample Attributes'])) {
-			var match = /tissue_origin=(.*?);/.exec(fprData['Library'][IUSSWID]['Sample Attributes']);
-			returnObj[IUSSWID]['Tissue Origin'] = match[1];
-		}
-		for (var runSWID in fprData['Library'][IUSSWID]['Run']) {
-			returnObj[IUSSWID]['Run'][runSWID] = fprData['Library'][IUSSWID]['Run'][runSWID];
-		}
-	}
-
-	return returnObj;
-}
-
-exports.updateLibraryInfoBySWID = function (libraryInfo, IUSSWID) {
-	var returnObj = {};
-	returnObj[IUSSWID] = libraryInfo[IUSSWID];
-
-	// Update in mongodb
-	updateData('LibraryInfo', IUSSWID, returnObj);
-
-	return returnObj;
-}
-
-// for each library, returns the workflow details such as name, skip, end date, and file paths
-exports.getWorkflowAllLibraries = function (fprData, analysisYAML) {
-	var returnObj = {};
-
-	for (var IUSSWID in fprData['Library']) {
-		returnObj[IUSSWID] = {};
-		returnObj[IUSSWID]['Workflow Run'] = {};
-		returnObj[IUSSWID]['Library Name'] = fprData['Library'][IUSSWID]['Library Name'];
-		for (var workflowSWID in fprData['Library'][IUSSWID]['Workflow Run']) {
-			returnObj[IUSSWID]['Workflow Run'][workflowSWID] = {};
-			returnObj[IUSSWID]['Workflow Run'][workflowSWID]['File Paths'] = [];
-			returnObj[IUSSWID]['Workflow Run'][workflowSWID]['Workflow Name'] = fprData['Library'][IUSSWID]['Workflow Run'][workflowSWID]['Workflow Name'];
-			returnObj[IUSSWID]['Workflow Run'][workflowSWID]['Skip'] = fprData['Library'][IUSSWID]['Workflow Run'][workflowSWID]['Skip'];
-			returnObj[IUSSWID]['Workflow Run'][workflowSWID]['End Date'] = getDateTimeString(fprData['Library'][IUSSWID]['Workflow Run'][workflowSWID]['Last Modified']);
-			for (var analysisType in analysisYAML) {
-				if (returnObj[IUSSWID]['Workflow Run'][workflowSWID]['Workflow Name'] in analysisYAML[analysisType]) {
-					returnObj[IUSSWID]['Workflow Run'][workflowSWID]['Analysis Type'] = analysisType;
+				// Add running to CurntSequencerRuns table
+				if (sequencerData[i].state === 'Running' && new Date(sequencerData[i].created_date) > new Date('2014-02-01 00:00:00')) {
+					var obj = {};
+					obj['_id'] = sequencerData[i].name;
+					obj['created_date'] = getDateTimeString(sequencerData[i].created_date);
+					obj['status'] = sequencerData[i].state;
+					currentRunBatch.find({_id: obj['_id']}).upsert().updateOne(obj);
+					running.push(sequencerData[i].name); 
+				// Change RunInfo status to failed
+				} else if (sequencerData[i].state === 'Failed') {
+					runBatch.find({_id: sequencerData[i].name}).upsert().updateOne({ $set: {status: 'Failed'} });
 				}
 			}
-			for (var fileSWID in fprData['Library'][IUSSWID]['Workflow Run'][workflowSWID]['Files']) {
-				returnObj[IUSSWID]['Workflow Run'][workflowSWID]['File Paths'].push(fprData['Library'][IUSSWID]['Workflow Run'][workflowSWID]['Files'][fileSWID]);
+
+			// Remove from CurrentSequencerRuns table if in psql database
+			for (var i = 0; i < jsonData.length; i++) {
+				complete.push(jsonData[i].sequencer_run_name);
 			}
-		}
-		returnObj[IUSSWID]['Num of workflow runs'] = Object.keys(returnObj[IUSSWID]['Workflow Run']).length;
-	}
-	for (var IUSSWID in returnObj) {
-		for (var workflowSWID in returnObj[IUSSWID]['Workflow Run']) {
-			var setMod = { $set: {} };
-			setMod.$set['file_paths'] = returnObj[IUSSWID]['Workflow Run'][workflowSWID]['File Paths'];
-			setMod.$set['skip'] = returnObj[IUSSWID]['Workflow Run'][workflowSWID]['Skip'];
-	 		setMod.$set['analysis_type'] = returnObj[IUSSWID]['Workflow Run'][workflowSWID]['Analysis Type'];
-	 		updateDataField('WorkflowInfo', parseInt(workflowSWID), setMod);
-		}
-	}
-
-	return returnObj;
-}
-
-exports.updateWorkflowByLibrary = function (workflows, IUSSWID) {
-	var returnObj = {};
-	returnObj[IUSSWID] = workflows[IUSSWID];
-
-	//Update in mongodb
-	updateData('WorkflowByLibrary', IUSSWID, returnObj);
-
-	return returnObj;
-}
-
-exports.updateIUSSWIDByLibraryName = function (fprData) {
-	var obj = {};
-	for (var IUSSWID in fprData['Library']) {
-		var library = fprData['Library'][IUSSWID]['Library Name'];
-		if (typeof obj[library] === 'undefined') {
-			obj[library] = {};
-			obj[library]['IUSSWID'] = [];
-		}
-		obj[library]['IUSSWID'].push(IUSSWID);
-	}
-	
-	for (var library in obj) {
-		var setMod = { $set: {} };
-		setMod.$set[library + '.IUSSWID'] = obj[library]['IUSSWID'];
-		updateDataField('LibraryTemplateIDandIUSSWIDByLibraryName', library, setMod);
-	}
-}
-
-//// Reporting Functions (detailed pages)
-
-function updateLibrariesPerLaneByRun(fprData) {
-	for (var runSWID in fprData['Run']) {
-		var obj = {};
-		obj[runSWID] = {};
-		obj[runSWID]['Run Name'] = fprData['Run'][runSWID]['Run Name'];
-		obj[runSWID]['Lane'] = {};
-		for (var lane in fprData['Run'][runSWID]['Lane']) {
-			if (typeof obj[runSWID]['Lane'][lane] === 'undefined') {
-				obj[runSWID]['Lane'][lane] = {};
-				obj[runSWID]['Lane'][lane]['Library'] = {};
+			var completed = _.intersection(running, complete);
+			for (var i = 0; i < completed.length; i++) {
+				currentRunBatch.find({_id: completed[i]}).removeOne();
 			}
-			for (var IUSSWID in fprData['Run'][runSWID]['Lane'][lane]['Library']) {
-				obj[runSWID]['Lane'][lane]['Library'][IUSSWID] = fprData['Run'][runSWID]['Lane'][lane]['Library'][IUSSWID];
-			}
-		}
-
-		//Update in mongodb
-		updateData('LibrariesPerLaneByRun', runSWID, obj);
-	}
+			currentRunBatch.execute(function(err, result) {
+				if (err) console.dir(err);
+			});
+			runBatch.execute(function(err, result) {
+				if (err) console.dir(err);
+				db.close();
+			});
+		});
+	});
 }
+
+// Checks for running workflow runs in seqware database
+// Does a check for existing workflow runs in mongodb
+exports.updateRunningWorkflowRuns = function (analysisYAML) {
+	// Query for all with status = 'running' and update the CurrentWorkflowRuns table
+	// Query all ids in the 'CurrentWorkflowRuns' collection and update all in WorkflowInfo table
+
+	MongoClient.connect(url, function(err, db) {
+		if (err) return console.error(err);
+		var currentWFBatch = db.collection('CurrentWorkflowRuns').initializeUnorderedBulkOp();
+		var failedWFBatch = db.collection('FailedWorkflowRuns').initializeUnorderedBulkOp();
+		var wfBatch = db.collection('WorkflowInfo').initializeUnorderedBulkOp();
+
+		var docs = [];
+		findAllDocuments(docs, 'CurrentWorkflowRuns', db, function() {
+			// If ids exist, add to query, else just search for status = 'running'
+			var ids;
+			if (docs.length > 0) {
+				ids = 'sw_accession in ( ' + docs.join() + ') or';
+			} else {
+				ids = '';
+			}
+			// Connect to postgresql client
+			client.connect(function(err) {
+				if (err) return console.error(err);
+				var query = 'WITH RECURSIVE workflow_run_set AS (SELECT workflow_run_id from workflow_run where ' + ids + ' status = \'running\'), workflow_run_processings (workflow_run_id, processing_id) AS (SELECT wr.workflow_run_id, p.processing_id from workflow_run wr JOIN workflow_run_set wrs ON wr.workflow_run_id = wrs.workflow_run_id JOIN processing p ON (wr.workflow_run_id = p.workflow_run_id or wr.workflow_run_id = p.ancestor_workflow_run_id) UNION SELECT p.workflow_run_id, pr.parent_id FROM workflow_run_processings p JOIN processing_relationship pr ON p.processing_id = pr.child_id), total_workflow_run_ius AS (SELECT wr.workflow_run_id, i.ius_id FROM workflow_run wr  JOIN workflow_run_set wrs ON wr.workflow_run_id = wrs.workflow_run_id JOIN ius_workflow_runs iwr ON wr.workflow_run_id = iwr.workflow_run_id  JOIN ius i ON iwr.ius_id = i.ius_id UNION SELECT wrp.workflow_run_id, i.ius_id FROM workflow_run_processings wrp JOIN processing_ius pi ON wrp.processing_id = pi.processing_id JOIN ius i ON pi.ius_id = i.ius_id),workflow_run_template_ids AS (SELECT twri.workflow_run_id, array_agg(sa.value) as template_ids, array_agg(distinct(sr.name)) as sequencer_run_names, array_agg(sr.name || \'||\' || l.lane_index+1 || \'||\' || sa.value || \'||\' || i.sw_accession) as library_id FROM total_workflow_run_ius twri JOIN ius i ON twri.ius_id = i.ius_id JOIN lane AS l ON i.lane_id = l.lane_id JOIN sequencer_run AS sr ON l.sequencer_run_id = sr.sequencer_run_id JOIN sample s ON i.sample_id = s.sample_id JOIN sample_attribute sa ON s.sample_id = sa.sample_id WHERE sa.tag = \'geo_template_id\' GROUP BY twri.workflow_run_id ) SELECT wr.sw_accession as _id,wr.sw_accession,wr.workflow_run_id,wr.status,wr.status_cmd,wr.create_tstmp,COALESCE(p.last_modified, wr.create_tstmp) as last_modified,w.name,w.version,wrti.template_ids, wrti.sequencer_run_names,wrti.library_id FROM workflow_run_set wrs JOIN workflow_run wr ON wrs.workflow_run_id = wr.workflow_run_id JOIN workflow_run_template_ids wrti ON wrs.workflow_run_id = wrti.workflow_run_id  JOIN workflow AS w ON wr.workflow_id = w.workflow_id LEFT OUTER JOIN (SELECT workflow_run_id, MAX(update_tstmp) AS last_modified FROM processing GROUP BY workflow_run_id ) AS p ON p.workflow_run_id = wr.workflow_run_id;';
+				//console.log(query);
+
+				client.query(query, function (err, result) {
+					if (err) console.error(err);
+					//console.log(result);
+					for (var i = 0; i < result.rows.length; i++) {
+						// Update workflow info
+						var WorkflowInfo_id = parseInt(result.rows[i]._id);
+						var workflowName = result.rows[i].name;
+						for (var analysisType in analysisYAML) {
+							if (workflowName in analysisYAML[analysisType]) {
+								result.rows[i].analysis_type = analysisType;
+							}
+						}
+						result.rows[i].create_tstmp = getDateTimeString(result.rows[i].create_tstmp);
+						result.rows[i].last_modified = getDateTimeString(result.rows[i].last_modified);
+
+						for (var j = 0; j < result.rows[i].library_id.length; j++) {
+							// Parse out ids from library_id
+							var match = /(.*?\|\|.*?\|\|.*?)\|\|.*?$/.exec(result.rows[i].library_id[j]);
+							var librarySeq_id = match[1];
+
+							// Update workflow info library ids to library seq ids
+							result.rows[i].library_id[j] = librarySeq_id;
+
+							// Update library and run analysis totals with the complete WorkflowInfo update
+						}
+
+						// Update running workflow table
+						if (result.rows[i].status === 'running') {
+							currentWFBatch.find({_id: result.rows[i]._id}).upsert().updateOne(result.rows[i]);
+							wfBatch.find({_id: result.rows[i]._id}).upsert().updateOne(result.rows[i]);
+						// Update failed workflow table and workflow info table
+						} else if (result.rows[i].status === 'failed') {
+							currentWFBatch.find({_id: result.rows[i]._id}).removeOne();
+							failedWFBatch.find({_id: result.rows[i]._id}).upsert().updateOne(result.rows[i]);
+							wfBatch.find({_id: result.rows[i]._id}).upsert().updateOne(result.rows[i]);
+						// Update completed workflows
+						} else {
+							currentWFBatch.find({_id: result.rows[i]._id}).removeOne();
+							wfBatch.find({_id: result.rows[i]._id}).upsert().updateOne(result.rows[i]);
+						}
+					}
+					currentWFBatch.execute(function(err, result) {
+						if (err) console.dir(err);
+					});
+					if (failedWFBatch.s.currentBatch !== null) {
+						failedWFBatch.execute(function(err, result) {
+							if (err) console.dir(err);
+						});
+					}
+					wfBatch.execute(function(err, result) {
+						if (err) console.dir(err);
+						db.close();
+					});
+					client.end();
+				});				
+			});
+		});
+	});
+}
+
+// Checks the failed workflow run table for change in status and updates accordingly
+function checkFailedWorkflowRuns (sequencerData) {
+	MongoClient.connect(url, function(err, db) {
+		if (err) return console.error(err);
+		var failedWFBatch = db.collection('FailedWorkflowRuns').initializeUnorderedBulkOp();
+		var wfBatch = db.collection('WorkflowInfo').initializeUnorderedBulkOp();
+
+		var docs = [];
+		findAllDocuments(docs, 'FailedWorkflowRuns', db, function() {
+			if (typeof docs !== 'undefined') {
+				// Connect to postgresql client
+				client.connect(function(err) {
+					if (err) return console.error(err);
+					var query = 'WITH RECURSIVE workflow_run_set AS (SELECT workflow_run_id from workflow_run where sw_accession in ( ' + docs.join() + ' ) ), workflow_run_processings (workflow_run_id, processing_id) AS (SELECT wr.workflow_run_id, p.processing_id from workflow_run wr JOIN workflow_run_set wrs ON wr.workflow_run_id = wrs.workflow_run_id JOIN processing p ON (wr.workflow_run_id = p.workflow_run_id or wr.workflow_run_id = p.ancestor_workflow_run_id) UNION SELECT p.workflow_run_id, pr.parent_id FROM workflow_run_processings p JOIN processing_relationship pr ON p.processing_id = pr.child_id), total_workflow_run_ius AS (SELECT wr.workflow_run_id, i.ius_id FROM workflow_run wr  JOIN workflow_run_set wrs ON wr.workflow_run_id = wrs.workflow_run_id JOIN ius_workflow_runs iwr ON wr.workflow_run_id = iwr.workflow_run_id  JOIN ius i ON iwr.ius_id = i.ius_id UNION SELECT wrp.workflow_run_id, i.ius_id FROM workflow_run_processings wrp JOIN processing_ius pi ON wrp.processing_id = pi.processing_id JOIN ius i ON pi.ius_id = i.ius_id),workflow_run_template_ids AS (SELECT twri.workflow_run_id, array_agg(sa.value) as template_ids, array_agg(distinct(sr.name)) as sequencer_run_names, array_agg(sr.name || \'||\' || l.lane_index+1 || \'||\' || sa.value || \'||\' || i.sw_accession) as library_id FROM total_workflow_run_ius twri JOIN ius i ON twri.ius_id = i.ius_id JOIN lane AS l ON i.lane_id = l.lane_id JOIN sequencer_run AS sr ON l.sequencer_run_id = sr.sequencer_run_id JOIN sample s ON i.sample_id = s.sample_id JOIN sample_attribute sa ON s.sample_id = sa.sample_id WHERE sa.tag = \'geo_template_id\' GROUP BY twri.workflow_run_id ) SELECT wr.sw_accession as _id,wr.sw_accession,wr.workflow_run_id,wr.status,wr.status_cmd,wr.create_tstmp,COALESCE(p.last_modified, wr.create_tstmp) as last_modified,w.name,w.version,wrti.template_ids, wrti.sequencer_run_names,wrti.library_id FROM workflow_run_set wrs JOIN workflow_run wr ON wrs.workflow_run_id = wr.workflow_run_id JOIN workflow_run_template_ids wrti ON wrs.workflow_run_id = wrti.workflow_run_id  JOIN workflow AS w ON wr.workflow_id = w.workflow_id LEFT OUTER JOIN (SELECT workflow_run_id, MAX(update_tstmp) AS last_modified FROM processing GROUP BY workflow_run_id ) AS p ON p.workflow_run_id = wr.workflow_run_id;';
+					
+					client.query(query, function (err, result) {
+						if (err) console.error(err);
+						//console.log(result);
+						for (var i = 0; i < result.rows.length; i++) {
+							if (result.rows[i].status !== 'failed') {
+								// Update workflow info
+								var WorkflowInfo_id = parseInt(result.rows[i]._id);
+								var workflowName = result.rows[i].name;
+								for (var analysisType in analysisYAML) {
+									if (workflowName in analysisYAML[analysisType]) {
+										result.rows[i].analysis_type = analysisType;
+									}
+								}
+								result.rows[i].create_tstmp = getDateTimeString(result.rows[i].create_tstmp);
+								result.rows[i].last_modified = getDateTimeString(result.rows[i].last_modified);
+
+								for (var j = 0; j < result.rows[i].library_id.length; j++) {
+									// Parse out ids from library_id
+									var match = /(.*?\|\|.*?\|\|.*?)\|\|.*?$/.exec(result.rows[i].library_id[j]);
+									var librarySeq_id = match[1];
+
+									// Update workflow info library ids to library seq ids
+									result.rows[i].library_id[j] = librarySeq_id;
+
+									// Update library and run analysis totals with the complete WorkflowInfo update
+								}
+
+								failedWFBatch.find({_id: result.rows[i]._id}).removeOne();
+								wfBatch.find({_id: result.rows[i]._id}).upsert().updateOne(result.rows[i]);
+							}
+						}
+
+						failedWFBatch.execute(function(err, result) {
+							if (err) console.dir(err);
+						});
+						wfBatch.execute(function(err, result) {
+							if (err) console.dir(err);
+							db.close();
+						});
+						client.end();
+					});
+				});
+			}
+		});
+	});
+}
+
+//// Reporting Functions (detail pages)
 
 // Takes in jsonFile, xenomeFile (for % mouse content), and an existing object and returns report data to that object
 function getReportData(jsonFile, xenomeFile) {
@@ -961,24 +1271,24 @@ function getReportData(jsonFile, xenomeFile) {
 	return obj;
 }
 
-exports.updateReportDataByLibrary = function (fprData) {
+exports.updateIUSSWIDReportData = function (fprData) {
 	// ALL DATA BASED ON REPORTS FROM JSON FILES
+	MongoClient.connect(url, function(err, db) {
+		if (err) console.error(err);
+		var batch = db.collection('IUSSWIDReportData').initializeUnorderedBulkOp();
+			// Individual library report data
+		for (var IUSSWID in fprData['Library']) {
+			var json = fprData['Library'][IUSSWID]['JSON'];
+			var xenomeFile = fprData['Library'][IUSSWID]['XenomeFile'];
+			var obj = {};
+			obj['_id'] = IUSSWID;
+			obj['library_name'] = fprData['Library'][IUSSWID]['Library Name'];
+			obj['data'] = getReportData(json, xenomeFile);
 
-	// Individual library report data
-	for (var IUSSWID in fprData['Library']) {
-		var json = fprData['Library'][IUSSWID]['JSON'];
-		var xenomeFile = fprData['Library'][IUSSWID]['XenomeFile'];
-		var obj = {};
-		obj[IUSSWID] = {};
-		obj[IUSSWID]['Library Name'] = fprData['Library'][IUSSWID]['Library Name'];
-		obj[IUSSWID]['Data'] = getReportData(json, xenomeFile);
-
-		//Update in mongodb
-		//updateData('ReportDataByLibrary', IUSSWID, obj);
-
-		console.log(JSON.stringify(obj));
-
-	}
+			//Update in mongodb
+			batch.find({_id: IUSSSWID}).upsert().updateOne(obj);
+		}
+	});
 }
 
 // Takes in zip files and returns an object of all alignment QC RNA Seq data
@@ -1094,31 +1404,32 @@ function getRNASeqQCData(zipFile) {
 	}
 	return obj;
 }
-//Test
-//var obj = {};
-//obj = getRNASeqQCData('/oicr/data/archive/seqware/seqware_analysis_8/hsqwprod/seqware-results/RNAseqQc_2.3/92922100/140926_SN802_0204_AC5JLPACXX_ERNA_0041_nn_C_PE_398_WT_rnaqc.report.zip');
 
 // Returns all RNA Seq QC data by running the above function getRNASeqQCData
-exports.updateRNASeqQCDataByLibrary = function (fprData) {
-	for (var IUSSWID in fprData['Library']) {
-		if (typeof fprData['Library'][IUSSWID]['RNAZipFile'] !== 'undefined') {
-			var obj = {};
-			obj[IUSSWID] = {};
-			obj[IUSSWID]['Library Name'] = fprData['Library'][IUSSWID]['Library Name'];
-			obj[IUSSWID]['Data'] = getRNASeqQCData(fprData['Library'][IUSSWID]['RNAZipFile']);
-			for (var runSWID in fprData['Library'][IUSSWID]['Run']) {
-				obj[IUSSWID]['Data']['Run Name'] = fprData['Library'][IUSSWID]['Run'][runSWID];
-			}
-			obj[IUSSWID]['Data']['Lane'] = fprData['Library'][IUSSWID]['Lane'];
+exports.updateIUSSWIDRNASeqQCData = function (fprData) {
+	MongoClient.connect(url, function(err, db) {
+		if (err) console.error(err);
+		var batch = db.collection('IUSSWIDRNASeqQCData').initializeUnorderedBulkOp();
 
-			//Update in mongodb
-			//updateData('RNASeqQCDataByLibrary', IUSSWID, obj);
-		
-			console.log(JSON.stringify(obj));
+		for (var IUSSWID in fprData['Library']) {
+			if (typeof fprData['Library'][IUSSWID]['RNAZipFile'] !== 'undefined') {
+				var obj = {};
+				obj['_id'] = IUSSWID;
+				obj['library_name'] = fprData['Library'][IUSSWID]['Library Name'];
+				obj['data'] = getRNASeqQCData(fprData['Library'][IUSSWID]['RNAZipFile']);
+				for (var runSWID in fprData['Library'][IUSSWID]['Run']) {
+					obj['data']['run_name'] = fprData['Library'][IUSSWID]['Run'][runSWID];
+				}
+				obj['data']['lane'] = fprData['Library'][IUSSWID]['Lane'];
+
+				//Update in mongodb
+				batch.find({_id: IUSSWID}).upsert().updateOne(obj);
+			}
 		}
-	}
+	});
 }
 
+// TODO: Read from mongodb and then get totals?
 function updateLaneDetailsTotalsByRun(fprData) {
 	var laneObj = {};
 	var runObj = {};
@@ -1314,8 +1625,7 @@ function generateGraphDataByJSON(json) {
 	graphData[id]['Soft Clip by Cycle']['y values'] = yValSoft;
 
 	// Update in mongodb
-	//updateData('GraphData', id, graphData);
-	return graphData;
+	updateDataField('GraphData', {'_id': id}, graphData);
 }
 
 // Draws graphs by reading data produced by generateGraphDataByJSON and adding data to html given sample id which is in format: runName_lane_barcode_library
@@ -1406,6 +1716,8 @@ function drawGraphsById(id) {
 //generateGraphDataByJSON('SWID_3165537_PV_0001_Bm_P_PE_423_EX_3_151216_D00331_0149_AC8L3CANXX_AACGTGAT_L001_R1_001.annotated.bam.BamQC.json');
 //drawGraphsById('110513_I581_00032_70CGE_LT_L005_TAGCTT_PCSI_0050_Pa_X_PE_397_EX');
 
+
+
 function getSeqWareStatsAllDates(fprData) {
 	var returnObj = {};
 
@@ -1481,36 +1793,6 @@ function getSeqWareStatsAllDates(fprData) {
 	return returnObj;
 }
 
-// Takes in output from getAnalysisStatusAllLibraries(fprData, null, analysisYAML)
-function updateWorkflowStatusLibrariesAllDates(fprData) {
-	var returnObj = {};
-	
-	for (var IUSSWID in fprData['Library']) {
-		for (var workflowSWID in fprData['Library'][IUSSWID]['Workflow Run']) {
-			if (/(.*?) /.test(fprData['Library'][IUSSWID]['Workflow Run'][workflowSWID]['Last Modified'])) {
-				var match = /(.*?) /.exec(fprData['Library'][IUSSWID]['Workflow Run'][workflowSWID]['Last Modified']);
-				var date = match[1];
-
-				if (typeof returnObj[date] === 'undefined') {
-					returnObj[date] = {};
-					returnObj[date]['Libraries'] = {};
-				}
-				returnObj[date]['Libraries'][IUSSWID] = {};
-				returnObj[date]['Libraries'][IUSSWID]['Library Name'] = fprData['Library'][IUSSWID]['Library Name'];
-				returnObj[date]['Libraries'][IUSSWID]['Last Modified Workflow'] = getDateTimeString(fprData['Library'][IUSSWID]['Workflow Run'][workflowSWID]['Last Modified']);
-			}
-		}
-	}
-
-	for (var date in returnObj) {
-		var obj = {};
-		obj[date] = returnObj[date];
-		updateData('WorkflowStatusLibrariesByDate', date, obj);
-	}
-
-	return returnObj;
-}
-
 function updateNumCompletedWorkflowsEachDateByRun(fprDataRun, fprDataLibrary) {
 	var returnObj = {};
 
@@ -1557,92 +1839,6 @@ function updateNumCompletedWorkflowsEachDateByRun(fprDataRun, fprDataLibrary) {
 	return returnObj;
 }
 
-//// General Analysis Status
-// general template to get workflow run analysis status based on category (either project or library)
-function getAnalysisStatusAllCategory(category, fprData, dateRange, analysisYAML) {
-	var returnObj = {};
-	if (dateRange === null) {
-		var dates = convertToDateObject('', '');
-		var dateFrom = dates[0];
-		var dateTo = dates[1];
-	} else {
-		var dateTo = dateNow;
-		var dateFrom = new Date().setDate(dateNow.getDate() - dateRange);
-	}
-	for (var SWID in fprData[category]) {
-		var date = new Date(fprData[category][SWID]['Last Modified']);
-		if (date <= dateTo && date >= dateFrom && date !== 'undefined') {
-			returnObj[SWID] = {};
-			returnObj[SWID]['Workflow Runs'] = [];
-			returnObj[SWID]['Analysis Status'] = {};
-			if (typeof fprData[category][SWID]['Barcode'] !== 'undefined') {
-				returnObj[SWID]['Barcode'] = fprData[category][SWID]['Barcode'];
-			}
-			if (typeof fprData[category][SWID]['Lane'] !== 'undefined') {
-				returnObj[SWID]['Lane'] = fprData[category][SWID]['Lane'];
-			}
-			returnObj[SWID][category + ' Name'] = fprData[category][SWID][category + " Name"];
-			returnObj[SWID]['Last Modified'] = getDateTimeString(fprData[category][SWID]['Last Modified']);
-			for (var workflowSWID in fprData[category][SWID]['Workflow Run']){
-				returnObj[SWID]['Workflow Runs'].push(fprData[category][SWID]['Workflow Run'][workflowSWID]['Workflow Name']);
-				for (var analysisType in analysisYAML) {
-					if (typeof returnObj[SWID]['Analysis Status'][analysisType] === 'undefined') {
-						returnObj[SWID]['Analysis Status'][analysisType] = {};
-					}
-					// for each workflow, check which analysis type it is and increment count by 1
-					if (fprData[category][SWID]['Workflow Run'][workflowSWID]['Workflow Name'] in analysisYAML[analysisType]) {
-						if (typeof returnObj[SWID]['Analysis Status'][analysisType][fprData[category][SWID]['Workflow Run'][workflowSWID]['Status']] === 'undefined') {
-							returnObj[SWID]['Analysis Status'][analysisType][fprData[category][SWID]['Workflow Run'][workflowSWID]['Status']] = 1;
-						} else {
-							returnObj[SWID]['Analysis Status'][analysisType][fprData[category][SWID]['Workflow Run'][workflowSWID]['Status']]++;
-						}
-					}
-				}
-			}
-			returnObj[SWID]['Workflow Runs'] = _.uniq(returnObj[SWID]['Workflow Runs']);
-		}
-	}
-
-	return returnObj;
-}
-
-// takes in returned object from getAnalysisStatusAllCategory
-function getAnalysisStatusByCategory(category, analysisCategories, SWID) {
-	var returnObj = {};
-	returnObj[SWID] = analysisCategories[SWID];
-
-	// Update in mongodb
-	updateData('AnalysisStatusBy' + category, SWID, returnObj);
-
-	return returnObj;
-}
-
-
-//// PINERY DATA FUNCTIONS
-// Parses data from files generated by pinery for current pipeline stats
-function getInstrumentIDs(instrumentData) {
-	var returnObj = {};
-
-	for (var i = 0; i < instrumentData.length; i++) {
-		returnObj[instrumentData[i]['id']] = instrumentData[i]['name'];
-	}
-
-	return returnObj;
-}
-
-function getSampleIDInfo(sampleData) {
-	var returnObj = {};
-
-	for (var i = 0; i < sampleData.length; i++) {
-		returnObj[sampleData[i]['id']] = {};
-		returnObj[sampleData[i]['id']]['Library Name'] = sampleData[i]['name'];
-		returnObj[sampleData[i]['id']]['Start Date'] = sampleData[i]['created_date'];
-		returnObj[sampleData[i]['id']]['Project Name'] = sampleData[i]['project_name'];
-	}
-
-	return returnObj;
-}
-
 exports.updatePipelineStatus = function (sequencerData, sampleData) {
 	var returnObj = {};
 	var sampleIDInfo = getSampleIDInfo(sampleData);
@@ -1651,35 +1847,27 @@ exports.updatePipelineStatus = function (sequencerData, sampleData) {
 	for (var i = 0; i < sequencerData.length; i++) {
 		if (sequencerData[i]['state'] == 'Running' || sequencerData[i]['state'] == 'Failed') {
 			returnObj[sequencerData[i]['id']] = {};
-			returnObj[sequencerData[i]['id']]['State'] = sequencerData[i]['state'];
-			returnObj[sequencerData[i]['id']]['Run Name'] = sequencerData[i]['name'];
-			returnObj[sequencerData[i]['id']]['Start Date'] = sequencerData[i]['created_date'];
-			returnObj[sequencerData[i]['id']]['Lanes'] = {};
+			returnObj[sequencerData[i]['id']]['state'] = sequencerData[i]['state'];
+			returnObj[sequencerData[i]['id']]['run_name'] = sequencerData[i]['name'];
+			returnObj[sequencerData[i]['id']]['start_date'] = getDateTimeString(sequencerData[i]['created_date']);
+			returnObj[sequencerData[i]['id']]['lanes'] = {};
 			
 			if (Object.prototype.toString.call(sequencerData[i].positions) === '[object Array]') {
 				for (var j = 0; j < sequencerData[i].positions.length; j++) {
-					if (typeof returnObj[sequencerData[i]['id']]['Lanes'][sequencerData[i].positions[j].position] === 'undefined') {
-						returnObj[sequencerData[i]['id']]['Lanes'][sequencerData[i].positions[j].position] = {};
-						returnObj[sequencerData[i]['id']]['Lanes'][sequencerData[i].positions[j].position]['Samples'] = [];
+					if (typeof returnObj[sequencerData[i]['id']]['lanes'][sequencerData[i].positions[j].position] === 'undefined') {
+						returnObj[sequencerData[i]['id']]['lanes'][sequencerData[i].positions[j].position] = {};
+						returnObj[sequencerData[i]['id']]['lanes'][sequencerData[i].positions[j].position]['TemplateInfo_id'] = [];
 					}
 					for (var k = 0; k < sequencerData[i].positions[j].samples.length; k++) {
-						var obj = {};
-						obj['id'] = sequencerData[i].positions[j].samples[k].id;
-						obj['Project'] = sampleIDInfo[sequencerData[i].positions[j].samples[k].id]['Project Name'];
-						obj['Library Name'] = sampleIDInfo[sequencerData[i].positions[j].samples[k].id]['Library Name'];
-						returnObj[sequencerData[i]['id']]['Lanes'][sequencerData[i].positions[j].position]['Samples'].push(obj);
+						returnObj[sequencerData[i]['id']]['lanes'][sequencerData[i].positions[j].position]['TemplateInfo_id'].push(sequencerData[i].positions[j].samples[k].id);
 					}
 				}
 			} else if (typeof sequencerData[i].positions !== 'undefined') {
-				if (typeof returnObj[sequencerData[i]['id']]['Lanes'][sequencerData[i].positions.position] === 'undefined') {
-					returnObj[sequencerData[i]['id']]['Lanes'][sequencerData[i].positions.position] = {};
-					returnObj[sequencerData[i]['id']]['Lanes'][sequencerData[i].positions.position]['Samples'] = [];
+				if (typeof returnObj[sequencerData[i]['id']]['lanes'][sequencerData[i].positions.position] === 'undefined') {
+					returnObj[sequencerData[i]['id']]['lanes'][sequencerData[i].positions.position] = {};
+					returnObj[sequencerData[i]['id']]['lanes'][sequencerData[i].positions.position]['TemplateInfo_id'] = [];
 				}
-				var obj = {};
-				obj['id'] = sequencerData[i].positions.id;
-				obj['Project'] = sampleIDInfo[sequencerData[i].positions.id]['Project Name'];
-				obj['Library Name'] = sampleIDInfo[sequencerData[i].positions.id]['Library Name'];
-				returnObj[sequencerData[i]['id']]['Lanes'][sequencerData[i].positions.position]['Samples'].push(obj);
+				returnObj[sequencerData[i]['id']]['lanes'][sequencerData[i].positions.position]['TemplateInfo_id'].push(sequencerData[i].positions.id);
 			} else {
 				//console.log(sequencerData[i]);
 			}
@@ -1711,233 +1899,69 @@ exports.updatePipelineStatus = function (sequencerData, sampleData) {
 	return returnObj;
 }
 
-exports.updateStartDateAllRuns = function (sequencerData) {
+
+
+// Pinery
+function getSampleIDInfo(sampleData) {
 	var returnObj = {};
 
-	for (var i = 0; i < sequencerData.length; i++) {
-		returnObj[sequencerData[i]['name']] = getDateTimeString(sequencerData[i]['created_date']);
+	for (var i = 0; i < sampleData.length; i++) {
+		returnObj[sampleData[i]['id']] = {};
+		returnObj[sampleData[i]['id']]['Library Name'] = sampleData[i]['name'];
+		returnObj[sampleData[i]['id']]['Start Date'] = sampleData[i]['created_date'];
+		returnObj[sampleData[i]['id']]['Project Name'] = sampleData[i]['project_name'];
+		returnObj[sampleData[i]['id']]['Sample Type'] = sampleData[i]['sample_type'];
+		if (typeof sampleData[i].attributes !== 'undefined') {
+			for (var j = 0; j < sampleData[i].attributes.length; j++) {
+				// Assuming all samples with the same donor head come from the same institute
+				var donor;
+				if (sampleData[i].attributes[j].name === 'Institute') {
+					if (/(.*?_.*?)_/.test(sampleData[i].name)) {
+						var match = /(.*?_.*?)_/.exec(sampleData[i].name);
+						donor = match[1];
+					} else {
+						donor = sampleData[i].name;
+					}
+					if (typeof returnObj[donor] === 'undefined') {
+						returnObj[donor] = {};
+					}
+					returnObj[donor]['Institute'] = sampleData[i].attributes[j].value;
+					//returnObj[sampleData[i]['id']]['Institute'] = sampleData[i].attributes[j].value;
+				} else if (sampleData[i].attributes[j].name === 'Tissue Origin') {
+					if (/(.*?_.*?)_/.test(sampleData[i].name)) {
+						var match = /(.*?_.*?)_/.exec(sampleData[i].name);
+						donor = match[1];
+					} else {
+						donor = sampleData[i].name;
+					}
+					if (typeof returnObj[donor] === 'undefined') {
+						returnObj[donor] = {};
+					}
+					returnObj[donor]['Tissue Origin'] = sampleData[i].attributes[j].value;
+				} else if (sampleData[i].attributes[j].name === 'External Name') {
+					returnObj[sampleData[i]['id']]['External Name'] = sampleData[i].attributes[j].value;
+				}
+			}
+		}
 	}
 
-	for (var run in returnObj) {
-		var obj = {};
-		obj[run] = returnObj[run];
-
-		// Update in mongodb
-		updateData('StartDateByRun', run, obj);
-	}
 	return returnObj;
 }
 
-exports.updateStartDateAllProjects = function (projectData) {
+function getProjectDataInfo(projectData) {
 	var returnObj = {};
 
 	for (var i = 0; i < projectData.length; i++) {
-		returnObj[projectData[i]['name']] = getDateTimeString(projectData[i]['earliest']);
-	}
-
-	for (var project in returnObj) {
-		var obj = {};
-		obj[project] = returnObj[project];
-
-		// Update in mongodb
-		updateData('StartDateByProject', project, obj);
-	}
-	return returnObj;
-}
-
-exports.updateSequencingStatusAllLibraries = function (sequencerData, sampleData) {
-	var returnObj = {};
-	var sampleIDInfo = getSampleIDInfo(sampleData);
-
-	for (var i = 0; i < sequencerData.length; i++) {
-		// Pooled Sample
-		if (Object.prototype.toString.call(sequencerData[i].positions) === '[object Array]') {
-			for (var j = 0; j < sequencerData[i].positions.length; j++) {
-				for (var k = 0; k < sequencerData[i].positions[j].samples.length; k++) {
-					returnObj[sequencerData[i].positions[j].samples[k].id] = {};
-					returnObj[sequencerData[i].positions[j].samples[k].id]['Library Name'] = sampleIDInfo[sequencerData[i].positions[j].samples[k].id]['Library Name'];
-					returnObj[sequencerData[i].positions[j].samples[k].id]['Status'] = sequencerData[i].state;
-					returnObj[sequencerData[i].positions[j].samples[k].id]['Lane'] = sequencerData[i].positions[j].position;
-				}
-			}
-		// Single Sample
-		} else if (typeof sequencerData[i].positions !== 'undefined') {
-			returnObj[sequencerData[i].positions.id] = {};
-			returnObj[sequencerData[i].positions.id]['Library Name'] = sampleIDInfo[sequencerData[i].positions.id]['Library Name'];
-			returnObj[sequencerData[i].positions.id]['Status'] = sequencerData[i].state;
-			returnObj[sequencerData[i].positions.id]['Lane'] = sequencerData[i].positions.position;
-		// Failed Sequencer Runs with no samples
-		} else {
-			//console.log(sequencerData[i]);
-		}
-	}
-
-	for (var id in returnObj) {
-		var obj = {};
-		obj[id] = returnObj[id];
-
-		updateData('SequencingStatusByLibrary', id, obj);
+		returnObj[projectData[i].name] = {};
+		returnObj[projectData[i].name]['Start Date'] = projectData[i].earliest;
+		returnObj[projectData[i].name]['Last Modified'] = projectData[i].latest;
+		returnObj[projectData[i].name]['Count'] = projectData[i].count;
 	}
 
 	return returnObj;
 }
 
-exports.updateExternalNameAndInstituteAllDonors = function (sampleData) {
-	var returnObj = {};
 
-	for (var i = 0; i < sampleData.length; i++) {
-		if (/(.*?_.*?)_/.test(sampleData[i].name)) {
-			var match = /(.*?_.*?)_/.exec(sampleData[i].name);
-			var donor = match[1];
-			if (typeof sampleData[i].attributes !== 'undefined') {
-				for (var j = 0; j < sampleData[i].attributes.length; j++) {
-					if (sampleData[i].attributes[j].name == 'Institute') {
-						if (typeof returnObj[match[1]] === 'undefined') {
-							returnObj[match[1]] = {};
-						}
-						returnObj[match[1]]['Institute'] = sampleData[i].attributes[j].value;
-					} else if (sampleData[i].attributes[j].name == 'External Name') {
-						if (typeof returnObj[match[1]] === 'undefined') {
-							returnObj[match[1]] = {};
-						}
-						returnObj[match[1]]['External Name'] = sampleData[i].attributes[j].value;
-					}
-				}
-			}
-		}
-	}
-
-	for (var donor in returnObj) {
-		var setMod = { $set: {} };
-		setMod.$set[donor + '.External Name'] = returnObj[donor]['External Name'];
-		setMod.$set[donor + '.Institute'] = returnObj[donor]['Institute'];
-		updateDataField('DonorInfo', donor, setMod);
-	}
-	return returnObj;
-}
-
-exports.updateSamplePrepLibraryDatesByTemplateID = function (sampleData) {
-	var IUSsampleObj = {};
-	var libraryObj = {};
-	var parentObj = {};
-	var returnObj = {};
-
-	for (var i = 0; i < sampleData.length; i++) {
-		var id = sampleData[i].id;
-		// If the sample name is affiliated and doesn't have children, get the parents (this is for IUS Sample Parents)
-		if (/Library Seq$/.test(sampleData[i].sample_type) && typeof sampleData[i].parents !== 'undefined') { 
-			IUSsampleObj[id] = {};
-			IUSsampleObj[id]['IUS Sample Name'] = sampleData[i].name;
-			IUSsampleObj[id]['Create Date'] = getDateTimeString(sampleData[i].created_date);
-			if (/\/(\d*)$/.test(sampleData[i].parents[0])) {
-				var match = /\/(\d*)$/.exec(sampleData[i].parents[0]);
-				IUSsampleObj[id]['Parent ID'] = match[1];
-			}
-		} else {
-			parentObj[id] = {};
-			parentObj[id]['Parent Library Name'] = sampleData[i].name;
-			parentObj[id]['Create Date'] = getDateTimeString(sampleData[i].created_date);
-			parentObj[id]['Sample Type'] = sampleData[i].sample_type;
-			if (typeof sampleData[i].parents !== 'undefined') {
-				if (/\/(\d*)$/.test(sampleData[i].parents[0])) {
-					var match = /\/(\d*)$/.exec(sampleData[i].parents[0]);
-					parentObj[id]['Parent ID'] = match[1];
-				}
-			} else {
-				parentObj[id]['Parent ID'] = 'Identity';
-			}
-		}
-	}
-
-	// Check if IUS library seq parent is the sample right before the IUS library in the sample hierarchy
-	// Library Date
-	for (var id in IUSsampleObj) {
-		var parentID = IUSsampleObj[id]['Parent ID'];
-		returnObj[id] = {};
-		returnObj[id]['IUS Sample Name'] = IUSsampleObj[id]['IUS Sample Name'];
-		if (typeof parentObj[parentID] === 'undefined') { // If the parent is from an IUS sample
-			returnObj[id]['Create Date'] = IUSsampleObj[parentID]['Create Date'];
-			parentID = IUSsampleObj[parentID]['Parent ID'];
-		} else {
-			returnObj[id]['Create Date'] = parentObj[parentID]['Create Date'];
-		}
-		// Determine Prep date by climbing up sample hierarchy
-		if (parentObj[parentID]['Parent ID'] === 'Identity') {
-			returnObj[id]['Prep Date'] = parentObj[parentID]['Create Date'];
-		} else {
-			// Keep iterating through hierarchy until the sample type does not end with 'Library'
-			while (/Library$/.test(parentObj[parentID]['Sample Type']) && parentObj[parentID]['Parent ID'] !== 'Identity') {
-				parentID = parentObj[parentID]['Parent ID'];
-				//console.log(parentObj[parentID]);
-			}
-			returnObj[id]['Prep Date'] = parentObj[parentID]['Create Date'];
-		}
-	}
-
-	for (var id in returnObj) {
-		var obj = {};
-		obj[id] = returnObj[id];
-
-		updateData('SamplePrepLibraryDatesByTemplateID', id, obj);
-	}
-
-	//return returnObj;
-}
-
-exports.updateLibraryTemplateIDByLibraryName = function (sampleData) {
-	var ids = {};
-	for (var i = 0; i < sampleData.length; i++) {
-		if (typeof ids[sampleData[i].name] === 'undefined') {
-			ids[sampleData[i].name] = {};
-		}
-		ids[sampleData[i].name]['template_id'] = sampleData[i].id;
-	}
-	for (var name in ids) {
-		var obj = {};
-		obj[name] = ids[name];
-		updateData('LibraryTemplateIDandIUSSWIDByLibraryName', name, obj);
-	}
-}
-
-//// SeqWare Database Functions
-function updateSampleReceiveDatesBySampleID(jsonData) {
-	for (var i = 0; i < jsonData.length; i++) {
-		if (/(.*?_.*?_.*?_.?)/.test(jsonData[i].name) && /_1$/.test(jsonData[i].name)) {
-			var match = /(.*?_.*?_.*?_.?)/.exec(jsonData[i].name);
-			jsonData[i].head = match[1];
-			updateData('SampleReceiveDatesBySampleTemplateID', jsonData[i].value, jsonData[i]);
-		}
-	}
-}
-
-function updateNumSkipSeqPerLibraryByTemplateID(jsonData) {
-	var obj = {};
-	for (var i = 0; i < jsonData.length; i++) {
-		if (typeof obj[jsonData[i].template_id] === 'undefined') {
-			obj[jsonData[i].template_id] = {};
-			obj[jsonData[i].template_id]['Skip'] = 0;
-		}
-		if (jsonData[i].skip == true) {
-			if (typeof obj[jsonData[i].template_id]['Skipped Libs'] === 'undefined') {
-				obj[jsonData[i].template_id]['Skipped Libs'] = [];
-			}
-			obj[jsonData[i].template_id]['Skipped Libs'].push(jsonData[i].run_lane);
-			obj[jsonData[i].template_id]['Skip']++;
-
-		}
-	}
-	for (var id in obj) {
-		var x = {};
-		x[id] = obj[id];
-		updateData('NumSkipSeqPerLibraryByTemplateID', id, x);
-	}
-}
-
-function updateWorkflowInfo(jsonData) {
-	for (var i = 0; i < jsonData.length; i++) {
-		updateData('WorkflowInfo', jsonData[i].sw_accession, jsonData[i]);
-	}
-}
 
 // ETC
 // takes in a date object or date string and converts it into %Y-%m-%d %H:%M:%S format
@@ -1971,50 +1995,83 @@ function getDateTimeString(date) {
     return dateTime;
 }
 
-// for functions with input dates, converts date strings to objects for comparision
-function convertToDateObject(dateFrom, dateTo) {
-	if (dateFrom === '' && dateTo === ''){
-		dateFrom = new Date('1970-01-01 00:00:00');
-		dateTo = dateNow;
-	} else if ((dateFrom) !== (dateTo)) {
-		if (dateFrom === ''){
-			dateFrom = new Date('1970-01-01 00:00:00');
-			dateTo = new Date(dateTo);
-		} else {
-			dateTo = dateNow;
-			dateFrom = new Date(dateFrom);
-		}
-	}
-	return [dateFrom, dateTo];
+// check if value is in the array
+function isInArray(value, array) {
+	return array.indexOf(value) > -1;
 }
-
-// updates provided info in mongodb and makes a new id if non existent
-function updateData(collection, id, data) {
-	// set the collection entry _id to the SWID/name of entry
-	data['_id'] = id;
-
-	MongoClient.connect(url, function(err, db) {
-		if (err) return console.error(err);
-		//console.log('connected');
-
-		// Return updated info to mongodb, insert if not already in db
-		db.collection(collection).updateOne({_id: data['_id']}, data, {upsert: true}, function (err) {
-			if (err) return console.error(err);
-			db.close();
-		});
-	});
-}
-
-// updates provided info in mongodb for a particular field given the id
-function updateDataField(collection, id, data) {
+// updates provided info in mongodb for a particular field given the field_value
+function updateDataField(collection, field_value, data) {
  	MongoClient.connect(url, function(err, db) {
 		if (err) return console.error(err);
 		console.log('connected');
 
 		// Return updated info to mongodb, insert if not already in db
-		db.collection(collection).updateOne({_id: id}, data, {upsert: true}, function (err) {
+		db.collection(collection).updateOne(field_value, data, {upsert: true}, function (err) {
 			if (err) return console.error(err);
 			db.close();
 		});
 	});
 }
+
+// removes document from collection in mongodb
+function removeDataField(collection, field_value) {
+	MongoClient.connect(url, function(err, db) {
+		if (err) return console.error(err);
+		console.log('removing');
+
+		db.collection(collection).deleteOne(field_value, function (err) {
+			if (err) return console.error(err);
+			db.close();
+		});
+	});
+}
+
+// returns all documents using a specific query in a specific collection
+function findDocuments(docs, query, collection, db, callback) {
+	var cursor = db.collection(collection).find(query);
+	cursor.each(function(err, doc) {
+		if (err) return console.error(err);
+
+		if (doc != null) {
+			docs.push(doc._id);
+		} else {
+			callback();
+			return docs;
+		}
+	});
+};
+
+// returns all documents in a collection
+function findAllDocuments(docs, collection, db, callback) {
+	console.log('finding');
+	var cursor = db.collection(collection).find();
+	cursor.each(function(err, doc) {
+		if (err) return console.error(err);
+
+		if (doc != null) {
+			docs.push(doc._id);
+		} else {
+			callback();
+			return docs;
+		}
+	});
+};
+
+/*
+MongoClient.connect(url, function(err, db) {
+	if (err) return console.error(err);
+	db.collection('RunInfo').find({_id:1010}, {LibraryInfo_id:1, _id:0}).each(function(err, doc) {
+		if (err) return console.error(err);
+
+		if (doc != null) {
+			for (key in doc) {
+				db.collection('LibraryInfo').find( {_id: { $in: doc[key] } }).each(function (err, items) {
+					if (err) return console.error(err);
+					console.log(items);
+					db.close();
+				});
+			}
+		}
+	});
+});
+*/
