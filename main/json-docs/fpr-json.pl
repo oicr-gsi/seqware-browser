@@ -14,11 +14,9 @@ my %fprData;
 my $json;
 
 my $workflowRunSWID;
-my $projectSWID;
 my $IUSSWID;
-my $donorSWID; # root sample
-my $sequencerRunSWID;
 my $fileSWID;
+my $sequencerRunSWID;
 
 ########################################################################
 # Extract data from File Provenance Report
@@ -40,68 +38,38 @@ while (!$fprHandle->eof()) {
 	$line = $fprHandle->getline();
 	chomp $line;
 	@linehash{@header} = split("\t", $line);
-	
-	my $projectName = $linehash{"Study Title"};
+
 	my $date = $linehash{"Last Modified"};
-	my $donorName = $linehash{"Root Sample Name"};
 	my $runName = $linehash{"Sequencer Run Name"};
 	my $libraryName = $linehash{"Sample Name"};
 	my $workflowName = $linehash{"Workflow Name"};
 	my $filePath = $linehash{"File Path"};
 	my $runStatus = $linehash{"Workflow Run Status"};
-	my $sampleAttributes = $linehash{"Sample Attributes"};
-	my $parentAttributes = $linehash{"Parent Sample Attributes"};
 	my $lane = $linehash{"Lane Number"};
-	my $barcode = $linehash{"IUS Tag"};
 
 	$workflowRunSWID = $linehash{"Workflow Run SWID"};
-	$projectSWID = $linehash{"Study SWID"};
-	$sequencerRunSWID = $linehash{"Sequencer Run SWID"};
 	$fileSWID = $linehash{"File SWID"};
 	$IUSSWID = $linehash{"IUS SWID"};
-	$donorSWID = $linehash{"Root Sample SWID"};
-	
+	$sequencerRunSWID = $linehash{"Sequencer Run SWID"};
+
+	#By Run
+	$fprData{"Run"}{$runName} = "1";
+
 	#By Workflow
 	$fprData{"Workflow"}{$workflowRunSWID}{"Last Modified"} = $date;
-	unless ( defined $fprData{"Workflow"}{$workflowRunSWID}{"Status"} ){
-		$fprData{"Workflow"}{$workflowRunSWID}{"Status"} = $runStatus;
-	}
-	
-	# By Project
-	unless ( defined $fprData{"Project"}{$projectSWID}{"Project Name"} ) {
-		$fprData{"Project"}{$projectSWID}{"Project Name"} = $projectName;
-	}
+	$fprData{"Workflow"}{$workflowRunSWID}{"Status"} = $runStatus;
+	$fprData{"Workflow"}{$workflowRunSWID}{"Workflow Name"} = $workflowName;
+	$fprData{"Workflow"}{$workflowRunSWID}{"Files"}{$fileSWID} = $filePath;
 
-	$fprData{"Project"}{$projectSWID}{"Last Modified"} = $date;
-
-	$fprData{"Project"}{$projectSWID}{"Library"}{$IUSSWID} = $libraryName;
-	$fprData{"Project"}{$projectSWID}{"Donor"}{$donorSWID} = $donorName;
-	$fprData{"Project"}{$projectSWID}{"Workflow Run"}{$workflowRunSWID}{"Workflow Name"} = $workflowName;
-	$fprData{"Project"}{$projectSWID}{"Workflow Run"}{$workflowRunSWID}{"Status"} = $runStatus;
-	$fprData{"Project"}{$projectSWID}{"Workflow Run"}{$workflowRunSWID}{"Last Modified"} = $date;
-	$fprData{"Project"}{$projectSWID}{"Run"}{$sequencerRunSWID}{"Run Name"} = $runName;
-	$fprData{"Project"}{$projectSWID}{"Run"}{$sequencerRunSWID}{"Donor Name"}{$donorName}++;
-	$fprData{"Project"}{$projectSWID}{"Run"}{$sequencerRunSWID}{"Workflow"}{$workflowRunSWID}{"Workflow Name"} = $workflowName;
-	$fprData{"Project"}{$projectSWID}{"Run"}{$sequencerRunSWID}{"Workflow"}{$workflowRunSWID}{"Status"} = $runStatus;
-	
-	# By Run
-	$fprData{"Run"}{$sequencerRunSWID}{"Run Name"} = $runName;
-	$fprData{"Run"}{$sequencerRunSWID}{"Library"}{$IUSSWID}{"Library Name"} = $libraryName;
-	$fprData{"Run"}{$sequencerRunSWID}{"Lane"}{$lane}{"Library"}{$IUSSWID}{"Library Name"} = $libraryName;
-	$fprData{"Run"}{$sequencerRunSWID}{"Lane"}{$lane}{"Library"}{$IUSSWID}{"Barcode"} = $barcode;
+	# By File
+	$fprData{"File"}{$fileSWID}{"Path"} = $filePath;
+	$fprData{"File"}{$fileSWID}{"WorkflowSWID"} = $workflowRunSWID;
 
 	# By Library
 	$fprData{"Library"}{$IUSSWID}{"Library Name"} = $libraryName;
 	$fprData{"Library"}{$IUSSWID}{"Last Modified"} = $date;
-	$fprData{"Library"}{$IUSSWID}{"Barcode"} = $barcode;
 	$fprData{"Library"}{$IUSSWID}{"Lane"} = $lane;
 	$fprData{"Library"}{$IUSSWID}{"Run"}{$sequencerRunSWID} = $runName;
-	$fprData{"Library"}{$IUSSWID}{"Workflow Run"}{$workflowRunSWID}{"Workflow Name"} = $workflowName;
-	$fprData{"Library"}{$IUSSWID}{"Workflow Run"}{$workflowRunSWID}{"Status"} = $runStatus;
-	$fprData{"Library"}{$IUSSWID}{"Workflow Run"}{$workflowRunSWID}{"Skip"} = $linehash{"Skip"};
-	$fprData{"Library"}{$IUSSWID}{"Workflow Run"}{$workflowRunSWID}{"Last Modified"} = $date;
-	$fprData{"Library"}{$IUSSWID}{"Workflow Run"}{$workflowRunSWID}{"Files"}{$fileSWID} = $filePath;
-	$fprData{"Library"}{$IUSSWID}{"Sample Attributes"} = $sampleAttributes;
 
 	if ($filePath =~ /.*.BamQC.json$/ ) {
         $fprData{"Library"}{$IUSSWID}{"JSON"} = $filePath;
@@ -110,17 +78,13 @@ while (!$fprHandle->eof()) {
    	} elsif ($filePath =~ /.*rnaqc.report.zip$/){
    		$fprData{"Library"}{$IUSSWID}{"RNAZipFile"} = $filePath;
    	}
-
-	# By Donor
-	$fprData{"Donor"}{$donorSWID}{"Donor Name"} = $donorName;
-	$fprData{"Donor"}{$donorSWID}{"Last Modified"} = $date;
-	$fprData{"Donor"}{$donorSWID}{"Donor Attributes"} = $parentAttributes;
-	$fprData{"Donor"}{$donorSWID}{"Run"}{$sequencerRunSWID}{"Run Name"} = $runName;
-	$fprData{"Donor"}{$donorSWID}{"Library"}{$IUSSWID}{"Library Name"} = $libraryName;
-	
+}
+open (runFH, ">", "./runs.txt");
+foreach my $key (keys (%{$fprData{"Run"}})) {
+	print runFH "$key \n";
 }
 
-my @categories = ("Workflow", "Project", "Run", "Library", "Donor");
+my @categories = ('Workflow', 'File', 'Library');
 my %hash;
 foreach my $key (@categories){
 	open (FH, ">", "./fpr-".$key.".json");
