@@ -10,6 +10,31 @@ Data is collected from these main data sources:
 
 Mongo databases are organized by database > collections > documents in the collection
 
+
+### Config.js
+This is the configuration file that fpr.js reads from to connect to databases: mongo and postgresql. Enter in hostnames and databases, then place this file in the node_modules directory
+
+```
+var config = {};
+ 
+config.mongo = {};
+config.postgres = {};
+ 
+//Mongo database
+config.mongo.host = <mongo hostname>;
+config.mongo.database = 'seqwareBrowser';
+ 
+//Seqware database
+config.postgres.username = <username>;
+config.postgres.password = <password>;
+config.postgres.host = <postgres hostname>;
+config.postgres.port = <postgres port>;
+config.postgres.database = <seqware database>;
+ 
+module.exports = config;
+```
+
+
 At the time of this edit, the mongo database name is seqwareBrowser and the collections are organized according to major categories: Project, Donor, Sequencer Run, Library Seq (same as IUS) , Workflow, Files, Dates, all the associated report data for a specific library, and currently running sequencer runs and running/failed workflow runs.
 
 The documents within the collection each have their own '_id'. Each _id format is different based on the collection and determines a document's uniqueness within the collection. They can be used to query documents effectively. The most common query to get back all documents is db.[collection].find() and the first 20 documents within that collection are displayed.
@@ -1023,58 +1048,52 @@ Run time: 3-5s
 #### Run Report Data Phasing
 - _id: run name
 - lane_#: run lane details 
+- source: source of the file that data was extracted from (either BIN, XML, or n/a)
 
 ```
 > db.RunReportDataPhasing.find()
 {
-  "_id": "141016_D00353_0081_BC5M0LANXX",
+  "_id": "140101_SN203_0209_AC3AGYACXX",
+  "source": "BIN",
   "lane_8": {
-    "Phasing (R1/R2)": "0.19/0.23",
-    "PF% Sequencing": "89.67",
-    "Source": "BIN",
-    "Prephasing {R1/R2)": "0.16/0.20"
+    "Phasing (R1/R2)": "0.21/0.27",
+    "PF% Sequencing": "76.82",
+    "Prephasing {R1/R2)": "0.23/0.26"
   },
   "lane_1": {
-    "Phasing (R1/R2)": "0.18/0.23",
-    "PF% Sequencing": "89.61",
-    "Source": "BIN",
-    "Prephasing {R1/R2)": "0.16/0.21"
+    "Phasing (R1/R2)": "0.21/0.28",
+    "PF% Sequencing": "82.26",
+    "Prephasing {R1/R2)": "0.24/0.29"
   },
   "lane_7": {
-    "Phasing (R1/R2)": "0.18/0.24",
-    "PF% Sequencing": "90.19",
-    "Source": "BIN",
-    "Prephasing {R1/R2)": "0.16/0.21"
+    "Phasing (R1/R2)": "0.18/0.25",
+    "PF% Sequencing": "51.23",
+    "Prephasing {R1/R2)": "0.19/0.23"
   },
   "lane_4": {
-    "Phasing (R1/R2)": "0.19/0.24",
-    "PF% Sequencing": "88.79",
-    "Source": "BIN",
-    "Prephasing {R1/R2)": "0.18/0.21"
+    "Phasing (R1/R2)": "0.20/0.27",
+    "PF% Sequencing": "88.70",
+    "Prephasing {R1/R2)": "0.32/0.36"
   },
   "lane_2": {
-    "Phasing (R1/R2)": "0.18/0.22",
-    "PF% Sequencing": "89.98",
-    "Source": "BIN",
-    "Prephasing {R1/R2)": "0.16/0.21"
+    "Phasing (R1/R2)": "0.20/0.27",
+    "PF% Sequencing": "75.49",
+    "Prephasing {R1/R2)": "0.25/0.27"
   },
   "lane_5": {
-    "Phasing (R1/R2)": "0.18/0.23",
-    "PF% Sequencing": "91.96",
-    "Source": "BIN",
-    "Prephasing {R1/R2)": "0.16/0.21"
+    "Phasing (R1/R2)": "0.21/0.27",
+    "PF% Sequencing": "85.98",
+    "Prephasing {R1/R2)": "0.32/0.40"
   },
   "lane_6": {
-    "Phasing (R1/R2)": "0.18/0.23",
-    "PF% Sequencing": "90.55",
-    "Source": "BIN",
-    "Prephasing {R1/R2)": "0.16/0.21"
+    "Phasing (R1/R2)": "0.20/0.27",
+    "PF% Sequencing": "76.18",
+    "Prephasing {R1/R2)": "0.23/0.26"
   },
   "lane_3": {
-    "Phasing (R1/R2)": "0.18/0.22",
-    "PF% Sequencing": "89.40",
-    "Source": "BIN",
-    "Prephasing {R1/R2)": "0.16/0.21"
+    "Phasing (R1/R2)": "0.20/0.27",
+    "PF% Sequencing": "89.84",
+    "Prephasing {R1/R2)": "0.31/0.35"
   }
 }
 ```
@@ -1088,3 +1107,54 @@ Note: perl module outputs returned object into json file that is taken in by a s
 function: RunReport.pl new job for every run
 
 Run time: Total for all run jobs approx 1h (qw and r and hqw)
+
+### Workflow Run Analysis YAML
+This is used to sort the workflow into its respective analysis type (the numbers don't mean anything)
+
+```
+---
+Alignment:
+  BWA: 3326549
+  BwaMem: 3490867
+  GenomicAlignmentNovoalign: 940113
+  GenomicAlignmentNovoalign_2: 1726998
+  GenomicAlignmentNovoalign_V2.07.15b: 3478218
+  RNAseqAligner-Tophat: 3500779
+Base calling:
+  CASAVA: 3504552
+  CASAVA-RTA: 538774
+  FileImport: 3215649
+  Xenome: 3403815
+Quality Control:
+  ArtifactCleaning: 4
+  BamQC: 3556289
+  ContEst: 5
+  CoverageAnalysis: 3498310
+  EGAUpload-OSW: 3
+  FastQC: 3504913
+  FingerprintCollector: 3557655
+  FusionDetection-Tophat: 3500783
+  GCBias-OSW: 3549180
+  RNAseqQc: 3502433
+  SampleFingerprinting: 9
+  SeqControl: 3549189
+  TargetedSequencingQC: 1338647
+Variant Calling:
+  BamFilterMergeCollapse: 3371881
+  Cufflinks: 3502421
+  GATK: 1818184
+  GATK3: 3239906
+  GATKAnnotateAndSort: 678388
+  GATKGenotypeGVCFs: 3285541
+  GATKHaplotypeCaller: 3371982
+  GATKRecalibrationAndVariantCalling: 17740
+  GATKRecalibrationAndVariantCallingHg19Exomes: 654471
+  GATKRecalibrationAndVariantCallingHg19WholeGenome: 554991
+  GATKvcfAnnotateAndSort: 1
+  Mutect: 7
+  MutectStrelka: 3324548
+  RNAseqTopHatCufflinks: 2
+  SomaticClassifier: 640448
+  Strelka: 6
+  VariantMerging: 8
+  ```
