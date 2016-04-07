@@ -14,7 +14,6 @@ At the time of this edit, the mongo database name is seqwareBrowser and the coll
 
 The documents within the collection each have their own '_id'. Each _id format is different based on the collection and determines a document's uniqueness within the collection. They can be used to query documents effectively. The most common query to get back all documents is db.[collection].find() and the first 20 documents within that collection are displayed.
 
-To view the collections:
 Log into the mongo server.
 
 ```
@@ -68,6 +67,9 @@ Displays all currently running sequencer runs before the date 2014-02-01.
 Runs a query in seqware database for all completed sequencer runs after 2014-02-01 and compares the output to the running sequencer runs from pinery. If the sequencer is 'running' in pinery but appears in seqware database, the sequencer run is complete so the entry is removed from the CurrentSequencerRuns collection.
 
 Failed sequencer runs don't appear in seqware database so if the status is failed on pinery, the status is updated as failed in the RunInfo collection.
+
+Download time: 12s
+Run time: 2s
 
 #### Current Workflow Runs
 - _id: workflow SWID (or sw accession)
@@ -160,6 +162,8 @@ Runs a query in seqware database for all workflow runs with status = 'running' a
 
 The _id for all documents in the CurrentWorkflowRuns collection are also queried for and if the status changes, the document is removed from the collection and updated in WorkflowInfo collection and other associated collections that require Workflow data. If the status = 'failed', the document is added to a FailedWorkflowRuns collection.
 
+Run time: 7-9s
+
 #### Failed Workflow Runs
 - _id: workflow SWID (or sw accession)
 - sw_accession: seqware accession id
@@ -189,6 +193,7 @@ Displays all workflow runs that have gone from running > failed.
 - RunInfo_id: array of runs with libraries that have had 'last modified date' workflows running on them on that date
 - WorkflowInfo_id: array of workflows that occurred on that date
 - num_complete_workflows: number of completed workflows on that date
+- num_failed_workflows: number of failed workflows on that date
 - num_runs: total sequencer runs count on that date
 - num_libraries: number of libraries with workflows run on them on that date
 - num_workflows: number of workflows on that date
@@ -225,6 +230,7 @@ Displays all workflow runs that have gone from running > failed.
     215471
   ],
   "num_complete_workflows": 9,
+  "num_failed_workflows": 0,
   "num_runs": 3,
   "num_libraries": 9,
   "num_workflows": 9
@@ -236,6 +242,9 @@ Displays all date documents and all associated libraries and runs data that have
 The RunInfo_id and LibraryInfo_id references the RunInfo collection and the LibraryInfo collection.
 
 functions: updateWorkflowInfo
+
+Download time: 12s + 36s + 2s = 50s
+Run time: 1m 25-30s
 
 #### Donor Info
 - _id: Donor name
@@ -283,6 +292,9 @@ Displays all information associated with a particular donor, you can either quer
 The LibraryInfo_id array references the LibraryInfo collection: see below
 
 functions: updateDonorInfo
+
+Download time: 12s + 36s = 48s
+Run time: 10-12s
 
 #### Library Info
 Note: Library Info documents refer to the **sequenced libraries** and not the general library. Information on the general library can be found by querying through the template_id or library name
@@ -364,6 +376,9 @@ Note: Library Info documents refer to the **sequenced libraries** and not the ge
 Displays all information associated with a particular library
 
 functions: updateLibraryInfo, updateWorkflowInfo
+
+Download time: 12s + 36s + 2s = 50s
+Run time: 8-9s
 
 ##### Example queries:
 Get all Libraries for a run:
@@ -663,6 +678,9 @@ Lists information for a specified project
 
 functions: updateProjectInfo
 
+Download time: 12s + 36s + 2s + 33s = 1m 23s
+Run time: 11-12s
+
 #### Run Info
 - _id: run name
 - start_date: start date of sequencer run
@@ -753,6 +771,9 @@ Lists information for a specified run
 
 functions: updateRunInfo, updateWorkflowInfo
 
+Download time: 12s + 36s = 48s
+Run time: 4s
+
 #### Workflow Info
 - _id: workflow SWID (or sw accession)
 - sw_accession: seqware accession id
@@ -799,6 +820,9 @@ Provides information on workflows
 
 functions: updateWorkflowInfo
 
+Download time: 12s + 36s + 2s = 50s
+Run time: 1m 25-30s
+
 #### File Info
 - _id: fileSWID
 - file_path: path of file
@@ -816,6 +840,9 @@ functions: updateWorkflowInfo
 List of files linked to associated workflow
 
 functions: updateFilesInfo
+
+Download/Hold time: 1m 5s
+Run time: 3s
 
 ##### Example queries:
 To query for all files associated with WorkflowInfo_id:
@@ -871,6 +898,9 @@ The data extracted from files in json directory for the details pages
 
 function: updateIUSSWIDReportData
 
+Download/Hold time: 1m 5s
+Run time: 18m
+
 #### IUSSWIDRNASeqQCData
 - _id: ius SWID (seqware accession for the particular library seq)
 - library_name: name of library that was sequenced
@@ -882,6 +912,9 @@ function: updateIUSSWIDReportData
   "_id": "1271394",
   "library_name": "HALT_1678_Lv_P_PE_600_MR",
   "data": {
+    "Bases Breakdown": <base64 image>,
+    "RSeQC Gene Body Coverage": <base64 image>,
+    "Junction Saturation": <base64 image>,
     "Total Reads": "50720838",
     "Uniq Reads": "45517225",
     "Reads/SP": "2.61",
@@ -915,6 +948,9 @@ RNA Seq QC data associated with a particular IUSSWID (unique for library seq)
 
 function: updateIUSSIWDRNASeqQCData
 
+Download/Hold time: 1m 5s
+Run time: 4m 30s
+
 #### IUSSWIDGraphData
 Note: Graphs are generated using Google charts and the data is in the format that is required for the function: drawGraphsById to plot graphs
 
@@ -931,6 +967,9 @@ Note: Graphs are generated using Google charts and the data is in the format tha
 For a specific library seq, contains data to graph using Google Charts
 
 function: updateGraphData
+
+Download/Hold time: 1m 5s
+Run time: 19m
 
 #### Report Run Data
 - _id: run name
@@ -976,6 +1015,10 @@ function: updateGraphData
 Queries through existing database data and reports on lane totals for a specific run and lane
 
 function: updateLaneDetailsTotalsByRun
+
+Download/Hold time: 1m 5s
+Hold time: 18m
+Run time: 3-5s
 
 #### Run Report Data Phasing
 - _id: run name
@@ -1041,3 +1084,7 @@ Reports on Prephasing, phasing and PF% of a particular lane on a run
 Uses the function get_XML_Data from wideInstrumentReport.pm perl module for each run
 
 Note: perl module outputs returned object into json file that is taken in by a separate javascript file to upload to mongo (can't directly upload to mongo because unable to use MongoDB.pm on the cluster due to outdated C compilier libc6.so)
+
+function: RunReport.pl new job for every run
+
+Run time: Total for all run jobs approx 1h (qw and r and hqw)

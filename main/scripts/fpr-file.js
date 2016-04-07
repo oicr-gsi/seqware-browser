@@ -16,5 +16,5 @@ fs.readFile(process.argv[2], 'utf8', function(err, data) {
 	console.log('reading files');
 	fprDataFiles = JSON.parse(data);
 
-	functions.updateFilesInfo(fprDataFiles);
+	functions.updateFileInfo(fprDataFiles);
 })

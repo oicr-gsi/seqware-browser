@@ -6,7 +6,8 @@ var YAML = require('yamljs');
 var readMultipleFiles = require('read-multiple-files');
 var http = require("http");
 var AdmZip = require('adm-zip');
-var config = require('./config.js'); // Configuration file for mongo and postgres databases
+// Configuration file for mongo and postgres databases
+var config = require('config.js');
 
 // Initialize mongo config
 var	mongodb = require('mongodb');
@@ -22,10 +23,10 @@ var analysisYAML;
 
 /////////////////////////////// Functions ///////////////////////////////
 
-///////////////////////////////// ProjectInfo /////////////////////////////
+////////////////////////////// ProjectInfo /////////////////////////////
 /** _id: project name
  * updates a list of projects and associated info
- * @param {json} sequencerData 
+ * @param {json} sequencerData
  * @param {json} sampleData
  * @param {json} projectData
  */
@@ -154,7 +155,7 @@ exports.updateProjectInfo = function (sequencerData, sampleData, projectData) {
 	});
 }
 
-///////////////////////////////// RunInfo /////////////////////////////////////////
+///////////////////////////////// RunInfo ///////////////////////////////
 /** _id: run name
  * updates a list of runs and associated info
  * @param {json} sequencerData 
@@ -191,7 +192,9 @@ exports.updateRunInfo = function (sequencerData, sampleData) {
 					returnObj['LibraryInfo_id'] = [];
 					if (typeof skipData[sequencerData[i].name] !== 'undefined') {
 						returnObj['skipped_libraries'] = skipData[sequencerData[i].name];
-					} 
+					} else {
+						returnObj['skipped_libraries'] = 0;
+					}
 					// Pooled Sample
 					if (Object.prototype.toString.call(sequencerData[i].positions) === '[object Array]') {
 						// initialize
@@ -365,7 +368,7 @@ exports.updateRunInfo = function (sequencerData, sampleData) {
 	});
 }
 
-///////////////////////////////// DonorInfo //////////////////////////////////////////
+///////////////////////////////// DonorInfo ///////////////////////////////
 /** _id: donor head
  * updates a list of donors heads and associated info
  * @param {json} sequencerData 
@@ -437,6 +440,8 @@ exports.updateDonorInfo = function (sequencerData, sampleData) {
 										returnObj[donor]['libraries'].push(libraryName);
 										if (typeof sampleIDInfo[donor] !== 'undefined') {
 											returnObj[donor]['institute'] = sampleIDInfo[donor]['Institute'];
+										} else {
+											returnObj[donor]['institute'] = 'n/a';
 										}
 										returnObj[donor]['status'] = sequencerData[i].state;
 									}
@@ -451,6 +456,8 @@ exports.updateDonorInfo = function (sequencerData, sampleData) {
 									}
 									if (typeof skipData[donor] !== 'undefined') {
 										returnObj[donor]['skipped_libraries'] = skipData[donor];
+									} else {
+										returnObj[donor]['skipped_libraries'] = 0;
 									}
 								}
 							}
@@ -472,6 +479,8 @@ exports.updateDonorInfo = function (sequencerData, sampleData) {
 								returnObj[donor]['libraries'].push(libraryName);
 								if (typeof sampleIDInfo[donor] !== 'undefined') {
 									returnObj[donor]['institute'] = sampleIDInfo[donor]['Institute'];
+								} else {
+									returnObj[donor]['institute'] = 'n/a';
 								}
 								returnObj[donor]['status'] = sequencerData[i].state;
 							}
@@ -542,7 +551,7 @@ exports.updateDonorInfo = function (sequencerData, sampleData) {
 	});
 }
 
-///////////////////////////////// LibraryInfo /////////////////////////////////
+/////////////////////////////// LibraryInfo /////////////////////////////////
 /** _id: library_id (run.name||lane||template.id)
  * updates library information mongodb and inserts if it isn't in the collection
  * @param {json} sequencerData 
@@ -558,53 +567,55 @@ exports.updateLibraryInfo = function (sequencerData, sampleData, skipData, recei
 		var sampleSkipInfo = getLibrarySeqSkip(skipData);
 		var sampleReceiveInfo = getLibraryReceiveDates(receiveData);
 		var libraries = {};
+		var libDonor = {};
 
-		// Get individual library seq data
-		for (var i = 0; i < sequencerData.length; i++) {
-			// Pooled samples
-			if (Object.prototype.toString.call(sequencerData[i].positions) === '[object Array]') {
-				for (var j = 0; j < sequencerData[i].positions.length; j++) {
-					for (var k = 0; k < sequencerData[i].positions[j].samples.length; k++) {
-						var id = sequencerData[i].positions[j].samples[k].id;
-						var _id = sequencerData[i].name + '||' + sequencerData[i].positions[j].position + '||' + id;
-						if (/Library Seq$/.test(sampleIDInfo[id]['Sample Type'])) {
-							var libraryName = sampleIDInfo[id]['Library Name'];
-							libraries[_id] = {};
-							libraries[_id]._id = _id;
-							libraries[_id].template_id = id;
-							libraries[_id].library_name = sampleIDInfo[id]['Library Name'];
-							libraries[_id].ProjectInfo_id = sampleIDInfo[id]['Project Name'];
-							libraries[_id].RunInfo_id = sequencerData[i].name;
-							libraries[_id].lane = sequencerData[i].positions[j].position;
-							libraries[_id].status = sequencerData[i].state;
-							if (typeof sampleSkipInfo[_id] !== 'undefined') {
-								libraries[_id].skip = sampleSkipInfo[_id].skip;
-							}
-							if (typeof sampleDateInfo[id] !== 'undefined') {
-								libraries[_id].create_date = sampleDateInfo[id]['create_date'];
-								libraries[_id].prep_date = sampleDateInfo[id]['prep_date'];
-							} else {
-								libraries[_id].create_date = 'n/a';
-								libraries[_id].prep_date = 'n/a';
-							}
+		// Query for library donors in mongo
+ 		findDonorDocuments(libDonor, db, function() {
+ 			//console.log(libDonor);
 
-							// If library format is 6 underscores
-							// Determine tissue and library type
-							if (/^.*?_.*?_.*?_.*?_.*?_.*?_.*?[^_]$/.test(libraryName)) {
-								if (/.*_(.*?)$/.test(libraryName)) {
-								var match = /.*_(.*?)$/.exec(libraryName);
-								libraries[_id].library_type = match[1];
+ 			// Get individual library seq data
+			for (var i = 0; i < sequencerData.length; i++) {
+				// Pooled samples
+				if (Object.prototype.toString.call(sequencerData[i].positions) === '[object Array]') {
+					for (var j = 0; j < sequencerData[i].positions.length; j++) {
+						for (var k = 0; k < sequencerData[i].positions[j].samples.length; k++) {
+							var id = sequencerData[i].positions[j].samples[k].id;
+							var _id = sequencerData[i].name + '||' + sequencerData[i].positions[j].position + '||' + id;
+							if (/Library Seq$/.test(sampleIDInfo[id]['Sample Type'])) {
+								var libraryName = sampleIDInfo[id]['Library Name'];
+								libraries[_id] = {};
+								libraries[_id]._id = _id;
+								libraries[_id].template_id = id;
+								libraries[_id].library_name = sampleIDInfo[id]['Library Name'];
+								libraries[_id].ProjectInfo_id = sampleIDInfo[id]['Project Name'];
+								libraries[_id].RunInfo_id = sequencerData[i].name;
+								libraries[_id].lane = sequencerData[i].positions[j].position;
+								libraries[_id].status = sequencerData[i].state;
+								if (typeof sampleSkipInfo[_id] !== 'undefined') {
+									libraries[_id].skip = sampleSkipInfo[_id].skip;
 								}
-								if (/.*?_.*?_.*?_(.*?)_/.test(libraryName)) {
-									var match = /.*?_.*?_.*?_(.*?)_/.exec(libraryName);
-									libraries[_id].tissue_type = match[1];
+								if (typeof sampleDateInfo[id] !== 'undefined') {
+									libraries[_id].create_date = sampleDateInfo[id]['create_date'];
+									libraries[_id].prep_date = sampleDateInfo[id]['prep_date'];
+								} else {
+									libraries[_id].create_date = 'n/a';
+									libraries[_id].prep_date = 'n/a';
 								}
-							}
-							// Assume all samples come from the same donor
-							// TODO: query donor database for libraries to get the donor?
-							if (/(.*?_.*?)_/.test(libraryName)) {
-								var match = /(.*?_.*?)_/.exec(libraryName);
-								var donor = match[1];
+
+								// If library format is 6 underscores
+								// Determine tissue and library type
+								if (/^.*?_.*?_.*?_.*?_.*?_.*?_.*?[^_]$/.test(libraryName)) {
+									if (/.*_(.*?)$/.test(libraryName)) {
+									var match = /.*_(.*?)$/.exec(libraryName);
+									libraries[_id].library_type = match[1];
+									}
+									if (/.*?_.*?_.*?_(.*?)_/.test(libraryName)) {
+										var match = /.*?_.*?_.*?_(.*?)_/.exec(libraryName);
+										libraries[_id].tissue_type = match[1];
+									}
+								}
+								// Donor
+								var donor = libDonor[_id];
 								libraries[_id].DonorInfo_id = donor;
 								if (typeof sampleIDInfo[donor] !== 'undefined') {
 									if (typeof sampleIDInfo[donor]['Institute'] !== 'undefined') {
@@ -623,57 +634,54 @@ exports.updateLibraryInfo = function (sequencerData, sampleData, skipData, recei
 								} else {
 									libraries[_id].receive_date = 'n/a';
 								}
-							}
 
-							if (typeof sequencerData[i].positions[j].samples[k].barcode !== 'undefined') {
-								libraries[_id].barcode = sequencerData[i].positions[j].samples[k].barcode;
-							} else {
-								libraries[_id].barcode = 'noIndex';
+								if (typeof sequencerData[i].positions[j].samples[k].barcode !== 'undefined') {
+									libraries[_id].barcode = sequencerData[i].positions[j].samples[k].barcode;
+								} else {
+									libraries[_id].barcode = 'noIndex';
+								}
 							}
 						}
 					}
-				}
-			} else if (typeof sequencerData[i].positions !== 'undefined') {
-				var id = sequencerData[i].positions.id;
-				var _id = sequencerData[i].name + '||' + sequencerData[i].positions[j].position + '||' + id;
-				if (/Library Seq$/.test(sampleIDInfo[id]['Sample Type'])) {
-					var libraryName = sampleIDInfo[id]['Library Name'];
-					libraries[_id] = {};
-					libraries[_id]._id = _id;
-					libraries[_id].template_id = id;
-					libraries[_id].library_name = libraryName;
-					libraries[_id].ProjectInfo_id = sampleIDInfo[id]['Project Name'];
-					libraries[_id].RunInfo_id = sequencerData[i].name;
-					libraries[_id].lane = sequencerData[i].positions.position;
-					libraries[_id].status = sequencerData[i].state;
-					if (typeof sampleSkipInfo[_id] !== 'undefined') {
-						libraries[_id].skip = sampleSkipInfo[_id].skip;
-					}
-					if (typeof sampleDateInfo[id] !== 'undefined') {
-						libraries[_id].create_date = sampleDateInfo[id]['create_date'];
-						libraries[_id].prep_date = sampleDateInfo[id]['prep_date'];
-					} else {
-						libraries[_id].create_date = 'n/a';
-						libraries[_id].prep_date = 'n/a';
-					}
+				} else if (typeof sequencerData[i].positions !== 'undefined') {
+					var id = sequencerData[i].positions.id;
+					var _id = sequencerData[i].name + '||' + sequencerData[i].positions[j].position + '||' + id;
+					if (/Library Seq$/.test(sampleIDInfo[id]['Sample Type'])) {
+						var libraryName = sampleIDInfo[id]['Library Name'];
+						libraries[_id] = {};
+						libraries[_id]._id = _id;
+						libraries[_id].template_id = id;
+						libraries[_id].library_name = libraryName;
+						libraries[_id].ProjectInfo_id = sampleIDInfo[id]['Project Name'];
+						libraries[_id].RunInfo_id = sequencerData[i].name;
+						libraries[_id].lane = sequencerData[i].positions.position;
+						libraries[_id].status = sequencerData[i].state;
+						if (typeof sampleSkipInfo[_id] !== 'undefined') {
+							libraries[_id].skip = sampleSkipInfo[_id].skip;
+						}
+						if (typeof sampleDateInfo[id] !== 'undefined') {
+							libraries[_id].create_date = sampleDateInfo[id]['create_date'];
+							libraries[_id].prep_date = sampleDateInfo[id]['prep_date'];
+						} else {
+							libraries[_id].create_date = 'n/a';
+							libraries[_id].prep_date = 'n/a';
+						}
 
-					// If library format is 6 underscores
-					// Determine tissue and library type
-					if (/^.*?_.*?_.*?_.*?_.*?_.*?_.*?[^_]$/.test(libraryName)) {
-						if (/.*_(.*?)$/.test(libraryName)) {
-						var match = /.*_(.*?)$/.exec(libraryName);
-						libraries[_id].library_type = match[1];
+						// If library format is 6 underscores
+						// Determine tissue and library type
+						if (/^.*?_.*?_.*?_.*?_.*?_.*?_.*?[^_]$/.test(libraryName)) {
+							if (/.*_(.*?)$/.test(libraryName)) {
+							var match = /.*_(.*?)$/.exec(libraryName);
+							libraries[_id].library_type = match[1];
+							}
+							if (/.*?_.*?_.*?_(.*?)_/.test(libraryName)) {
+								var match = /.*?_.*?_.*?_(.*?)_/.exec(libraryName);
+								libraries[_id].tissue_type = match[1];
+							}
 						}
-						if (/.*?_.*?_.*?_(.*?)_/.test(libraryName)) {
-							var match = /.*?_.*?_.*?_(.*?)_/.exec(libraryName);
-							libraries[_id].tissue_type = match[1];
-						}
-					}
-					
-					// Assume all samples come from the same donor
-					if (/(.*?_.*?)_/.test(libraryName)) {
-						var match = /(.*?_.*?)_/.exec(libraryName);
-						var donor = match[1];
+						
+						// Assume all samples come from the same donor
+						var donor = libDonor[_id];
 						libraries[_id].DonorInfo_id = donor;
 						if (typeof sampleIDInfo[donor] !== 'undefined') {
 							if (typeof sampleIDInfo[donor]['Institute'] !== 'undefined') {
@@ -692,23 +700,23 @@ exports.updateLibraryInfo = function (sequencerData, sampleData, skipData, recei
 						} else {
 							libraries[_id].receive_date = 'n/a';
 						}
-					}
 
-					if (typeof sequencerData[i].positions.barcode !== 'undefined') {
-						libraries[_id].barcode = sequencerData[i].positions.barcode;
-					} else {
-						libraries[_id].barcode = 'noIndex';
+						if (typeof sequencerData[i].positions.barcode !== 'undefined') {
+							libraries[_id].barcode = sequencerData[i].positions.barcode;
+						} else {
+							libraries[_id].barcode = 'noIndex';
+						}
 					}
 				}
 			}
-		}
-		for (var id in libraries) {
-			batch.find({_id: id}).upsert().updateOne(libraries[id]);
-		}
-		batch.execute(function(err, result) {
-			if (err) console.dir(err);
-			db.close();
-		});
+			for (var id in libraries) {
+				batch.find({_id: id}).upsert().updateOne(libraries[id]);
+			}
+			batch.execute(function(err, result) {
+				if (err) console.dir(err);
+				db.close();
+			});
+ 		});
 	});
 }
 
@@ -820,7 +828,7 @@ function getLibraryReceiveDates(jsonData) {
 
 ///////////////////////////////// WorkflowInfo /////////////////////////////////
 /** _id: workflowSWID
- * updates data from seqware database and updates mongodb
+ * updates data from seqware database and updates mongodb Library, Run, Date, and Workflow collections
  * @param {yaml} analysisYAML
  */
 exports.updateWorkflowInfo = function (analysisYAML) {
@@ -869,6 +877,7 @@ exports.updateWorkflowInfo = function (analysisYAML) {
 							dateObj[date].RunInfo_id = [];
 							dateObj[date].WorkflowInfo_id = [];
 							dateObj[date].num_complete_workflows = 0;
+							dateObj[date].num_failed_workflows = 0;
 						}
 						dateObj[date]['WorkflowInfo_id'].push(WorkflowInfo_id);
 						dateObj[date].RunInfo_id = dateObj[date].RunInfo_id.concat(jsonData[i].runinfo_id);
@@ -879,6 +888,9 @@ exports.updateWorkflowInfo = function (analysisYAML) {
 						}
 						if (jsonData[i].status === 'completed') {
 							dateObj[date].num_complete_workflows++;
+						}
+						if (jsonData[i].status === 'failed') {
+							dateObj[date].num_failed_workflows++;
 						}
 					}
 
@@ -1933,7 +1945,7 @@ function findAllDocuments(docs, collection, db, callback) {
 };
 
 /**
- * returns all documents in a collection
+ * returns all report documents information in a collection
  * @param {array} docs
  * @param {db} db
  * @param {function} callback
@@ -1971,6 +1983,28 @@ function findReportDocuments(docs, db, callback) {
 					return docs;
 				}
 			});
+		}
+	});
+}
+
+/**
+ * returns all library donor as an object
+ * @param {object} libDonor
+ * @param {db} db
+ * @param {function} callback
+ * @return {object} libDonor
+ */
+function findDonorDocuments(libDonor, db, callback) {
+	var cursor = db.collection('DonorInfo').find({"LibraryInfo_id":{$exists:true}});
+	cursor.each(function(err, doc) {
+		if (err) return console.error(err);
+		if (doc != null) {
+			for (var i = 0; i < doc['LibraryInfo_id'].length; i++) {
+				libDonor[doc['LibraryInfo_id'][i]] = doc._id;
+			}
+		} else {
+			callback();
+			return libDonor;
 		}
 	});
 }
