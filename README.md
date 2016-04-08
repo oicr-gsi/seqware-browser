@@ -57,7 +57,6 @@ $ mongo
 - [IUSSWIDReportData](#iusswidreportdata)
 - [LibraryInfo](#library-info)
 - [ProjectInfo](#project-info)
-- [ReportRunData](#report-run-data)
 - [RunInfo](#run-info)
 - [RunReportDataPhasing](#run-report-data-phasing)
 - [WorkflowInfo](#workflow-info)
@@ -159,22 +158,25 @@ Displays all workflow runs that have gone from running > failed.
 #### Donor Info
 - _id: Donor name
 - institute: institute where the donor sample was originated from
+- external_name: the external name of the donor
 - status: sequencer run status
 - library_types: count for libraries per type of sequenced library
 - tissue_types: count for libraries per tissue type
 
 ```
-> db.DonorInfo.find({_id: "PCSI_0139"})
+> db.DonorInfo.find({_id: "PCSI_0069"})
 {
-  "_id": "PCSI_0139",
+  "_id": "PCSI_0069",
   "institute": "Mayo Clinic",
+  "external_name": "5548-1",
   "status": "Completed",
   "library_types": {
-    "EX": 5
+    "EX": 5,
+    "TS": 3
   },
   "tissue_types": {
-    "R": 2,
-    "X": 3
+    "X": 4,
+    "R": 4
   }
 }
 ```
@@ -202,7 +204,6 @@ Note: Library Info documents refer to the **sequenced libraries** and not the ge
 - library_type: type of library
 - tissue_type: type of tissue the library is from
 - DonorInfo_id: reference to donor document in DonorInfo collection
-- institute: institute where the donor sample came from
 - tissue_origin: tissue where the sample originates from
 - receive_date: date when the donor sample was received 
 - barcode: unique IUS tag/barcode of the sequenced library 
@@ -225,7 +226,6 @@ Note: Library Info documents refer to the **sequenced libraries** and not the ge
   "library_type": "WG",
   "tissue_type": "C",
   "DonorInfo_id": "AOE_0012",
-  "institute": "n/a",
   "tissue_origin": "Pa",
   "receive_date": "2012-08-22",
   "barcode": "noIndex",
@@ -290,7 +290,11 @@ Get all Libraries for a run:
   "tissue_type": "P",
   "DonorInfo_id": "FCSG_0003",
   "receive_date": "n/a",
-  "barcode": "noIndex"
+  "barcode": "noIndex",
+  "WorkflowInfo_id": [
+    25831
+  ],
+  "iusswid": "8174"
 }
 ...
 ```
@@ -300,37 +304,46 @@ Get all libraries for a project:
 ```
 > db.LibraryInfo.find({"ProjectInfo_id": "TLCR"})
 {
-  "_id": "110224_h239_0109_B81CLAABXX||1||6753",
-  "template_id": 6753,
-  "library_name": "TLCR_1R11_nn_n_PE_500_WG",
+  "_id": "110415_SN203_0106_B816EVABXX||7||7973",
+  "template_id": 7973,
+  "library_name": "TLCR_4C6_nn_n_PE_500_WG",
   "ProjectInfo_id": "TLCR",
-  "RunInfo_id": "110224_h239_0109_B81CLAABXX",
-  "lane": 1,
+  "RunInfo_id": "110415_SN203_0106_B816EVABXX",
+  "lane": 7,
   "status": "Completed",
   "skip": 0,
-  "create_date": "2011-02-17 11:49:23",
-  "prep_date": "2010-10-26 13:04:03",
+  "create_date": "2011-04-11 11:07:17",
+  "prep_date": "2011-04-11 11:04:51",
   "library_type": "WG",
   "tissue_type": "n",
-  "DonorInfo_id": "TLCR_1R11",
+  "DonorInfo_id": "TLCR_4C6",
   "receive_date": "n/a",
-  "barcode": "noIndex"
+  "barcode": "GCCAAT",
+  "WorkflowInfo_id": [
+    25831
+  ],
+  "iusswid": "9745"
 }{
-  "_id": "110224_h239_0109_B81CLAABXX||1||6748",
-  "template_id": 6748,
-  "library_name": "TLCR_1R6_nn_n_PE_500_WG",
+  "_id": "110415_SN203_0106_B816EVABXX||7||7975",
+  "template_id": 7975,
+  "library_name": "TLCR_4C8_nn_n_PE_500_WG",
   "ProjectInfo_id": "TLCR",
-  "RunInfo_id": "110224_h239_0109_B81CLAABXX",
-  "lane": 1,
+  "RunInfo_id": "110415_SN203_0106_B816EVABXX",
+  "lane": 7,
   "status": "Completed",
   "skip": 0,
-  "create_date": "2011-02-17 11:49:23",
-  "prep_date": "2010-10-26 12:01:55",
+  "create_date": "2011-04-11 11:07:17",
+  "prep_date": "2011-04-11 11:04:51",
   "library_type": "WG",
   "tissue_type": "n",
-  "DonorInfo_id": "TLCR_1R6",
+  "DonorInfo_id": "TLCR_4C8",
   "receive_date": "n/a",
-  "barcode": "noIndex"
+  "barcode": "ACTTGA",
+  "WorkflowInfo_id": [
+    25831,
+    394313
+  ],
+  "iusswid": "9741"
 }
 ...
 ```
@@ -340,49 +353,78 @@ Get all libraries for a donor:
 ```
 > db.LibraryInfo.find({"DonorInfo_id": "PCSI_0001"})
 {
-  "_id": "100826_I280_00019_61RVA_LT||6||3967",
-  "template_id": 3967,
-  "library_name": "PCSI_0001_Pa_P_PE_300_WG",
+  "_id": "110401_SN393_0121_A81CGEABXX||6||5114",
+  "template_id": 5114,
+  "library_name": "PCSI_0001_Ly_R_PE_400_EX",
   "ProjectInfo_id": "PCSI",
-  "RunInfo_id": "100826_I280_00019_61RVA_LT",
+  "RunInfo_id": "110401_SN393_0121_A81CGEABXX",
   "lane": 6,
   "status": "Completed",
   "skip": 0,
-  "create_date": "2010-08-27 16:27:42",
-  "prep_date": "2010-08-27 16:25:59",
-  "library_type": "WG",
-  "tissue_type": "P",
+  "create_date": "2010-10-27 14:40:19",
+  "prep_date": "2010-08-30 15:26:57",
+  "library_type": "EX",
+  "tissue_type": "R",
   "DonorInfo_id": "PCSI_0001",
-  "institute": "n/a",
   "tissue_origin": "Ly",
   "receive_date": "n/a",
   "barcode": "noIndex",
   "WorkflowInfo_id": [
-    25831
+    134082,
+    636716,
+    2892505,
+    1630217,
+    848301,
+    114079,
+    636708,
+    635879,
+    25831,
+    416141,
+    1691082,
+    453505,
+    1793545,
+    33247,
+    431729,
+    554942,
+    638355
   ],
-  "iusswid": "14408"
+  "iusswid": "9081"
 }{
-  "_id": "100826_I280_00019_61RVA_LT||1||3967",
-  "template_id": 3967,
-  "library_name": "PCSI_0001_Pa_P_PE_300_WG",
+  "_id": "110406_SN801_0045_AB07R4ABXX||2||7921",
+  "template_id": 7921,
+  "library_name": "PCSI_0001_Pa_X_PE_193_EX",
   "ProjectInfo_id": "PCSI",
-  "RunInfo_id": "100826_I280_00019_61RVA_LT",
-  "lane": 1,
+  "RunInfo_id": "110406_SN801_0045_AB07R4ABXX",
+  "lane": 2,
   "status": "Completed",
   "skip": 0,
-  "create_date": "2010-08-27 16:27:42",
-  "prep_date": "2010-08-27 16:25:59",
-  "library_type": "WG",
-  "tissue_type": "P",
+  "create_date": "2011-03-01 14:01:34",
+  "prep_date": "2010-08-30 15:51:51",
+  "library_type": "EX",
+  "tissue_type": "X",
   "DonorInfo_id": "PCSI_0001",
-  "institute": "n/a",
   "tissue_origin": "Ly",
   "receive_date": "n/a",
   "barcode": "noIndex",
   "WorkflowInfo_id": [
-    25831
+    134082,
+    1691073,
+    636716,
+    416291,
+    636708,
+    635879,
+    1793536,
+    25831,
+    453505,
+    1629690,
+    561492,
+    395373,
+    2892442,
+    33247,
+    431729,
+    638355
   ],
-  "iusswid": "14418"
+  "iusswid": "9092"
 }
 ...
 ```
@@ -550,30 +592,23 @@ To query for all files associated with WorkflowInfo_id:
 
 #### IUSSWIDReportData
 - _id: ius SWID (seqware accession for the particular library seq)
-- library_name: name of library that was sequenced
-- data: json details report data associated to the library seq
+- json details report data associated to the library seq
 
 ```
 > db.IUSSWIDReportData.find()
 {
   "_id": "592409",
-  "library_name": "CPCG_0349_Pr_P_PE_680_WG",
-  "data": {
-    "Run Name": "130827_h239_0205_AC2CJJACXX",
-    "Lane": 7,
-    "Barcode": "NoIndex",
-    "Reads/SP": "1.03",
-    "Map %": "81.46%",
-    "Reads": 371050656,
-    "Yield": 37476030707,
-    "% on Target": "100.00%",
-    "Insert Mean": "390.96",
-    "Insert Stdev": "115.61",
-    "Read Length": "101,101",
-    "Coverage (collapsed)": "9.19",
-    "Coverage (raw)": "9.47",
-    "% Mouse Content": "N/A"
-  }
+  "Reads/SP": "1.03",
+  "Map %": "81.46%",
+  "Reads": 371050656,
+  "Yield": 37476030707,
+  "% on Target": "100.00%",
+  "Insert Mean": "390.96",
+  "Insert Stdev": "115.61",
+  "Read Length": "101,101",
+  "Coverage (collapsed)": "9.19",
+  "Coverage (raw)": "9.47",
+  "% Mouse Content": "N/A"
 }
 ```
 
@@ -586,28 +621,22 @@ Run time: 18m
 
 #### IUSSWIDRNASeqQCData
 - _id: ius SWID (seqware accession for the particular library seq)
-- library_name: name of library that was sequenced
-- data: rna seq qc details report data associated to the library seq
+- rna seq qc details report data associated to the library seq
 
 ```
 > db.IUSSWIDRNASeqQCData.find()
 {
   "_id": "1271394",
-  "library_name": "HALT_1678_Lv_P_PE_600_MR",
-  "data": {
-    "Bases Breakdown": <base64 image>,
-    "RSeQC Gene Body Coverage": <base64 image>,
-    "Junction Saturation": <base64 image>,
-    "Total Reads": "95016984",
-    "Uniq Reads": "6292051",
-    "Reads/SP": "3.04",
-    "Yield": "471903825",
-    "Proportion Correct Strand Reads": "0.993366",
-    "Median 5Prime to 3Prime Bias": "0.531538",
-    "% rRNA Content": "4.18",
-    "run_name": "140926_SN802_0204_AC5JLPACXX",
-    "lane": "1"
-  }
+  "Bases Breakdown": <base64 image>,
+  "RSeQC Gene Body Coverage": <base64 image>,
+  "Junction Saturation": <base64 image>,
+  "Total Reads": "95016984",
+  "Uniq Reads": "6292051",
+  "Reads/SP": "3.04",
+  "Yield": "471903825",
+  "Proportion Correct Strand Reads": "0.993366",
+  "Median 5Prime to 3Prime Bias": "0.531538",
+  "% rRNA Content": "4.18"
 }
 ```
 

@@ -367,22 +367,19 @@ exports.updateDonorInfo = function (sequencerData, sampleData) {
 									libraryObj[donor]['libraries'] = [];
 								}
 								libraryObj[donor]['libraries'].push(libraryName);
-
 								if (typeof sampleIDInfo[donor] !== 'undefined') {
-									returnObj[donor]['institute'] = sampleIDInfo[donor]['Institute'];
-								} else {
-									returnObj[donor]['institute'] = 'n/a';
+									if (typeof sampleIDInfo[donor]['Institute'] !== 'undefined') {
+										returnObj[donor]['institute'] = sampleIDInfo[donor]['Institute'];
+									} else {
+										returnObj[donor]['institute'] = 'n/a';
+									}
+									if (typeof sampleIDInfo[donor]['External Name'] !== 'undefined') {
+										returnObj[donor]['external_name'] = sampleIDInfo[donor]['External Name'];
+									} else {
+										returnObj[donor]['external_name'] = 'n/a';
+									}
 								}
 								returnObj[donor]['status'] = sequencerData[i].state;
-							}
-						}
-
-						// get external name and num skipped libraries
-						if (/(.*?_.*?)_/.test(libraryName)) {
-							var match = /(.*?_.*?)_/.exec(libraryName);
-							var donor = match[1];
-							if (typeof sampleIDInfo[id]['External Name'] !== 'undefined') {
-								returnObj[donor]['external_name'] = sampleIDInfo[id]['External Name'];
 							}
 						}
 					}
@@ -402,20 +399,18 @@ exports.updateDonorInfo = function (sequencerData, sampleData) {
 						libraryObj[donor]['libraries'].push(libraryName);
 
 						if (typeof sampleIDInfo[donor] !== 'undefined') {
-							returnObj[donor]['institute'] = sampleIDInfo[donor]['Institute'];
-						} else {
-							returnObj[donor]['institute'] = 'n/a';
+							if (typeof sampleIDInfo[donor]['Institute'] !== 'undefined') {
+								returnObj[donor]['institute'] = sampleIDInfo[donor]['Institute'];
+							} else {
+								returnObj[donor]['institute'] = 'n/a';
+							}
+							if (typeof sampleIDInfo[donor]['External Name'] !== 'undefined') {
+								returnObj[donor]['external_name'] = sampleIDInfo[donor]['External Name'];
+							} else {
+								returnObj[donor]['external_name'] = 'n/a';
+							}
 						}
 						returnObj[donor]['status'] = sequencerData[i].state;
-					}
-				}
-
-				// get external name and num skipped libraries
-				if (/(.*?_.*?)_/.test(libraryName)) {
-					var match = /(.*?_.*?)_/.exec(libraryName);
-					var donor = match[1];
-					if (typeof sampleIDInfo[id]['External Name'] !== 'undefined') {
-						returnObj[donor]['external_name'] = sampleIDInfo[id]['External Name'];
 					}
 				}
 			}
@@ -532,11 +527,6 @@ exports.updateLibraryInfo = function (sequencerData, sampleData, skipData, recei
 								var donor = match[1];
 								libraries[_id].DonorInfo_id = donor;
 								if (typeof sampleIDInfo[donor] !== 'undefined') {
-									if (typeof sampleIDInfo[donor]['Institute'] !== 'undefined') {
-										libraries[_id].institute = sampleIDInfo[donor]['Institute'];
-									} else {
-										libraries[_id].institute = 'n/a';
-									}
 									if (typeof sampleIDInfo[donor]['Tissue Origin'] !== 'undefined') {
 										libraries[_id].tissue_origin = sampleIDInfo[donor]['Tissue Origin'];
 									} else {
@@ -599,11 +589,6 @@ exports.updateLibraryInfo = function (sequencerData, sampleData, skipData, recei
 						var donor = match[1];
 						libraries[_id].DonorInfo_id = donor;
 						if (typeof sampleIDInfo[donor] !== 'undefined') {
-							if (typeof sampleIDInfo[donor]['Institute'] !== 'undefined') {
-								libraries[_id].institute = sampleIDInfo[donor]['Institute'];
-							} else {
-								libraries[_id].institute = 'n/a';
-							}
 							if (typeof sampleIDInfo[donor]['Tissue Origin'] !== 'undefined') {
 								libraries[_id].tissue_origin = sampleIDInfo[donor]['Tissue Origin'];
 							} else {
@@ -1024,19 +1009,6 @@ function getReportData(jsonFile, xenomeFile) {
 		var readsSP = parseFloat(lineObj['reads per start point']).toFixed(2);
 		var onTargetRate = lineObj['reads on target']/lineObj['mapped reads'];
 
-		// Run Name
-		obj['Run Name'] = lineObj['run name'];
-
-		// Lane
-		obj['Lane'] = lineObj['lane'];
-
-		// Barcode
-		if (typeof lineObj['barcode'] === 'undefined') {
-			obj['Barcode'] = 'noIndex';
-		} else {
-			obj['Barcode'] = lineObj['barcode'];
-		}
-
 		// Reads per start point
 		obj['Reads/SP'] = readsSP;
 
@@ -1106,9 +1078,8 @@ exports.updateIUSSWIDReportData = function (fprData) {
 			var json = fprData['Library'][IUSSWID]['JSON'];
 			var xenomeFile = fprData['Library'][IUSSWID]['XenomeFile'];
 			var obj = {};
+			obj = getReportData(json, xenomeFile);
 			obj['_id'] = IUSSWID;
-			obj['library_name'] = fprData['Library'][IUSSWID]['Library Name'];
-			obj['data'] = getReportData(json, xenomeFile);
 
 			//Update in mongodb
 			batch.find({_id: IUSSWID}).upsert().updateOne(obj);
@@ -1266,13 +1237,8 @@ exports.updateIUSSWIDRNASeqQCData = function (fprData) {
 		for (var IUSSWID in fprData['Library']) {
 			if (typeof fprData['Library'][IUSSWID]['RNAZipFile'] !== 'undefined') {
 				var obj = {};
+				obj = getRNASeqQCData(fprData['Library'][IUSSWID]['RNAZipFile']);
 				obj['_id'] = IUSSWID;
-				obj['library_name'] = fprData['Library'][IUSSWID]['Library Name'];
-				obj['data'] = getRNASeqQCData(fprData['Library'][IUSSWID]['RNAZipFile']);
-				for (var runSWID in fprData['Library'][IUSSWID]['Run']) {
-					obj['data']['run_name'] = fprData['Library'][IUSSWID]['Run'][runSWID];
-				}
-				obj['data']['lane'] = fprData['Library'][IUSSWID]['Lane'];
 
 				//Update in mongodb
 				batch.find({_id: IUSSWID}).upsert().updateOne(obj);
@@ -1524,30 +1490,27 @@ function getSampleIDInfo(sampleData) {
 			for (var j = 0; j < sampleData[i].attributes.length; j++) {
 				// Assuming all samples with the same donor head come from the same institute
 				var donor;
+				if (/(.*?_.*?)_/.test(sampleData[i].name)) {
+					var match = /(.*?_.*?)_/.exec(sampleData[i].name);
+					donor = match[1];
+				} else {
+					donor = sampleData[i].name;
+				}
 				if (sampleData[i].attributes[j].name === 'Institute') {
-					if (/(.*?_.*?)_/.test(sampleData[i].name)) {
-						var match = /(.*?_.*?)_/.exec(sampleData[i].name);
-						donor = match[1];
-					} else {
-						donor = sampleData[i].name;
-					}
 					if (typeof returnObj[donor] === 'undefined') {
 						returnObj[donor] = {};
 					}
 					returnObj[donor]['Institute'] = sampleData[i].attributes[j].value;
 				} else if (sampleData[i].attributes[j].name === 'Tissue Origin') {
-					if (/(.*?_.*?)_/.test(sampleData[i].name)) {
-						var match = /(.*?_.*?)_/.exec(sampleData[i].name);
-						donor = match[1];
-					} else {
-						donor = sampleData[i].name;
-					}
 					if (typeof returnObj[donor] === 'undefined') {
 						returnObj[donor] = {};
 					}
 					returnObj[donor]['Tissue Origin'] = sampleData[i].attributes[j].value;
 				} else if (sampleData[i].attributes[j].name === 'External Name') {
-					returnObj[sampleData[i]['id']]['External Name'] = sampleData[i].attributes[j].value;
+					if (typeof returnObj[donor] === 'undefined') {
+						returnObj[donor] = {};
+					}
+					returnObj[donor]['External Name'] = sampleData[i].attributes[j].value;
 				}
 			}
 		}
