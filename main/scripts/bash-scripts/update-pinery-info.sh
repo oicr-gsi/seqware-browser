@@ -7,8 +7,8 @@ cd /u/mcheng/browsertest
 unset LD_LIBRARY_PATH
 unset PERL5LIB
 
-#curl -k https://pinery.hpc.oicr.on.ca:8443/pinery/sequencerruns -o /u/mcheng/browsertest/pinery/runs.out
-#curl -k https://pinery.hpc.oicr.on.ca:8443/pinery/samples -o /u/mcheng/browsertest/pinery/samples.out
+curl -k https://pinery.hpc.oicr.on.ca:8443/pinery/sequencerruns -o /u/mcheng/browsertest/pinery/runs.out
+curl -k https://pinery.hpc.oicr.on.ca:8443/pinery/samples -o /u/mcheng/browsertest/pinery/samples.out
 
 ## Runs and Donors
 qsub -cwd -b y -N RunInfo -e error.log -o output.log -l h_vmem=8g "/u/mcheng/browsertest/node-v5.7.0-linux-x64/bin/node --max_old_space_size=8192 pinery-data-run.js ./pinery/runs.out ./pinery/samples.out"

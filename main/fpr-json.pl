@@ -41,36 +41,19 @@ while (!$fprHandle->eof()) {
 
 	my $date = $linehash{"Last Modified"};
 	my $runName = $linehash{"Sequencer Run Name"};
-	my $libraryName = $linehash{"Sample Name"};
-	my $workflowName = $linehash{"Workflow Name"};
 	my $filePath = $linehash{"File Path"};
-	my $runStatus = $linehash{"Workflow Run Status"};
-	my $lane = $linehash{"Lane Number"};
 
-	$workflowRunSWID = $linehash{"Workflow Run SWID"};
 	$fileSWID = $linehash{"File SWID"};
 	$IUSSWID = $linehash{"IUS SWID"};
-	$sequencerRunSWID = $linehash{"Sequencer Run SWID"};
 
 	#By Run
 	$fprData{"Run"}{$runName} = "1";
-
-	#By Workflow
-	$fprData{"Workflow"}{$workflowRunSWID}{"Last Modified"} = $date;
-	$fprData{"Workflow"}{$workflowRunSWID}{"Status"} = $runStatus;
-	$fprData{"Workflow"}{$workflowRunSWID}{"Workflow Name"} = $workflowName;
-	$fprData{"Workflow"}{$workflowRunSWID}{"Files"}{$fileSWID} = $filePath;
 
 	# By File
 	$fprData{"File"}{$fileSWID}{"Path"} = $filePath;
 	$fprData{"File"}{$fileSWID}{"WorkflowSWID"} = $workflowRunSWID;
 
 	# By Library
-	$fprData{"Library"}{$IUSSWID}{"Library Name"} = $libraryName;
-	$fprData{"Library"}{$IUSSWID}{"Last Modified"} = $date;
-	$fprData{"Library"}{$IUSSWID}{"Lane"} = $lane;
-	$fprData{"Library"}{$IUSSWID}{"Run"}{$sequencerRunSWID} = $runName;
-
 	if ($filePath =~ /.*.BamQC.json$/ ) {
         $fprData{"Library"}{$IUSSWID}{"JSON"} = $filePath;
     } elsif ($filePath =~ /.*.log$/ and $workflowName eq ("Xenome")){
@@ -84,7 +67,7 @@ foreach my $key (keys (%{$fprData{"Run"}})) {
 	print runFH "$key \n";
 }
 
-my @categories = ('Workflow', 'File', 'Library');
+my @categories = ('File', 'Library');
 my %hash;
 foreach my $key (@categories){
 	open (FH, ">", "./fpr-".$key.".json");
