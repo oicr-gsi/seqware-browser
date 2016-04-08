@@ -65,118 +65,66 @@ $ mongo
 ### Collections
 
 #### Current Sequencer Runs
-- _id: run name
-- created_date: start date of run
-- status: sequencer run status
+Can be queried from the RunInfo collection for "status": "Running" and create date before the date 2014-02-01.
 
-```
-> db.CurrentSequencerRuns.find()
-{
-  "_id": "160219_D00331_0178_BC8BTHANXX",
-  "created_date": "2016-02-19 15:42:13",
-  "status": "Running"
-}{
-  "_id": "160315_D00355_0113_BC8KRBANXX",
-  "created_date": "2016-03-15 14:02:11",
-  "status": "Running"
-}{
-  "_id": "160329_D00331_0184_AC8KL5ANXX",
-  "created_date": "2016-03-30 09:42:48",
-  "status": "Running"
-}
-...
-```
-
-Displays all currently running sequencer runs before the date 2014-02-01.
-
-Runs a query in seqware database for all completed sequencer runs after 2014-02-01 and compares the output to the running sequencer runs from pinery. If the sequencer is 'running' in pinery but appears in seqware database, the sequencer run is complete so the entry is removed from the CurrentSequencerRuns collection.
-
-Failed sequencer runs don't appear in seqware database so if the status is failed on pinery, the status is updated as failed in the RunInfo collection.
-
-Download time: 12s
-Run time: 2s
+Runs a query in seqware database for all completed sequencer runs after 2014-02-01 and compares the output to the running sequencer runs from pinery.
 
 #### Current Workflow Runs
 - _id: workflow SWID (or sw accession)
-- sw_accession: seqware accession id
 - workflow_run_id: workflow run id given by seqware
 - status: workflow run status
 - status_cmd: oozie id
 - create_tstmp: create date
 - last_modified: last modified date
-- name: workflow name
-- version: workflow version
+- workflow_name: workflow name and version
 - template_id: array of templates (libraries) associated with this workflow
-- runinfo_id: an array of sequencer run names associated with this workflow 
 - libraryinfo_id: an array of library info ids associated with this workflow run
 - analysis_type: workflow analysis type
-- workflow_name: workflow name and version
 
 ```
 > db.CurrentWorkflowRuns.find()
 {
-  "_id": 3447739,
-  "sw_accession": 3447739,
-  "workflow_run_id": 201890,
+  "_id": 3452850,
+  "workflow_run_id": 201917,
   "status": "running",
-  "status_cmd": "0000720-160202125311466-oozie-oozi-W",
+  "status_cmd": "0000757-160202125311466-oozie-oozi-W",
+  "create_tstmp": "2016-03-22 10:46:37",
+  "last_modified": "2016-03-22 15:04:21",
+  "workflow_name": "CASAVA_2.8",
+  "template_id": [
+    "12850"
+  ],
+  "libraryinfo_id": [
+    "110916_SN804_0064_AD04TBACXX||4||12850"
+  ]
+}{
+  "_id": 3447735,
+  "workflow_run_id": 201886,
+  "status": "running",
+  "status_cmd": "0000721-160202125311466-oozie-oozi-W",
   "create_tstmp": "2016-03-21 10:45:40",
   "last_modified": "2016-03-21 14:46:04",
-  "name": "CASAVA",
-  "version": "2.8",
+  "workflow_name": "CASAVA_2.8",
   "template_id": [
     "12850"
   ],
-  "runinfo_id": [
-    "110916_SN804_0064_AD04TBACXX"
-  ],
   "libraryinfo_id": [
     "110916_SN804_0064_AD04TBACXX||4||12850"
-  ],
-  "analysis_type": "Base calling",
-  "workflow_name": "CASAVA_2.8"
+  ]
 }{
-  "_id": 3439497,
-  "sw_accession": 3439497,
-  "workflow_run_id": 201817,
+  "_id": 3439496,
+  "workflow_run_id": 201816,
   "status": "running",
-  "status_cmd": "0000629-160202125311466-oozie-oozi-W",
+  "status_cmd": "0000628-160202125311466-oozie-oozi-W",
   "create_tstmp": "2016-03-15 15:43:45",
   "last_modified": "2016-03-15 19:44:02",
-  "name": "CASAVA",
-  "version": "2.8",
+  "workflow_name": "CASAVA_2.8",
   "template_id": [
     "12850"
   ],
-  "runinfo_id": [
-    "110916_SN804_0064_AD04TBACXX"
-  ],
   "libraryinfo_id": [
     "110916_SN804_0064_AD04TBACXX||4||12850"
-  ],
-  "analysis_type": "Base calling",
-  "workflow_name": "CASAVA_2.8"
-}{
-  "_id": 3452851,
-  "sw_accession": 3452851,
-  "workflow_run_id": 201918,
-  "status": "running",
-  "status_cmd": "0000756-160202125311466-oozie-oozi-W",
-  "create_tstmp": "2016-03-22 10:46:37",
-  "last_modified": "2016-03-22 15:04:23",
-  "name": "CASAVA",
-  "version": "2.8",
-  "template_id": [
-    "12850"
-  ],
-  "runinfo_id": [
-    "110916_SN804_0064_AD04TBACXX"
-  ],
-  "libraryinfo_id": [
-    "110916_SN804_0064_AD04TBACXX||4||12850"
-  ],
-  "analysis_type": "Base calling",
-  "workflow_name": "CASAVA_2.8"
+  ]
 }
 ...
 ```
@@ -191,19 +139,15 @@ Run time: 7-9s
 
 #### Failed Workflow Runs
 - _id: workflow SWID (or sw accession)
-- sw_accession: seqware accession id
 - workflow_run_id: workflow run id given by seqware
 - status: workflow run status
 - status_cmd: oozie id
 - create_tstmp: create date
 - last_modified: last modified date
-- name: workflow name
-- version: workflow version
+- workflow_name: workflow name and version
 - template_id: array of templates (libraries) associated with this workflow
-- runinfo_id: an array of sequencer run names associated with this workflow 
 - libraryinfo_id: an array of library info ids associated with this workflow run
 - analysis_type: workflow analysis type
-- workflow_name: workflow name and version
 
 ```
 > db.FailedWorkflowRuns.find()
@@ -212,73 +156,10 @@ n/a
 
 Displays all workflow runs that have gone from running > failed.
 
-#### Date Info
-- _id: date
-- LibraryInfo_id: array of libraries that have 'last modified date' workflows occurring on that date
-- RunInfo_id: array of runs with libraries that have had 'last modified date' workflows running on them on that date
-- WorkflowInfo_id: array of workflows that occurred on that date
-- num_complete_workflows: number of completed workflows on that date
-- num_failed_workflows: number of failed workflows on that date
-- num_runs: total sequencer runs count on that date
-- num_libraries: number of libraries with workflows run on them on that date
-- num_workflows: number of workflows on that date
-
-```
-> db.DateInfo.find()
-{
-  "_id": "2012-05-24",
-  "LibraryInfo_id": [
-    "120413_SN802_0082_BC0M4AACXX||8||18337",
-    "120511_SN1080_0107_AD0VMLACXX||4||19275",
-    "120511_SN1080_0107_AD0VMLACXX||6||19279",
-    "120413_SN802_0082_BC0M4AACXX||6||18333",
-    "120511_SN1080_0107_AD0VMLACXX||2||19270",
-    "120511_SN1080_0107_AD0VMLACXX||5||19277",
-    "120413_SN802_0082_BC0M4AACXX||7||18335",
-    "120511_SN1080_0107_AD0VMLACXX||3||19273",
-    "120412_h1179_0073_BC075RACXX||2||18675"
-  ],
-  "RunInfo_id": [
-    "120413_SN802_0082_BC0M4AACXX",
-    "120511_SN1080_0107_AD0VMLACXX",
-    "120412_h1179_0073_BC075RACXX"
-  ],
-  "WorkflowInfo_id": [
-    215476,
-    215451,
-    215447,
-    215475,
-    215449,
-    215452,
-    215474,
-    215448,
-    215471
-  ],
-  "num_complete_workflows": 9,
-  "num_failed_workflows": 0,
-  "num_runs": 3,
-  "num_libraries": 9,
-  "num_workflows": 9
-}
-```
-
-Displays all date documents and all associated libraries and runs data that have had workflow runs occurring on that date.
-
-The RunInfo_id and LibraryInfo_id references the RunInfo collection and the LibraryInfo collection.
-
-functions: updateWorkflowInfo
-
-Download time: 12s + 36s + 2s = 50s
-Run time: 1m 25-30s
-
 #### Donor Info
 - _id: Donor name
-- LibraryInfo_id: array of LibraryInfo_id documents associated with that donor
-- libraries: array of libraries associated with the donor
 - institute: institute where the donor sample was originated from
 - status: sequencer run status
-- skipped_libraries: number of skipped libraries for this donor
-- library_total: total number of library seqs
 - library_types: count for libraries per type of sequenced library
 - tissue_types: count for libraries per tissue type
 
@@ -286,22 +167,8 @@ Run time: 1m 25-30s
 > db.DonorInfo.find({_id: "PCSI_0139"})
 {
   "_id": "PCSI_0139",
-  "LibraryInfo_id": [
-    "111130_h801_0064_AC043YACXX||5||15291",
-    "111212_h1080_0086_AC045BACXX||8||15545",
-    "111209_h239_0135_BD0GRMACXX||4||15291",
-    "120106_h804_0076_AD0LFWACXX||8||15545",
-    "120215_SN1080_0099_AC0GHPACXX||2||17304"
-  ],
-  "libraries": [
-    "PCSI_0139_Ly_R_PE_393_EX",
-    "PCSI_0139_Pa_X_PE_425_EX",
-    "PCSI_0139_Pa_X_PE_427_EX"
-  ],
   "institute": "Mayo Clinic",
   "status": "Completed",
-  "skipped_libraries": 1,
-  "library_total": 5,
   "library_types": {
     "EX": 5
   },
@@ -313,8 +180,6 @@ Run time: 1m 25-30s
 ```
 
 Displays all information associated with a particular donor, you can either query for the donor by name or just do db.Donor.find() for all donors
-
-The LibraryInfo_id array references the LibraryInfo collection: see below
 
 functions: updateDonorInfo
 
@@ -343,8 +208,6 @@ Note: Library Info documents refer to the **sequenced libraries** and not the ge
 - barcode: unique IUS tag/barcode of the sequenced library 
 - WorkflowInfo_id: array of workflows associated with the library seq
 - iusswid: the ius SWID (seqware accession for the particular library seq)
-- analysis_total: total number of workflows and their statuses under their respective analysis type
-- num_workflows: number of workflows performed on this library seq
 
 ```
 > db.LibraryInfo.find()
@@ -373,28 +236,15 @@ Note: Library Info documents refer to the **sequenced libraries** and not the ge
     1706844,
     2056628,
     342931,
-    438218,
-    543372,
     600000,
     1529562,
     340888,
+    438218,
     2897931,
-    458889
+    458889,
+    543372
   ],
-  "iusswid": "322947",
-  "analysis_total": {
-    "Quality Control": {
-      "failed": 3,
-      "completed": 8
-    },
-    "Alignment": {
-      "completed": 1
-    },
-    "Base calling": {
-      "completed": 1
-    }
-  },
-  "num_workflows": 13
+  "iusswid": "322947"
 }
 ```
 
@@ -411,31 +261,20 @@ Get all Libraries for a run:
 ```
 > db.LibraryInfo.find({"RunInfo_id":"110114_H239_0105_A81CK4ABXX"})
 {
-  "_id": "110114_H239_0105_A81CK4ABXX||7||6155",
-  "template_id": 6155,
-  "library_name": "FCSG_0004_Li_P_PE_300_EX",
-  "ProjectInfo_id": "FCSG",
+  "_id": "110114_H239_0105_A81CK4ABXX||3||6152",
+  "template_id": 6152,
+  "library_name": "LCMT_0023_LU_X_PE_300_EX",
+  "ProjectInfo_id": "LCMT",
   "RunInfo_id": "110114_H239_0105_A81CK4ABXX",
-  "lane": 7,
+  "lane": 3,
   "status": "Completed",
-  "skip": 0,
-  "create_date": "2010-12-07 13:36:50",
-  "prep_date": "2010-11-23 15:06:26",
+  "create_date": "2010-12-07 13:23:22",
+  "prep_date": "2010-11-22 11:05:55",
   "library_type": "EX",
-  "tissue_type": "P",
-  "DonorInfo_id": "FCSG_0004",
+  "tissue_type": "X",
+  "DonorInfo_id": "LCMT_0023",
   "receive_date": "n/a",
-  "barcode": "noIndex",
-  "WorkflowInfo_id": [
-    25831
-  ],
-  "iusswid": "8176",
-  "analysis_total": {
-    "Base calling": {
-      "completed": 1
-    }
-  },
-  "num_workflows": 1
+  "barcode": "noIndex"
 }{
   "_id": "110114_H239_0105_A81CK4ABXX||6||6220",
   "template_id": 6220,
@@ -451,17 +290,7 @@ Get all Libraries for a run:
   "tissue_type": "P",
   "DonorInfo_id": "FCSG_0003",
   "receive_date": "n/a",
-  "barcode": "noIndex",
-  "WorkflowInfo_id": [
-    25831
-  ],
-  "iusswid": "8174",
-  "analysis_total": {
-    "Base calling": {
-      "completed": 1
-    }
-  },
-  "num_workflows": 1
+  "barcode": "noIndex"
 }
 ...
 ```
@@ -471,58 +300,37 @@ Get all libraries for a project:
 ```
 > db.LibraryInfo.find({"ProjectInfo_id": "TLCR"})
 {
-  "_id": "110512_SN803_0045_B808NNABXX||8||7967",
-  "template_id": 7967,
-  "library_name": "TLCR_4R12_nn_n_PE_500_WG",
+  "_id": "110224_h239_0109_B81CLAABXX||1||6753",
+  "template_id": 6753,
+  "library_name": "TLCR_1R11_nn_n_PE_500_WG",
   "ProjectInfo_id": "TLCR",
-  "RunInfo_id": "110512_SN803_0045_B808NNABXX",
-  "lane": 8,
+  "RunInfo_id": "110224_h239_0109_B81CLAABXX",
+  "lane": 1,
   "status": "Completed",
   "skip": 0,
-  "create_date": "2011-04-11 11:07:17",
-  "prep_date": "2011-04-11 11:04:51",
+  "create_date": "2011-02-17 11:49:23",
+  "prep_date": "2010-10-26 13:04:03",
   "library_type": "WG",
   "tissue_type": "n",
-  "DonorInfo_id": "TLCR_4R12",
+  "DonorInfo_id": "TLCR_1R11",
   "receive_date": "n/a",
-  "barcode": "CTTGTA",
-  "WorkflowInfo_id": [
-    25831
-  ],
-  "iusswid": "9759",
-  "analysis_total": {
-    "Base calling": {
-      "completed": 1
-    }
-  },
-  "num_workflows": 1
+  "barcode": "noIndex"
 }{
-  "_id": "110415_SN203_0106_B816EVABXX||8||7965",
-  "template_id": 7965,
-  "library_name": "TLCR_4R10_nn_n_PE_500_WG",
+  "_id": "110224_h239_0109_B81CLAABXX||1||6748",
+  "template_id": 6748,
+  "library_name": "TLCR_1R6_nn_n_PE_500_WG",
   "ProjectInfo_id": "TLCR",
-  "RunInfo_id": "110415_SN203_0106_B816EVABXX",
-  "lane": 8,
+  "RunInfo_id": "110224_h239_0109_B81CLAABXX",
+  "lane": 1,
   "status": "Completed",
   "skip": 0,
-  "create_date": "2011-04-11 11:07:17",
-  "prep_date": "2011-04-11 11:04:51",
+  "create_date": "2011-02-17 11:49:23",
+  "prep_date": "2010-10-26 12:01:55",
   "library_type": "WG",
   "tissue_type": "n",
-  "DonorInfo_id": "TLCR_4R10",
+  "DonorInfo_id": "TLCR_1R6",
   "receive_date": "n/a",
-  "barcode": "TAGCTT",
-  "WorkflowInfo_id": [
-    394273,
-    25831
-  ],
-  "iusswid": "9762",
-  "analysis_total": {
-    "Base calling": {
-      "completed": 2
-    }
-  },
-  "num_workflows": 2
+  "barcode": "noIndex"
 }
 ...
 ```
@@ -532,110 +340,49 @@ Get all libraries for a donor:
 ```
 > db.LibraryInfo.find({"DonorInfo_id": "PCSI_0001"})
 {
-  "_id": "110401_SN393_0121_A81CGEABXX||6||5114",
-  "template_id": 5114,
-  "library_name": "PCSI_0001_Ly_R_PE_400_EX",
+  "_id": "100826_I280_00019_61RVA_LT||6||3967",
+  "template_id": 3967,
+  "library_name": "PCSI_0001_Pa_P_PE_300_WG",
   "ProjectInfo_id": "PCSI",
-  "RunInfo_id": "110401_SN393_0121_A81CGEABXX",
+  "RunInfo_id": "100826_I280_00019_61RVA_LT",
   "lane": 6,
   "status": "Completed",
   "skip": 0,
-  "create_date": "2010-10-27 14:40:19",
-  "prep_date": "2010-08-30 15:26:57",
-  "library_type": "EX",
-  "tissue_type": "R",
+  "create_date": "2010-08-27 16:27:42",
+  "prep_date": "2010-08-27 16:25:59",
+  "library_type": "WG",
+  "tissue_type": "P",
   "DonorInfo_id": "PCSI_0001",
   "institute": "n/a",
   "tissue_origin": "Ly",
   "receive_date": "n/a",
   "barcode": "noIndex",
   "WorkflowInfo_id": [
-    134082,
-    636716,
-    2892505,
-    1630217,
-    848301,
-    114079,
-    636708,
-    635879,
-    25831,
-    416141,
-    1691082,
-    453505,
-    1793545,
-    33247,
-    431729,
-    554942,
-    638355
+    25831
   ],
-  "iusswid": "9081",
-  "analysis_total": {
-    "Variant Calling": {
-      "completed": 8
-    },
-    "Quality Control": {
-      "completed": 6
-    },
-    "Base calling": {
-      "completed": 2
-    },
-    "Alignment": {
-      "completed": 1
-    }
-  },
-  "num_workflows": 17
+  "iusswid": "14408"
 }{
-  "_id": "110406_SN801_0045_AB07R4ABXX||2||7921",
-  "template_id": 7921,
-  "library_name": "PCSI_0001_Pa_X_PE_193_EX",
+  "_id": "100826_I280_00019_61RVA_LT||1||3967",
+  "template_id": 3967,
+  "library_name": "PCSI_0001_Pa_P_PE_300_WG",
   "ProjectInfo_id": "PCSI",
-  "RunInfo_id": "110406_SN801_0045_AB07R4ABXX",
-  "lane": 2,
+  "RunInfo_id": "100826_I280_00019_61RVA_LT",
+  "lane": 1,
   "status": "Completed",
   "skip": 0,
-  "create_date": "2011-03-01 14:01:34",
-  "prep_date": "2010-08-30 15:51:51",
-  "library_type": "EX",
-  "tissue_type": "X",
+  "create_date": "2010-08-27 16:27:42",
+  "prep_date": "2010-08-27 16:25:59",
+  "library_type": "WG",
+  "tissue_type": "P",
   "DonorInfo_id": "PCSI_0001",
   "institute": "n/a",
   "tissue_origin": "Ly",
   "receive_date": "n/a",
   "barcode": "noIndex",
   "WorkflowInfo_id": [
-    134082,
-    1691073,
-    636716,
-    416291,
-    636708,
-    635879,
-    1793536,
-    25831,
-    453505,
-    1629690,
-    561492,
-    395373,
-    2892442,
-    33247,
-    431729,
-    638355
+    25831
   ],
-  "iusswid": "9092",
-  "analysis_total": {
-    "Variant Calling": {
-      "completed": 7
-    },
-    "Quality Control": {
-      "completed": 5
-    },
-    "Alignment": {
-      "completed": 1
-    },
-    "Base calling": {
-      "completed": 3
-    }
-  },
-  "num_workflows": 16
+  "iusswid": "14418"
 }
 ...
 ```
@@ -644,13 +391,7 @@ Get all libraries for a donor:
 - _id: project acronym
 - start_date: start date of the project
 - last_mod: last modified date
-- DonorInfo_id: donors associated with the project, referenced to DonorInfo collection
-- LibraryInfo_id: library seqs associated with the project, referenced to LibraryInfo collection
-- RunInfo_id: sequencer runs associated with the project, referenced to RunInfo collection
-- num_runs: number of sequencer runs
-- num_libraries: number of libraries
 - donor_totals: number of donors with that donor head (first section of donor name)
-- num_donors: number of donors
 
 ```
 > db.ProjectInfo.find()
@@ -658,44 +399,9 @@ Get all libraries for a donor:
   "_id": "DCR",
   "start_date": "2012-08-17 16:28:25",
   "last_mod": "2012-08-31 14:52:40",
-  "DonorInfo_id": [
-    "DCR_0001",
-    "DCR_0002",
-    "DCR_0003",
-    "DCR_0004",
-    "DCR_0005",
-    "DCR_0006",
-    "DCR_0007",
-    "DCR_0008"
-  ],
-  "LibraryInfo_id": [
-    "120905_h803_0094_BD184RACXX||2||23389",
-    "120905_h803_0094_BD184RACXX||3||23393",
-    "120905_h803_0094_BD184RACXX||7||23409",
-    "120905_h803_0094_BD184RACXX||6||23405",
-    "120905_h803_0094_BD184RACXX||1||23385",
-    "120905_h803_0094_BD184RACXX||5||23401",
-    "120905_h803_0094_BD184RACXX||4||23397",
-    "120905_h803_0094_BD184RACXX||8||23413",
-    "120905_SN1080_0117_BC0TFVACXX||7||23407",
-    "120905_SN1080_0117_BC0TFVACXX||8||23411",
-    "120905_SN1080_0117_BC0TFVACXX||1||23383",
-    "120905_SN1080_0117_BC0TFVACXX||6||23403",
-    "120905_SN1080_0117_BC0TFVACXX||3||23391",
-    "120905_SN1080_0117_BC0TFVACXX||2||23387",
-    "120905_SN1080_0117_BC0TFVACXX||4||23395",
-    "120905_SN1080_0117_BC0TFVACXX||5||23399"
-  ],
-  "RunInfo_id": [
-    "120905_h803_0094_BD184RACXX",
-    "120905_SN1080_0117_BC0TFVACXX"
-  ],
-  "num_runs": 2,
-  "num_libraries": 16,
   "donor_totals": {
     "DCR": 8
-  },
-  "num_donors": 8
+  }
 }
 ```
 
@@ -710,35 +416,19 @@ Run time: 11-12s
 - _id: run name
 - start_date: start date of sequencer run
 - status: sequencer run status
-- LibraryInfo_id: library seqs associated with that sequencer run
-- skipped_libraries: number of skipped libraries for this run
 - library_types: number of library seqs with a particular library type
 - tissue_types: number of library seqs with a particular tissue type
 - library_totals: number of libraries organized by head of name
 - donors: number of libraries associated with a donor on that run
 - donor_totals: number of donors organized by head of donor name
-- libraries: array of libraries on this sequencer run
 - projects: number of library seqs associated with a particular project
-- num_libraries: number of libraries on this run
-- analysis_total: total number of workflows and their statuses under their respective analysis type
 
 ```
-> db.RunInfo.find()
+> db.RunInfo.find({"_id": "140110_SN804_0172_BC3KBVACXX"})
 {
   "_id": "140110_SN804_0172_BC3KBVACXX",
   "start_date": "2014-01-30 15:54:32",
   "status": "Completed",
-  "LibraryInfo_id": [
-    "140110_SN804_0172_BC3KBVACXX||5||49666",
-    "140110_SN804_0172_BC3KBVACXX||8||49665",
-    "140110_SN804_0172_BC3KBVACXX||1||52424",
-    "140110_SN804_0172_BC3KBVACXX||3||49671",
-    "140110_SN804_0172_BC3KBVACXX||2||52424",
-    "140110_SN804_0172_BC3KBVACXX||7||49680",
-    "140110_SN804_0172_BC3KBVACXX||6||49668",
-    "140110_SN804_0172_BC3KBVACXX||4||49678"
-  ],
-  "skipped_libraries": 5,
   "library_types": {
     "MR": 6,
     "WG": 2
@@ -762,30 +452,8 @@ Run time: 11-12s
   "donor_totals": {
     "ASHPC": 5
   },
-  "libraries": [
-    "ASHPC_0018_Pa_P_PE_500_MR",
-    "ASHPC_0018_Pa_F_PE_500_MR",
-    "ASHPC_0026_Pa_R_PE_792_WG",
-    "ASHPC_0020_Pa_F_PE_500_MR",
-    "ASHPC_0026_Pa_R_PE_792_WG",
-    "ASHPC_0024_Pa_M_PE_500_MR",
-    "ASHPC_0019_Pa_M_PE_500_MR",
-    "ASHPC_0024_Pa_P_PE_500_MR"
-  ],
   "projects": {
     "ASHPC": 8
-  },
-  "num_libraries": 8,
-  "analysis_total": {
-    "Quality Control": {
-      "completed": 21
-    },
-    "Alignment": {
-      "completed": 4
-    },
-    "Base calling": {
-      "completed": 3
-    }
   }
 }
 ```
@@ -801,43 +469,33 @@ Run time: 4s
 
 #### Workflow Info
 - _id: workflow SWID (or sw accession)
-- sw_accession: seqware accession id
 - workflow_run_id: workflow run id given by seqware
 - status: workflow run status
 - status_cmd: oozie id
 - create_tstmp: create date
 - last_modified: last modified date
-- name: workflow name
-- version: workflow version
+- workflow_name: workflow name and version
 - template_id: array of templates (libraries) associated with this workflow
-- runinfo_id: an array of sequencer run names associated with this workflow 
 - libraryinfo_id: an array of library info ids associated with this workflow run
 - analysis_type: workflow analysis type
-- workflow_name: workflow name and version
 
 ```
 > db.WorkflowInfo.find()
 {
-  "_id": 2693076,
-  "sw_accession": 2693076,
+  "_id": "2693076",
   "workflow_run_id": 161361,
   "status": "completed",
   "status_cmd": "0008012-150807151645068-oozie-oozi-W",
   "create_tstmp": "2015-09-17 12:01:24",
   "last_modified": "2015-09-17 12:20:36",
-  "name": "BamQC",
-  "version": "2.5",
+  "workflow_name": "BamQC_2.5",
   "template_id": [
     "83083"
   ],
-  "runinfo_id": [
-    "150911_D00331_0139_AC7HN0ANXX"
-  ],
   "libraryinfo_id": [
     "150911_D00331_0139_AC7HN0ANXX||8||83083"
-  ],
-  "analysis_type": "Quality Control",
-  "workflow_name": "BamQC_2.5"
+  ]
+  "analysis_type": "Quality Control"
 }
 ```
 
@@ -940,31 +598,15 @@ Run time: 18m
     "Bases Breakdown": <base64 image>,
     "RSeQC Gene Body Coverage": <base64 image>,
     "Junction Saturation": <base64 image>,
-    "Total Reads": "50720838",
-    "Uniq Reads": "45517225",
-    "Reads/SP": "2.61",
-    "Yield": "3413791875",
-    "Passed Filter Aligned Bases": "3413413185",
-    "Coding Bases": "1266080233",
-    "UTR Bases": "961632593",
-    "Intronic Bases": "696536490",
-    "Intergenic Bases": "489163869",
-    "Correct Strand Reads": "0",
-    "Incorrect Strand Reads": "0",
-    "Proportion Coding Bases": "0.370913",
-    "Proportion UTR Bases": "0.281722",
-    "Proportion Intronic Bases": "0.204059",
-    "Proportion Intergenic Bases": "0.143306",
-    "Proportion mRNA Bases": "0.652635",
-    "Proportion Usable Bases": "0.652563",
-    "Proportion Correct Strand Reads": "0",
-    "Median CV Coverage": "0.531802",
-    "Median 5Prime Bias": "0.097145",
-    "Median 3Prime Bias": "0.449012",
-    "Median 5Prime to 3Prime Bias": "0.248396",
-    "% rRNA Content": "0.62",
-    "run_name": "141024_D00353_0082_AC57H2ANXX",
-    "lane": "2"
+    "Total Reads": "95016984",
+    "Uniq Reads": "6292051",
+    "Reads/SP": "3.04",
+    "Yield": "471903825",
+    "Proportion Correct Strand Reads": "0.993366",
+    "Median 5Prime to 3Prime Bias": "0.531538",
+    "% rRNA Content": "4.18",
+    "run_name": "140926_SN802_0204_AC5JLPACXX",
+    "lane": "1"
   }
 }
 ```
@@ -996,59 +638,10 @@ function: updateGraphData
 Download/Hold time: 1m 5s
 Run time: 19m
 
-#### Report Run Data
-- _id: run name
-- reads: total reads for a run
-- yield: total yields for a run
-- % target: total % on target for a run
-- lane_#: the raw yield, raw reads, number of libraries associated with a particular lane on a run
-
-```
-> db.ReportRunData.find()
-{
-  "_id": "151002_D00331_0142_AC7G20ANXX",
-  "reads": 1871967478,
-  "yield": 235867066564,
-  "% target": 1130,
-  "lane_5": {
-    "raw_yield": 49455621700,
-    "raw_reads": 392507150,
-    "num_libraries": 6
-  },
-  "lane_8": {
-    "raw_yield": 40842808077,
-    "raw_reads": 324149918,
-    "num_libraries": 1
-  },
-  "lane_6": {
-    "raw_yield": 39419203643,
-    "raw_reads": 312851172,
-    "num_libraries": 1
-  },
-  "lane_7": {
-    "raw_yield": 48401662621,
-    "raw_reads": 384140558,
-    "num_libraries": 1
-  },
-  "lane_1": {
-    "raw_yield": 57747770523,
-    "raw_reads": 458318680,
-    "num_libraries": 6
-  }
-}
-```
-Queries through existing database data and reports on lane totals for a specific run and lane
-
-function: updateLaneDetailsTotalsByRun
-
-Download/Hold time: 1m 5s
-Hold time: 18m
-Run time: 3-5s
-
 #### Run Report Data Phasing
 - _id: run name
 - lane_#: run lane details 
-- source: source of the file that data was extracted from (either BIN, XML, or n/a)
+- source: source of the file that data was extracted from (either BIN, XML, or NIL)
 
 ```
 > db.RunReportDataPhasing.find()

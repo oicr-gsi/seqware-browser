@@ -27,5 +27,5 @@ qsub -cwd -b y -N WorkflowInfo -hold_jid LibraryInfo -m beas -M mcheng@oicr.on.c
 ## Projects
 curl -k https://pinery.hpc.oicr.on.ca:8443/pinery/sample/projects -o /u/mcheng/browsertest/pinery/projects.out
 
-qsub -cwd -b y -N ProjInfo -m beas -M mcheng@oicr.on.ca -e error.log -o output.log -l h_vmem=8g "/u/mcheng/browsertest/node-v5.7.0-linux-x64/bin/node --max_old_space_size=8192 pinery-data-seq-sample-proj.js ./pinery/runs.out ./pinery/samples.out ./pinery/projects.out"
+qsub -cwd -b y -N ProjInfo -m beas -M mcheng@oicr.on.ca -e error.log -o output.log -l h_vmem=8g "/u/mcheng/browsertest/node-v5.7.0-linux-x64/bin/node --max_old_space_size=8192 pinery-data-project.js ./pinery/runs.out ./pinery/samples.out ./pinery/projects.out"
 

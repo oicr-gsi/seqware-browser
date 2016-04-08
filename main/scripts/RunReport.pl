@@ -26,12 +26,14 @@ my $run = $ARGV[0];
 #my $collection = $client->ns('seqwareBrowser.RunReportDataPhasing');
 my %returnObj;
 $returnObj{"_id"} = $run;
+
 for (my $i = 1; $i < 9; $i++) {
 	my $data = decode_json(get_XML_Data ($run, $i));
 
 	#print Dumper($data);
 	# BIN
 	if (defined $data->{"BIN"} and $data->{"BIN"}->{"PF %"} ne 'null') {
+		$returnObj{"source"} = "BIN";
 		my $R1Phasing = sprintf( "%.2f", $data->{"BIN"}->{"R1 Phasing"});
 		my $R2Phasing = sprintf( "%.2f", $data->{"BIN"}->{"R2 Phasing"});
 		my $R1Prephasing = sprintf( "%.2f", $data->{"BIN"}->{"R1 Prephasing"});
@@ -39,8 +41,9 @@ for (my $i = 1; $i < 9; $i++) {
 		$returnObj{"lane_$i"}{"PF% Sequencing"} = sprintf( "%.2f", $data->{"BIN"}->{"PF %"} );
 		$returnObj{"lane_$i"}{"Phasing (R1/R2)"} = "$R1Phasing/$R2Phasing";
 		$returnObj{"lane_$i"}{"Prephasing {R1/R2)"} = "$R1Prephasing/$R2Prephasing";
-		$returnObj{"source"} = "BIN";
-	} elsif (defined $data->{"XML"}) { #XML
+	#XML
+	} elsif (defined $data->{"XML"}) {
+		$returnObj{"source"} = "XML";
 		my $R1Phasing = sprintf( "%.2f", $data->{"XML"}->{"R1 Phasing"});
 		my $R2Phasing = sprintf( "%.2f", $data->{"XML"}->{"R2 Phasing"});
 		my $R1Prephasing = sprintf( "%.2f", $data->{"XML"}->{"R1 Prephasing"});
@@ -48,12 +51,12 @@ for (my $i = 1; $i < 9; $i++) {
 		$returnObj{"lane_$i"}{"PF% Sequencing"} = sprintf( "%.2f", $data->{"XML"}->{"PF %"} );
 		$returnObj{"lane_$i"}{"Phasing (R1/R2)"} = "$R1Phasing/$R2Phasing";
 		$returnObj{"lane_$i"}{"Prephasing {R1/R2)"} = "$R1Prephasing/$R2Prephasing";
-		$returnObj{"source"} = "XML";
-	} else { #NIL
+	#NIL
+	} else {
+		$returnObj{"source"} = "NIL";
 		$returnObj{"lane_$i"}{"PF% Sequencing"} = "n/a";
 		$returnObj{"lane_$i"}{"Phasing (R1/R2)"} = "n/a";
 		$returnObj{"lane_$i"}{"Prephasing {R1/R2)"} = "n/a";
-		$returnObj{"source"} = "NIL";
 	}
 }
 print encode_json(\%returnObj);
