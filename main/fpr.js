@@ -1574,16 +1574,6 @@ function getDateTimeString(date) {
 }
 
 /**
- * check if value is in the array
- * @param {any} value
- * @param {array} array
- * @return {boolean} true/false
- */
-function isInArray(value, array) {
-	return array.indexOf(value) > -1;
-}
-
-/**
  * returns desire field for result documents using a specific query in a specific collection
  * @param {array} docs
  * @param {object} query

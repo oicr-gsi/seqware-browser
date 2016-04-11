@@ -1,18 +1,30 @@
 seqware-browser
 ================
-Next gen seqware browser calls for foundational code that will parse data from data sources and update seqware data in a mongodb database, which can then be called by the frontend to populate the web pages with relevant data.
+### What is the SeqWare Browser
+The SeqWare browser is a reporting website that can be used to gather run and analysis details on projects by SeqWare. By gathering information from pinery, the seqware database, and the file provenance report, it updates dynamically for the most up-to-date information.
+
+Next gen seqware browser calls for foundational code that will parse data from data sources and update SeqWare data in a MongoDB database, which can then be called by the front end to populate the web pages with relevant data.
 
 Data is collected from these main data sources: 
-- seqware postgres database
+- SeqWare PostGreSQL database
 - pinery webservice
 - file provenance report
 - json reports and directories (file sources)
 
-Mongo databases are organized by database > collections > documents in the collection
+### Set-up
+The back end uses a NodeJS framework and some install packages. First, install NodeJS and npm (node package manager). The packages that are installed locally into a node_modules directory are:
+- adm-zip
+- fs
+- mongodb
+- pg
+- read-multiple-files
+- underscore
+- yamljs
 
+The main functions to call data from the data sources are within the file 'fpr.js'.
 
-### Config.js
-This is the configuration file that fpr.js reads from to connect to databases: mongo and postgresql. Enter in hostnames and databases, then place this file in the node_modules directory
+#### Config.js
+This is the configuration file that fpr.js reads from to connect to databases: mongo and postgresql. Enter in hostnames and databases, and place this file in the node_modules directory
 
 ```
 var config = {};
@@ -33,9 +45,48 @@ config.postgres.database = <seqware database>;
  
 module.exports = config;
 ```
+### Scripts
+The 'fpr.js' file is called by other javascript files under main/scripts that load the necessary data source before running a function in 'fpr.js'. These scripts along with some perl scripts are then called by bash scripts (found in main/scripts/bash-scripts) to be used within a cron job for easy automation. A list of the bash scripts, their js/perl scripts and data sources, and what they update can be found below:
 
+#### current-workflow-runs.sh
+- Js Scripts: seqware-db-current-wfs.js
+- Data sources: workflowRuns.yml
+- Updates: [CurrentWorkflowRuns](#current-workflow-runs)
 
-At the time of this edit, the mongo database name is seqwareBrowser and the collections are organized according to major categories: Project, Donor, Sequencer Run, Library Seq (same as IUS) , Workflow, Files, Dates, all the associated report data for a specific library, and currently running sequencer runs and running/failed workflow runs.
+#### update-fpr-data.sh
+Data is updated from information in the file provenance report
+
+- Perl scripts: fpr-json.pl (used to parse the file provenance report into fpr-File.json and fpr-Library.json, and runs.txt)
+- Data sources: file provenance report (/.mounts/labs/seqprodbio/private/backups/sqwprod-db.hpc.oicr.on.ca/seqware_files_report_latest.gz)
+
+- Js Scripts: fpr-file.js, fpr-report-data.js, fpr-rna-data.js, fpr-graph-data.js
+- Data sources: fpr-File.json, fpr-Library.json, workflowRuns.yml
+- Updates: [FilesInfo](#file-info), [IUSSWIDGraphData](#iusswidgraphdata), [IUSSWIDRNASeqQCData](#iusswidrnaseqqcdata), [IUSSWIDReportData](#iusswidreportdata)
+
+#### update-pinery-info.sh
+This script downloads data sources by accessing pinery webservice and SeqWare PostGreSQL database
+
+- Js Scripts: pinery-data-run.js, pinery-data-donor.js, pinery-data-library.js, seqware-db-wfs.js, pinery-data-project.js
+- Data sources: runs.out, samples.out, projects.out, skip.json, receive_dates.json
+- Updates: [DonorInfo](#donor-info), [LibraryInfo](#library-info), [ProjectInfo](#project-info), [RunInfo](#run-info), [WorkflowInfo](#workflow-info)
+
+#### update-run-report.sh
+This script reads from a runs.txt file which is a list of all sequencer runs (produced by perl script fpr-json.pl in [update-fpr-data.sh](#update-fpr-data.sh)) and for each run, creates two new jobs. One is a perl script that gathers data from the run directory and one is a javascript script that updates that file produced to mongodb.
+
+- Perl script: RunReport.pl
+- Data sources: Run directories
+- Output: json run file into RunLaneReports directory
+
+- Js Script: run-report.js
+- Data source: output file from above perl script
+- Updates: [RunReportDataPhasing](#run-report-data-phasing)
+
+### MongoDB
+Install mongo from the mongodb website
+
+Mongo databases are organized by database > collections > documents in the collection
+
+At the time of this edit, the mongo database name is seqwareBrowser and the collections are organized according to major categories: Project, Donor, Sequencer Run, Library Seq (same as IUS) , Workflow, Files, all the associated report data for a specific library, and currently running sequencer runs and running/failed workflow runs.
 
 The documents within the collection each have their own '_id'. Each _id format is different based on the collection and determines a document's uniqueness within the collection. They can be used to query documents effectively. The most common query to get back all documents is db.[collection].find() and the first 20 documents within that collection are displayed.
 
@@ -47,9 +98,7 @@ $ mongo
 > show collections
 ```
 
-- [CurrentSequencerRuns](#current-sequencer-runs)
 - [CurrentWorkflowRuns](#current-workflow-runs)
-- [DateInfo](#date-info)
 - [DonorInfo](#donor-info)
 - [FilesInfo](#file-info)
 - [IUSSWIDGraphData](#iusswidgraphdata)
