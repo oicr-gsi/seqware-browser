@@ -209,8 +209,7 @@ Displays all workflow runs that have gone from running > failed.
 - institute: institute where the donor sample was originated from
 - external_name: the external name of the donor
 - status: sequencer run status
-- library_types: count for libraries per type of sequenced library
-- tissue_types: count for libraries per tissue type
+- donor_head: used to determine donor totals counts for a run or project
 
 ```
 > db.DonorInfo.find({_id: "PCSI_0069"})
@@ -219,14 +218,7 @@ Displays all workflow runs that have gone from running > failed.
   "institute": "Mayo Clinic",
   "external_name": "5548-1",
   "status": "Completed",
-  "library_types": {
-    "EX": 5,
-    "TS": 3
-  },
-  "tissue_types": {
-    "X": 4,
-    "R": 4
-  }
+  "donor_head": "PCSI"
 }
 ```
 
@@ -253,6 +245,7 @@ Note: Library Info documents refer to the **sequenced libraries** and not the ge
 - library_type: type of library
 - tissue_type: type of tissue the library is from
 - DonorInfo_id: reference to donor document in DonorInfo collection
+- library_head: used to determine library totals counts for run
 - tissue_origin: tissue where the sample originates from
 - receive_date: date when the donor sample was received 
 - barcode: unique IUS tag/barcode of the sequenced library 
@@ -275,6 +268,7 @@ Note: Library Info documents refer to the **sequenced libraries** and not the ge
   "library_type": "WG",
   "tissue_type": "C",
   "DonorInfo_id": "AOE_0012",
+  "library_head": "AOE",
   "tissue_origin": "Pa",
   "receive_date": "2012-08-22",
   "barcode": "noIndex",
@@ -322,6 +316,7 @@ Get all Libraries for a run:
   "library_type": "EX",
   "tissue_type": "X",
   "DonorInfo_id": "LCMT_0023",
+  "library_head": "LCMT",
   "receive_date": "n/a",
   "barcode": "noIndex"
 }{
@@ -338,6 +333,7 @@ Get all Libraries for a run:
   "library_type": "EX",
   "tissue_type": "P",
   "DonorInfo_id": "FCSG_0003",
+  "library_head": "FCSG",
   "receive_date": "n/a",
   "barcode": "noIndex",
   "WorkflowInfo_id": [
@@ -353,46 +349,39 @@ Get all libraries for a project:
 ```
 > db.LibraryInfo.find({"ProjectInfo_id": "TLCR"})
 {
-  "_id": "110415_SN203_0106_B816EVABXX||7||7973",
-  "template_id": 7973,
-  "library_name": "TLCR_4C6_nn_n_PE_500_WG",
+  "_id": "110224_h239_0109_B81CLAABXX||2||6767",
+  "template_id": 6767,
+  "library_name": "TLCR_1C4_nn_n_PE_500_WG",
   "ProjectInfo_id": "TLCR",
-  "RunInfo_id": "110415_SN203_0106_B816EVABXX",
-  "lane": 7,
+  "RunInfo_id": "110224_h239_0109_B81CLAABXX",
+  "lane": 2,
   "status": "Completed",
   "skip": 0,
-  "create_date": "2011-04-11 11:07:17",
-  "prep_date": "2011-04-11 11:04:51",
+  "create_date": "2011-02-17 12:14:01",
+  "prep_date": "2010-10-26 13:52:11",
   "library_type": "WG",
   "tissue_type": "n",
-  "DonorInfo_id": "TLCR_4C6",
+  "DonorInfo_id": "TLCR_1C4",
+  "library_head": "TLCR",
   "receive_date": "n/a",
-  "barcode": "GCCAAT",
-  "WorkflowInfo_id": [
-    25831
-  ],
-  "iusswid": "9745"
+  "barcode": "noIndex"
 }{
-  "_id": "110415_SN203_0106_B816EVABXX||7||7975",
-  "template_id": 7975,
-  "library_name": "TLCR_4C8_nn_n_PE_500_WG",
+  "_id": "110224_h239_0109_B81CLAABXX||2||6765",
+  "template_id": 6765,
+  "library_name": "TLCR_1C2_nn_n_PE_500_WG",
   "ProjectInfo_id": "TLCR",
-  "RunInfo_id": "110415_SN203_0106_B816EVABXX",
-  "lane": 7,
+  "RunInfo_id": "110224_h239_0109_B81CLAABXX",
+  "lane": 2,
   "status": "Completed",
   "skip": 0,
-  "create_date": "2011-04-11 11:07:17",
-  "prep_date": "2011-04-11 11:04:51",
+  "create_date": "2011-02-17 12:14:01",
+  "prep_date": "2010-10-26 13:37:29",
   "library_type": "WG",
   "tissue_type": "n",
-  "DonorInfo_id": "TLCR_4C8",
+  "DonorInfo_id": "TLCR_1C2",
+  "library_head": "TLCR",
   "receive_date": "n/a",
-  "barcode": "ACTTGA",
-  "WorkflowInfo_id": [
-    25831,
-    394313
-  ],
-  "iusswid": "9741"
+  "barcode": "noIndex"
 }
 ...
 ```
@@ -402,78 +391,49 @@ Get all libraries for a donor:
 ```
 > db.LibraryInfo.find({"DonorInfo_id": "PCSI_0001"})
 {
-  "_id": "110401_SN393_0121_A81CGEABXX||6||5114",
-  "template_id": 5114,
-  "library_name": "PCSI_0001_Ly_R_PE_400_EX",
+  "_id": "100826_I280_00019_61RVA_LT||6||3967",
+  "template_id": 3967,
+  "library_name": "PCSI_0001_Pa_P_PE_300_WG",
   "ProjectInfo_id": "PCSI",
-  "RunInfo_id": "110401_SN393_0121_A81CGEABXX",
+  "RunInfo_id": "100826_I280_00019_61RVA_LT",
   "lane": 6,
   "status": "Completed",
   "skip": 0,
-  "create_date": "2010-10-27 14:40:19",
-  "prep_date": "2010-08-30 15:26:57",
-  "library_type": "EX",
-  "tissue_type": "R",
+  "create_date": "2010-08-27 16:27:42",
+  "prep_date": "2010-08-27 16:25:59",
+  "library_type": "WG",
+  "tissue_type": "P",
   "DonorInfo_id": "PCSI_0001",
+  "library_head": "PCSI",
   "tissue_origin": "Ly",
   "receive_date": "n/a",
   "barcode": "noIndex",
   "WorkflowInfo_id": [
-    134082,
-    636716,
-    2892505,
-    1630217,
-    848301,
-    114079,
-    636708,
-    635879,
-    25831,
-    416141,
-    1691082,
-    453505,
-    1793545,
-    33247,
-    431729,
-    554942,
-    638355
+    25831
   ],
-  "iusswid": "9081"
+  "iusswid": "14408"
 }{
-  "_id": "110406_SN801_0045_AB07R4ABXX||2||7921",
-  "template_id": 7921,
-  "library_name": "PCSI_0001_Pa_X_PE_193_EX",
+  "_id": "100826_I280_00019_61RVA_LT||1||3967",
+  "template_id": 3967,
+  "library_name": "PCSI_0001_Pa_P_PE_300_WG",
   "ProjectInfo_id": "PCSI",
-  "RunInfo_id": "110406_SN801_0045_AB07R4ABXX",
-  "lane": 2,
+  "RunInfo_id": "100826_I280_00019_61RVA_LT",
+  "lane": 1,
   "status": "Completed",
   "skip": 0,
-  "create_date": "2011-03-01 14:01:34",
-  "prep_date": "2010-08-30 15:51:51",
-  "library_type": "EX",
-  "tissue_type": "X",
+  "create_date": "2010-08-27 16:27:42",
+  "prep_date": "2010-08-27 16:25:59",
+  "library_type": "WG",
+  "tissue_type": "P",
   "DonorInfo_id": "PCSI_0001",
+  "library_head": "PCSI",
   "tissue_origin": "Ly",
   "receive_date": "n/a",
   "barcode": "noIndex",
   "WorkflowInfo_id": [
-    134082,
-    1691073,
-    636716,
-    416291,
-    636708,
-    635879,
-    1793536,
-    25831,
-    453505,
-    1629690,
-    561492,
-    395373,
-    2892442,
-    33247,
-    431729,
-    638355
+    25831
   ],
-  "iusswid": "9092"
+  "iusswid": "14418"
 }
 ...
 ```
@@ -482,7 +442,6 @@ Get all libraries for a donor:
 - _id: project acronym
 - start_date: start date of the project
 - last_mod: last modified date
-- donor_totals: number of donors with that donor head (first section of donor name)
 
 ```
 > db.ProjectInfo.find()
@@ -490,9 +449,6 @@ Get all libraries for a donor:
   "_id": "DCR",
   "start_date": "2012-08-17 16:28:25",
   "last_mod": "2012-08-31 14:52:40",
-  "donor_totals": {
-    "DCR": 8
-  }
 }
 ```
 
@@ -507,12 +463,6 @@ Run time: 11-12s
 - _id: run name
 - start_date: start date of sequencer run
 - status: sequencer run status
-- library_types: number of library seqs with a particular library type
-- tissue_types: number of library seqs with a particular tissue type
-- library_totals: number of libraries organized by head of name
-- donors: number of libraries associated with a donor on that run
-- donor_totals: number of donors organized by head of donor name
-- projects: number of library seqs associated with a particular project
 
 ```
 > db.RunInfo.find({"_id": "140110_SN804_0172_BC3KBVACXX"})
@@ -520,43 +470,17 @@ Run time: 11-12s
   "_id": "140110_SN804_0172_BC3KBVACXX",
   "start_date": "2014-01-30 15:54:32",
   "status": "Completed",
-  "library_types": {
-    "MR": 6,
-    "WG": 2
-  },
-  "tissue_types": {
-    "P": 2,
-    "F": 2,
-    "R": 2,
-    "M": 2
-  },
-  "library_totals": {
-    "ASHPC": 8
-  },
-  "donors": {
-    "ASHPC_0018": 2,
-    "ASHPC_0026": 2,
-    "ASHPC_0020": 1,
-    "ASHPC_0024": 2,
-    "ASHPC_0019": 1
-  },
-  "donor_totals": {
-    "ASHPC": 5
-  },
-  "projects": {
-    "ASHPC": 8
-  }
 }
 ```
 
 Lists information for a specified run
 
-*Only captures those libraries with sample_type ending in library Seq (from pinery)
+functions: updateRunInfo
 
-functions: updateRunInfo, updateWorkflowInfo
-
-Download time: 12s + 36s = 48s
+Download time: 12s
 Run time: 4s
+
+//TODO: projects and library_totals might be the same 
 
 #### Workflow Info
 - _id: workflow SWID (or sw accession)
@@ -719,13 +643,11 @@ Run time: 19m
 #### Run Report Data Phasing
 - _id: run name
 - lane_#: run lane details 
-- source: source of the file that data was extracted from (either BIN, XML, or NIL)
 
 ```
 > db.RunReportDataPhasing.find()
 {
   "_id": "140101_SN203_0209_AC3AGYACXX",
-  "source": "BIN",
   "lane_8": {
     "Phasing (R1/R2)": "0.21/0.27",
     "PF% Sequencing": "76.82",
