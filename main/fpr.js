@@ -168,7 +168,6 @@ exports.updateDonorInfo = function (sequencerData, sampleData) {
 										returnObj[donor]['external_name'] = 'n/a';
 									}
 								}
-								returnObj[donor]['status'] = sequencerData[i].state;
 								returnObj[donor]['donor_head'] = donorHead;
 							}
 						}
@@ -197,7 +196,6 @@ exports.updateDonorInfo = function (sequencerData, sampleData) {
 								returnObj[donor]['external_name'] = 'n/a';
 							}
 						}
-						returnObj[donor]['status'] = sequencerData[i].state;
 						returnObj[donor]['donor_head'] = donorHead;
 					}
 				}
@@ -249,7 +247,6 @@ exports.updateLibraryInfo = function (sequencerData, sampleData, skipData, recei
 							libraries[_id].ProjectInfo_id = sampleIDInfo[id]['Project Name'];
 							libraries[_id].RunInfo_id = sequencerData[i].name;
 							libraries[_id].lane = sequencerData[i].positions[j].position;
-							libraries[_id].status = sequencerData[i].state;
 							if (typeof sampleSkipInfo[_id] !== 'undefined') {
 								libraries[_id].skip = sampleSkipInfo[_id].skip;
 							}
@@ -314,7 +311,6 @@ exports.updateLibraryInfo = function (sequencerData, sampleData, skipData, recei
 					libraries[_id].ProjectInfo_id = sampleIDInfo[id]['Project Name'];
 					libraries[_id].RunInfo_id = sequencerData[i].name;
 					libraries[_id].lane = sequencerData[i].positions.position;
-					libraries[_id].status = sequencerData[i].state;
 					if (typeof sampleSkipInfo[_id] !== 'undefined') {
 						libraries[_id].skip = sampleSkipInfo[_id].skip;
 					}

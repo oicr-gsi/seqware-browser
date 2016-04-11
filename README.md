@@ -208,7 +208,6 @@ Displays all workflow runs that have gone from running > failed.
 - _id: Donor name
 - institute: institute where the donor sample was originated from
 - external_name: the external name of the donor
-- status: sequencer run status
 - donor_head: used to determine donor totals counts for a run or project
 
 ```
@@ -217,7 +216,6 @@ Displays all workflow runs that have gone from running > failed.
   "_id": "PCSI_0069",
   "institute": "Mayo Clinic",
   "external_name": "5548-1",
-  "status": "Completed",
   "donor_head": "PCSI"
 }
 ```
@@ -238,7 +236,6 @@ Note: Library Info documents refer to the **sequenced libraries** and not the ge
 - ProjectInfo_id: reference to project document in ProjectInfo collection
 - RunInfo_id: reference to run document in RunInfo collection
 - lane: lane library was sequenced on
-- status: sequencer run status
 - skip: boolean, whether or not the library was skipped
 - create_date: date the library was created
 - prep_date: date the sample for the library was prepared
@@ -261,7 +258,6 @@ Note: Library Info documents refer to the **sequenced libraries** and not the ge
   "ProjectInfo_id": "AOE",
   "RunInfo_id": "121108_SN802_0094_AD1DD8ACXX",
   "lane": 3,
-  "status": "Completed",
   "skip": 0,
   "create_date": "2012-11-05 15:51:19",
   "prep_date": "2012-08-31 10:46:26",
@@ -310,7 +306,6 @@ Get all Libraries for a run:
   "ProjectInfo_id": "LCMT",
   "RunInfo_id": "110114_H239_0105_A81CK4ABXX",
   "lane": 3,
-  "status": "Completed",
   "create_date": "2010-12-07 13:23:22",
   "prep_date": "2010-11-22 11:05:55",
   "library_type": "EX",
@@ -326,7 +321,6 @@ Get all Libraries for a run:
   "ProjectInfo_id": "FCSG",
   "RunInfo_id": "110114_H239_0105_A81CK4ABXX",
   "lane": 6,
-  "status": "Completed",
   "skip": 0,
   "create_date": "2010-12-17 16:13:36",
   "prep_date": "2010-12-17 15:02:16",
@@ -355,7 +349,6 @@ Get all libraries for a project:
   "ProjectInfo_id": "TLCR",
   "RunInfo_id": "110224_h239_0109_B81CLAABXX",
   "lane": 2,
-  "status": "Completed",
   "skip": 0,
   "create_date": "2011-02-17 12:14:01",
   "prep_date": "2010-10-26 13:52:11",
@@ -372,7 +365,6 @@ Get all libraries for a project:
   "ProjectInfo_id": "TLCR",
   "RunInfo_id": "110224_h239_0109_B81CLAABXX",
   "lane": 2,
-  "status": "Completed",
   "skip": 0,
   "create_date": "2011-02-17 12:14:01",
   "prep_date": "2010-10-26 13:37:29",
@@ -397,7 +389,6 @@ Get all libraries for a donor:
   "ProjectInfo_id": "PCSI",
   "RunInfo_id": "100826_I280_00019_61RVA_LT",
   "lane": 6,
-  "status": "Completed",
   "skip": 0,
   "create_date": "2010-08-27 16:27:42",
   "prep_date": "2010-08-27 16:25:59",
@@ -419,7 +410,6 @@ Get all libraries for a donor:
   "ProjectInfo_id": "PCSI",
   "RunInfo_id": "100826_I280_00019_61RVA_LT",
   "lane": 1,
-  "status": "Completed",
   "skip": 0,
   "create_date": "2010-08-27 16:27:42",
   "prep_date": "2010-08-27 16:25:59",
