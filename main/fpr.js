@@ -547,6 +547,8 @@ exports.updateWorkflowInfo = function (analysisYAML) {
 					}
 
 					// Update workflow information batch
+					// Do not update with library_ids, omit
+					jsonData[i] = _.omit(jsonData[i], ['libraryinfo_id', 'template_id']);
 					wfBatch.find({'_id':jsonData[i]._id}).upsert().updateOne(jsonData[i]);
 				}
 
@@ -633,7 +635,7 @@ exports.updateRunningWorkflowRuns = function (analysisYAML) {
 
 					for (var i = 0; i < result.rows.length; i++) {
 						// Update workflow info
-						var WorkflowInfo_id = jsonData[i]._id;
+						var WorkflowInfo_id = result.rows[i]._id;
 						if (/(.*?)_.*?/.test(result.rows[i].workflow_name)) {
 							var match = /(.*?)_.*?/.exec(result.rows[i].workflow_name);
 							var workflowName = match[1];
@@ -648,14 +650,8 @@ exports.updateRunningWorkflowRuns = function (analysisYAML) {
 						result.rows[i].create_tstmp = getDateTimeString(result.rows[i].create_tstmp);
 						result.rows[i].last_modified = getDateTimeString(result.rows[i].last_modified);
 
-						for (var j = 0; j < result.rows[i].libraryinfo_id.length; j++) {
-							// Parse out library seq ids from libraryinfo_id
-							var match = /(.*?\|\|.*?\|\|.*?)\|\|.*?$/.exec(result.rows[i].libraryinfo_id[j]);
-							var librarySeq_id = match[1];
-
-							// Update workflow info library ids to library seq ids
-							result.rows[i].libraryinfo_id[j] = librarySeq_id;
-						}
+						// Do not update with library_ids, omit
+						result.rows[i] = _.omit(result.rows[i], ['libraryinfo_id', 'template_id']);
 
 						// Update running workflow collection
 						if (result.rows[i].status === 'running') {
@@ -729,14 +725,8 @@ function checkFailedWorkflowRuns () {
 								result.rows[i].create_tstmp = getDateTimeString(result.rows[i].create_tstmp);
 								result.rows[i].last_modified = getDateTimeString(result.rows[i].last_modified);
 
-								for (var j = 0; j < result.rows[i].libraryinfo_id.length; j++) {
-									// Parse out ids from libraryinfo_id
-									var match = /(.*?\|\|.*?\|\|.*?)\|\|.*?$/.exec(result.rows[i].libraryinfo_id[j]);
-									var librarySeq_id = match[1];
-
-									// Update workflow info library ids to library seq ids
-									result.rows[i].libraryinfo_id[j] = librarySeq_id;
-								}
+								// Do not update with library_ids, omit
+								result.rows[i] = _.omit(result.rows[i], ['libraryinfo_id', 'template_id']);
 
 								failedWFBatch.find({_id: result.rows[i]._id}).removeOne();
 								wfBatch.find({_id: result.rows[i]._id}).upsert().updateOne(result.rows[i]);

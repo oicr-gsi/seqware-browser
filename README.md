@@ -125,54 +125,37 @@ Runs a query in seqware database for all completed sequencer runs after 2014-02-
 - create_tstmp: create date
 - last_modified: last modified date
 - workflow_name: workflow name and version
-- template_id: array of templates (libraries) associated with this workflow
-- libraryinfo_id: an array of library info ids associated with this workflow run
 - analysis_type: workflow analysis type
 
 ```
 > db.CurrentWorkflowRuns.find()
 {
-  "_id": 3452850,
-  "workflow_run_id": 201917,
+  "_id": 3452851,
+  "workflow_run_id": 201918,
   "status": "running",
-  "status_cmd": "0000757-160202125311466-oozie-oozi-W",
+  "status_cmd": "0000756-160202125311466-oozie-oozi-W",
   "create_tstmp": "2016-03-22 10:46:37",
-  "last_modified": "2016-03-22 15:04:21",
+  "last_modified": "2016-03-22 15:04:23",
   "workflow_name": "CASAVA_2.8",
-  "template_id": [
-    "12850"
-  ],
-  "libraryinfo_id": [
-    "110916_SN804_0064_AD04TBACXX||4||12850"
-  ]
+  "analysis_type": "Base calling"
 }{
-  "_id": 3447735,
-  "workflow_run_id": 201886,
+  "_id": 3447737,
+  "workflow_run_id": 201888,
   "status": "running",
-  "status_cmd": "0000721-160202125311466-oozie-oozi-W",
+  "status_cmd": "0000724-160202125311466-oozie-oozi-W",
   "create_tstmp": "2016-03-21 10:45:40",
-  "last_modified": "2016-03-21 14:46:04",
+  "last_modified": "2016-03-21 14:46:20",
   "workflow_name": "CASAVA_2.8",
-  "template_id": [
-    "12850"
-  ],
-  "libraryinfo_id": [
-    "110916_SN804_0064_AD04TBACXX||4||12850"
-  ]
+  "analysis_type": "Base calling"
 }{
-  "_id": 3439496,
-  "workflow_run_id": 201816,
+  "_id": 3439494,
+  "workflow_run_id": 201814,
   "status": "running",
-  "status_cmd": "0000628-160202125311466-oozie-oozi-W",
+  "status_cmd": "0000632-160202125311466-oozie-oozi-W",
   "create_tstmp": "2016-03-15 15:43:45",
-  "last_modified": "2016-03-15 19:44:02",
+  "last_modified": "2016-03-15 19:44:03",
   "workflow_name": "CASAVA_2.8",
-  "template_id": [
-    "12850"
-  ],
-  "libraryinfo_id": [
-    "110916_SN804_0064_AD04TBACXX||4||12850"
-  ]
+  "analysis_type": "Base calling"
 }
 ...
 ```
@@ -478,8 +461,6 @@ Run time: 4s
 - create_tstmp: create date
 - last_modified: last modified date
 - workflow_name: workflow name and version
-- template_id: array of templates (libraries) associated with this workflow
-- libraryinfo_id: an array of library info ids associated with this workflow run
 - analysis_type: workflow analysis type
 
 ```
@@ -492,12 +473,6 @@ Run time: 4s
   "create_tstmp": "2015-09-17 12:01:24",
   "last_modified": "2015-09-17 12:20:36",
   "workflow_name": "BamQC_2.5",
-  "template_id": [
-    "83083"
-  ],
-  "libraryinfo_id": [
-    "150911_D00331_0139_AC7HN0ANXX||8||83083"
-  ]
   "analysis_type": "Quality Control"
 }
 ```
