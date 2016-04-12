@@ -100,7 +100,7 @@ $ mongo
 
 - [CurrentWorkflowRuns](#current-workflow-runs)
 - [DonorInfo](#donor-info)
-- [FilesInfo](#file-info)
+- [FileInfo](#file-info)
 - [IUSSWIDGraphData](#iusswidgraphdata)
 - [IUSSWIDRNASeqQCData](#iusswidrnaseqqcdata)
 - [IUSSWIDReportData](#iusswidreportdata)
@@ -469,8 +469,6 @@ functions: updateRunInfo
 
 Download time: 12s
 Run time: 4s
-
-//TODO: projects and library_totals might be the same 
 
 #### Workflow Info
 - _id: workflow SWID (or sw accession)

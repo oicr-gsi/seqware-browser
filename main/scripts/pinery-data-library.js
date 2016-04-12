@@ -1,14 +1,10 @@
-// Script takes in pinery data output
+// Script takes in pinery data output - sequencer runs and samples
+// Script takes in data from seqware postgresql database - skip and receive data data
 
 var fs = require('fs');
 var readMultipleFiles = require('read-multiple-files');
 var functions = require('/u/mcheng/browsertest/fpr.js');
 //var functions = require('/home/mcheng/Documents/workspace/seqware-browser/main/fpr.js');
-var	mongodb = require('mongodb');
-var MongoClient = mongodb.MongoClient;
-var url = 'mongodb://10.30.128.97:27017/seqwareBrowser';
-
-var dateNow = new Date();
 
 // read pinery output files
 readMultipleFiles([process.argv[2], process.argv[3], process.argv[4], process.argv[5]], 'utf8', function(err, data){

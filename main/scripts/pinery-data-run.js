@@ -1,4 +1,4 @@
-// Script takes in pinery data output
+// Script takes in pinery data output - sequencer run
 
 var fs = require('fs');
 var functions = require('/u/mcheng/browsertest/fpr.js');

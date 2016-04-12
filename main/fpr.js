@@ -1,5 +1,6 @@
 // Separate scripts require this script for all the functions to update data to mongodb
 
+// Node Modules
 var fs = require('fs');
 var _ = require('underscore');
 var YAML = require('yamljs');
@@ -37,6 +38,7 @@ exports.updateProjectInfo = function (projectData) {
 		for (var project in projectInfo) {
 			var returnObj = {};
 			returnObj['_id'] = project;
+			// Convert date time to same format
 			returnObj['start_date'] = getDateTimeString(projectInfo[project]['Start Date']);
 			returnObj['last_mod'] = getDateTimeString(projectInfo[project]['Last Modified']);
 
@@ -88,14 +90,16 @@ exports.updateRunInfo = function (sequencerData) {
 
 				// Query for running sequencer runs by 
 				// sequencerData[i].state === 'Running' && new Date(sequencerData[i].created_date) > new Date('2014-02-01 00:00:00')
-				// Change status to 'Complete' if in psql database (even if status is running in pinery)
 				for (var i = 0; i < jsonData.length; i++) {
 					complete.push(jsonData[i].sequencer_run_name);
 				}
+
+				// Change status to 'Complete' if in psql database (even if status is running in pinery)
 				var completed = _.intersection(running, complete);
 				for (var i = 0; i < completed.length; i++) {
 					batch.find({_id: completed[i]}).upsert().updateOne({ $set: {status: 'Completed'} });
 				}
+
 				batch.execute(function(err, result) {
 					if (err) console.dir(err);
 					db.close();
@@ -140,7 +144,7 @@ exports.updateDonorInfo = function (sequencerData, sampleData) {
 			}
 		}
 
-		// Get all libraries per donor
+		// Get all donor information
 		for (var i = 0; i < sequencerData.length; i++) {
 			// Pooled Sample
 			if (Object.prototype.toString.call(sequencerData[i].positions) === '[object Array]') {
@@ -154,7 +158,7 @@ exports.updateDonorInfo = function (sequencerData, sampleData) {
 							if (/((.*?)_.*?)_/.test(libraryName)) {
 								var match = /((.*?)_.*?)_/.exec(libraryName);
 								var donor = match[1];
-								var donorHead = match[2];
+								var donorHead = match[2]; // can sum up totals of donor heads (for runs and projects)
 
 								if (typeof sampleIDInfo[donor] !== 'undefined') {
 									if (typeof sampleIDInfo[donor]['Institute'] !== 'undefined') {
@@ -173,6 +177,7 @@ exports.updateDonorInfo = function (sequencerData, sampleData) {
 						}
 					}
 				}
+			// Single Sample
 			} else if (typeof sequencerData[i].positions !== 'undefined') {
 				var id = sequencerData[i].positions.id;
 				if (/Library Seq$/.test(sampleIDInfo[id]['Sample Type'])) {
@@ -182,7 +187,7 @@ exports.updateDonorInfo = function (sequencerData, sampleData) {
 					if (/(.*?_.*?)_/.test(libraryName)) {
 						var match = /((.*?)_.*?)_/.exec(libraryName);
 						var donor = match[1];
-						var donorHead = match[2];
+						var donorHead = match[2]; // can sum up totals of donor heads (for runs and projects)
 
 						if (typeof sampleIDInfo[donor] !== 'undefined') {
 							if (typeof sampleIDInfo[donor]['Institute'] !== 'undefined') {
@@ -228,7 +233,6 @@ exports.updateLibraryInfo = function (sequencerData, sampleData, skipData, recei
 		var sampleSkipInfo = getLibrarySeqSkip(skipData);
 		var sampleReceiveInfo = getLibraryReceiveDates(receiveData);
 		var libraries = {};
-		var libDonor = {};
 
 		// Get individual library seq data
 		for (var i = 0; i < sequencerData.length; i++) {
@@ -247,9 +251,13 @@ exports.updateLibraryInfo = function (sequencerData, sampleData, skipData, recei
 							libraries[_id].ProjectInfo_id = sampleIDInfo[id]['Project Name'];
 							libraries[_id].RunInfo_id = sequencerData[i].name;
 							libraries[_id].lane = sequencerData[i].positions[j].position;
+							// Determine skip (t/f)
 							if (typeof sampleSkipInfo[_id] !== 'undefined') {
 								libraries[_id].skip = sampleSkipInfo[_id].skip;
+							} else {
+								libraries[_id].skip = 'n/a';
 							}
+							// Determine create and prepared dates
 							if (typeof sampleDateInfo[id] !== 'undefined') {
 								libraries[_id].create_date = sampleDateInfo[id]['create_date'];
 								libraries[_id].prep_date = sampleDateInfo[id]['prep_date'];
@@ -258,7 +266,7 @@ exports.updateLibraryInfo = function (sequencerData, sampleData, skipData, recei
 								libraries[_id].prep_date = 'n/a';
 							}
 
-							// If library format is 6 underscores
+							// If library format is w/ 6 underscores
 							// Determine tissue and library type
 							if (/^.*?_.*?_.*?_.*?_.*?_.*?_.*?[^_]$/.test(libraryName)) {
 								if (/.*_(.*?)$/.test(libraryName)) {
@@ -271,13 +279,13 @@ exports.updateLibraryInfo = function (sequencerData, sampleData, skipData, recei
 								}
 							}
 							// Donor
-							// Assume all samples come from the same donor
+							// Assume all samples come from the donor (first two sections of library name)
 							if (/((.*?)_.*?)_/.test(libraryName)) {
 								var match = /((.*?)_.*?)_/.exec(libraryName);
 								var donor = match[1];
-								var libHead = match[2];
+								var libHead = match[2]; // can sum up totals of donor heads (for runs and donors)
 								libraries[_id].DonorInfo_id = donor;
-								libraries[_id].library_head = libHead;
+								libraries[_id].library_head = libHead; 
 								if (typeof sampleIDInfo[donor] !== 'undefined') {
 									if (typeof sampleIDInfo[donor]['Tissue Origin'] !== 'undefined') {
 										libraries[_id].tissue_origin = sampleIDInfo[donor]['Tissue Origin'];
@@ -311,9 +319,13 @@ exports.updateLibraryInfo = function (sequencerData, sampleData, skipData, recei
 					libraries[_id].ProjectInfo_id = sampleIDInfo[id]['Project Name'];
 					libraries[_id].RunInfo_id = sequencerData[i].name;
 					libraries[_id].lane = sequencerData[i].positions.position;
+					// Determine skip (t/f)
 					if (typeof sampleSkipInfo[_id] !== 'undefined') {
 						libraries[_id].skip = sampleSkipInfo[_id].skip;
+					} else {
+						libraries[_id].skip = 'n/a';
 					}
+					// Determine create and prepared dates
 					if (typeof sampleDateInfo[id] !== 'undefined') {
 						libraries[_id].create_date = sampleDateInfo[id]['create_date'];
 						libraries[_id].prep_date = sampleDateInfo[id]['prep_date'];
@@ -322,7 +334,7 @@ exports.updateLibraryInfo = function (sequencerData, sampleData, skipData, recei
 						libraries[_id].prep_date = 'n/a';
 					}
 
-					// If library format is 6 underscores
+					// If library format is w/ 6 underscores
 					// Determine tissue and library type
 					if (/^.*?_.*?_.*?_.*?_.*?_.*?_.*?[^_]$/.test(libraryName)) {
 						if (/.*_(.*?)$/.test(libraryName)) {
@@ -338,7 +350,7 @@ exports.updateLibraryInfo = function (sequencerData, sampleData, skipData, recei
 					if (/((.*?)_.*?)_/.test(libraryName)) {
 						var match = /((.*?)_.*?)_/.exec(libraryName);
 						var donor = match[1];
-						var libHead = match[2];
+						var libHead = match[2]; // can sum up totals of donor heads (for runs and donors)
 						libraries[_id].DonorInfo_id = donor;
 						libraries[_id].library_head = libHead;
 						if (typeof sampleIDInfo[donor] !== 'undefined') {
@@ -488,7 +500,6 @@ exports.updateWorkflowInfo = function (analysisYAML) {
 	MongoClient.connect(url, function(err, db) {
 		var libBatch = db.collection('LibraryInfo').initializeUnorderedBulkOp();
 		var wfBatch = db.collection('WorkflowInfo').initializeUnorderedBulkOp();
-
 		var libraryObj = {};
 
 		// Connect with postgresql
@@ -507,6 +518,7 @@ exports.updateWorkflowInfo = function (analysisYAML) {
 					if (/(.*?)_.*?/.test(jsonData[i].workflow_name)) {
 						var match = /(.*?)_.*?/.exec(jsonData[i].workflow_name);
 						var workflowName = match[1];
+						// Determine workflow analysis type by comparing to analysis YAML file
 						for (var analysisType in analysisYAML) {
 							if (workflowName in analysisYAML[analysisType]) {
 								jsonData[i].analysis_type = analysisType;
@@ -515,7 +527,6 @@ exports.updateWorkflowInfo = function (analysisYAML) {
 					}
 					jsonData[i].create_tstmp = getDateTimeString(jsonData[i].create_tstmp);
 					jsonData[i].last_modified = getDateTimeString(jsonData[i].last_modified);
-					wfBatch.find({'_id':jsonData[i]._id}).upsert().updateOne(jsonData[i]);
 
 					for (var j = 0; j < jsonData[i].libraryinfo_id.length; j++) {
 						// Parse out ids from libraryinfo_id
@@ -534,9 +545,12 @@ exports.updateWorkflowInfo = function (analysisYAML) {
 						}
 						libraryObj[librarySeq_id]['WorkflowInfo_id'].push(WorkflowInfo_id);
 					}
+
+					// Update workflow information batch
+					wfBatch.find({'_id':jsonData[i]._id}).upsert().updateOne(jsonData[i]);
 				}
 
-				// Sets the analysis status of workflows totals in LibraryInfo collection
+				// Sets the workflow arrays and iusswid in LibraryInfo collection
 				for (var librarySeq_id in libraryObj) {
 					var setMod = { $set:{} };
 					setMod.$set = libraryObj[librarySeq_id];
@@ -623,6 +637,7 @@ exports.updateRunningWorkflowRuns = function (analysisYAML) {
 						if (/(.*?)_.*?/.test(result.rows[i].workflow_name)) {
 							var match = /(.*?)_.*?/.exec(result.rows[i].workflow_name);
 							var workflowName = match[1];
+							// Determine workflow analysis type by matching name within analysis YAML file
 							for (var analysisType in analysisYAML) {
 								if (workflowName in analysisYAML[analysisType]) {
 									result.rows[i].analysis_type = analysisType;
@@ -634,7 +649,7 @@ exports.updateRunningWorkflowRuns = function (analysisYAML) {
 						result.rows[i].last_modified = getDateTimeString(result.rows[i].last_modified);
 
 						for (var j = 0; j < result.rows[i].libraryinfo_id.length; j++) {
-							// Parse out ids from libraryinfo_id
+							// Parse out library seq ids from libraryinfo_id
 							var match = /(.*?\|\|.*?\|\|.*?)\|\|.*?$/.exec(result.rows[i].libraryinfo_id[j]);
 							var librarySeq_id = match[1];
 
@@ -642,11 +657,11 @@ exports.updateRunningWorkflowRuns = function (analysisYAML) {
 							result.rows[i].libraryinfo_id[j] = librarySeq_id;
 						}
 
-						// Update running workflow table
+						// Update running workflow collection
 						if (result.rows[i].status === 'running') {
 							currentWFBatch.find({_id: result.rows[i]._id}).upsert().updateOne(result.rows[i]);
 							wfBatch.find({_id: result.rows[i]._id}).upsert().updateOne(result.rows[i]);
-						// Update failed workflow table and workflow info table
+						// Update failed workflow collection and workflow info table, remove from running workflow collection
 						} else if (result.rows[i].status === 'failed') {
 							currentWFBatch.find({_id: result.rows[i]._id}).removeOne();
 							failedWFBatch.find({_id: result.rows[i]._id}).upsert().updateOne(result.rows[i]);
@@ -704,6 +719,7 @@ function checkFailedWorkflowRuns () {
 								if (/(.*?)_.*?/.test(result.rows[i].workflow_name)) {
 									var match = /(.*?)_.*?/.exec(result.rows[i].workflow_name);
 									var workflowName = match[1];
+									// Determine analysis type by comparning workflow name within analysis YAML file
 									for (var analysisType in analysisYAML) {
 										if (workflowName in analysisYAML[analysisType]) {
 											result.rows[i].analysis_type = analysisType;
@@ -720,8 +736,6 @@ function checkFailedWorkflowRuns () {
 
 									// Update workflow info library ids to library seq ids
 									result.rows[i].libraryinfo_id[j] = librarySeq_id;
-
-									// Update library and run analysis totals with the complete WorkflowInfo update
 								}
 
 								failedWFBatch.find({_id: result.rows[i]._id}).removeOne();
@@ -826,7 +840,7 @@ exports.updateIUSSWIDReportData = function (fprData) {
 	MongoClient.connect(url, function(err, db) {
 		if (err) console.error(err);
 		var batch = db.collection('IUSSWIDReportData').initializeUnorderedBulkOp();
-			// Individual library report data
+		// Individual library report data
 		for (var IUSSWID in fprData['Library']) {
 			var json = fprData['Library'][IUSSWID]['JSON'];
 			var xenomeFile = fprData['Library'][IUSSWID]['XenomeFile'];
@@ -1238,7 +1252,7 @@ function getSampleIDInfo(sampleData) {
 		returnObj[sampleData[i]['id']]['Project Name'] = sampleData[i]['project_name'];
 		returnObj[sampleData[i]['id']]['Sample Type'] = sampleData[i]['sample_type'];
 
-		// Get attribute values
+		// Get attribute values (for donor information)
 		if (typeof sampleData[i].attributes !== 'undefined') {
 			for (var j = 0; j < sampleData[i].attributes.length; j++) {
 				// Assuming all samples with the same donor head come from the same institute
@@ -1284,7 +1298,7 @@ function getProjectDataInfo(projectData) {
 		returnObj[projectData[i].name] = {};
 		returnObj[projectData[i].name]['Start Date'] = projectData[i].earliest;
 		returnObj[projectData[i].name]['Last Modified'] = projectData[i].latest;
-		returnObj[projectData[i].name]['Count'] = projectData[i].count;
+		//returnObj[projectData[i].name]['Count'] = projectData[i].count;
 	}
 
 	return returnObj;
@@ -1325,29 +1339,6 @@ function getDateTimeString(date) {
 	
     return dateTime;
 }
-
-/**
- * returns desire field for result documents using a specific query in a specific collection
- * @param {array} docs
- * @param {object} query
- * @param {string} collection
- * @param {string} returnField
- * @param {db} db
- * @param {function} callback
- * @return {array} docs
- */
-function findDocuments(docs, query, collection, returnField, db, callback) {
-	var cursor = db.collection(collection).find(query);
-	cursor.each(function(err, doc) {
-		if (err) return console.error(err);
-		if (doc != null) {
-			docs.push(doc[returnField]);
-		} else {
-			callback();
-			return docs;
-		}
-	});
-};
 
 /**
  * returns all documents in a collection

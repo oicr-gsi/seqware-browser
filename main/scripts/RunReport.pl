@@ -11,8 +11,6 @@
 
 use warnings;
 use strict;
-#use MongoDB::Collection;
-#use MongoDB::MongoClient;
 
 use File::Basename qw(dirname);
 use JSON;
@@ -22,8 +20,6 @@ use lib dirname(dirname abs_path $0) . "/Report";
 use Report::wideInstrument qw (get_instrument_report get_XML_Data);
 
 my $run = $ARGV[0];
-#my $client = MongoDB->connect('mongodb://10.30.128.97');
-#my $collection = $client->ns('seqwareBrowser.RunReportDataPhasing');
 my %returnObj;
 $returnObj{"_id"} = $run;
 
@@ -60,4 +56,3 @@ for (my $i = 1; $i < 9; $i++) {
 	}
 }
 print encode_json(\%returnObj);
-#$collection->update_one( {'_id' => $run}, { '$set' => \%returnObj }, {'upsert' => 1});
