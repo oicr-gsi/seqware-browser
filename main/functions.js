@@ -4,10 +4,8 @@
 var fs = require('fs');
 var _ = require('underscore');
 var YAML = require('yamljs');
-var readMultipleFiles = require('read-multiple-files');
 var http = require("http");
 var AdmZip = require('adm-zip');
-// Configuration file for mongo and postgres databases
 var config = require('config.js');
 
 // Initialize mongo config

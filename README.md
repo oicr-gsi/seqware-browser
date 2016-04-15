@@ -21,10 +21,10 @@ The back end uses a NodeJS framework and some install packages. First, install N
 - underscore
 - yamljs
 
-The main functions to call data from the data sources are within the file 'fpr.js'.
+The main functions to call data from the data sources are within the file 'functions.js'.
 
 #### Config.js
-This is the configuration file that fpr.js reads from to connect to databases: mongo and postgresql. Enter in hostnames and databases, and place this file in the node_modules directory
+This is the configuration file that functions.js reads from to connect to databases: mongo and postgresql. Enter in hostnames and databases, and place this file in the node_modules directory
 
 ```
 var config = {};
@@ -46,7 +46,7 @@ config.postgres.database = <seqware database>;
 module.exports = config;
 ```
 ### Scripts
-The 'fpr.js' file is called by other javascript files under main/scripts that load the necessary data source before running a function in 'fpr.js'. These scripts along with some perl scripts are then called by bash scripts (found in main/scripts/bash-scripts) to be used within a cron job for easy automation. A list of the bash scripts, their js/perl scripts and data sources, and what they update can be found below:
+The 'functions.js' file is called by other javascript files under main/scripts that load the necessary data source before running a function in 'functions.js'. These scripts along with some perl scripts are then called by bash scripts (found in main/scripts/bash-scripts) to be used within a cron job for easy automation. A list of the bash scripts, their js/perl scripts and data sources, and what they update can be found below:
 
 #### current-workflow-runs.sh
 - Js Scripts: seqware-db-current-wfs.js
@@ -166,8 +166,6 @@ Runs a query in seqware database for all workflow runs with status = 'running' a
 
 The _id for all documents in the CurrentWorkflowRuns collection are also queried for and if the status changes, the document is removed from the collection and updated in WorkflowInfo collection and other associated collections that require Workflow data. If the status = 'failed', the document is added to a FailedWorkflowRuns collection.
 
-Run time: 7-9s
-
 #### Failed Workflow Runs
 - _id: workflow SWID (or sw accession)
 - workflow_run_id: workflow run id given by seqware
@@ -206,9 +204,6 @@ Displays all workflow runs that have gone from running > failed.
 Displays all information associated with a particular donor, you can either query for the donor by name or just do db.Donor.find() for all donors
 
 functions: updateDonorInfo
-
-Download time: 12s + 36s = 48s
-Run time: 10-12s
 
 #### Library Info
 Note: Library Info documents refer to the **sequenced libraries** and not the general library. Information on the general library can be found by querying through the template_id or library name
@@ -273,9 +268,6 @@ Note: Library Info documents refer to the **sequenced libraries** and not the ge
 Displays all information associated with a particular library
 
 functions: updateLibraryInfo, updateWorkflowInfo
-
-Download time: 12s + 36s + 2s = 50s
-Run time: 8-9s
 
 ##### Example queries:
 Get all Libraries for a run:
@@ -429,9 +421,6 @@ Lists information for a specified project
 
 functions: updateProjectInfo
 
-Download time: 12s + 36s + 2s + 33s = 1m 23s
-Run time: 11-12s
-
 #### Run Info
 - _id: run name
 - start_date: start date of sequencer run
@@ -449,9 +438,6 @@ Run time: 11-12s
 Lists information for a specified run
 
 functions: updateRunInfo
-
-Download time: 12s
-Run time: 4s
 
 #### Workflow Info
 - _id: workflow SWID (or sw accession)
@@ -481,9 +467,6 @@ Provides information on workflows
 
 functions: updateWorkflowInfo
 
-Download time: 12s + 36s + 2s = 50s
-Run time: 1m 25-30s
-
 #### File Info
 - _id: fileSWID
 - file_path: path of file
@@ -501,9 +484,6 @@ Run time: 1m 25-30s
 List of files linked to associated workflow
 
 functions: updateFilesInfo
-
-Download/Hold time: 1m 5s
-Run time: 3s
 
 ##### Example queries:
 To query for all files associated with WorkflowInfo_id:
@@ -552,9 +532,6 @@ The data extracted from files in json directory for the details pages
 
 function: updateIUSSWIDReportData
 
-Download/Hold time: 1m 5s
-Run time: 18m
-
 #### IUSSWIDRNASeqQCData
 - _id: ius SWID (seqware accession for the particular library seq)
 - rna seq qc details report data associated to the library seq
@@ -580,9 +557,6 @@ RNA Seq QC data associated with a particular IUSSWID (unique for library seq)
 
 function: updateIUSSIWDRNASeqQCData
 
-Download/Hold time: 1m 5s
-Run time: 4m 30s
-
 #### IUSSWIDGraphData
 Note: Graphs are generated using Google charts and the data is in the format that is required for the function: drawGraphsById to plot graphs
 
@@ -599,9 +573,6 @@ Note: Graphs are generated using Google charts and the data is in the format tha
 For a specific library seq, contains data to graph using Google Charts
 
 function: updateGraphData
-
-Download/Hold time: 1m 5s
-Run time: 19m
 
 #### Run Report Data Phasing
 - _id: run name
@@ -663,6 +634,24 @@ Note: perl module outputs returned object into json file that is taken in by a s
 function: RunReport.pl new job for every run
 
 Run time: Total for all run jobs approx 1h (qw and r and hqw)
+
+### Approximate Time Totals
+This table demonstrates the dependencies of collection updates on download times, hold times, and general function run time and returns a column of total time it takes to update the collection.
+
+|                      | Download time (s) |                    |                     |                 | Hold time (s) |             | Run time (s) | Total time (s) | Human time |
+|----------------------|-------------------|--------------------|---------------------|-----------------|---------------|-------------|--------------|----------------|------------|
+|                      | pinery/runs.out   | pinery/samples.out | pinery/projects.out | psql seqware db | PerlFPR       | LibraryInfo |              |                |            |
+| CurrentWorkflowRuns  |                   |                    |                     |                 |               |             | 5            | 5              | 5s         |
+| DonorInfo            | 10                | 40                 |                     |                 |               |             | 13           | 63             | 1m 3s      |
+| FileInfo             |                   |                    |                     |                 | 60            |             | 30           | 90             | 1m 30s     |
+| IUSSWIDGraphData     |                   |                    |                     |                 | 60            |             | 896          | 956            | 16m        |
+| IUSSWIDRNASeqQCData  |                   |                    |                     |                 | 60            |             | 270          | 330            | 5m 30s     |
+| IUSSWIDReportData    |                   |                    |                     |                 | 60            |             | 860          | 920            | 5m 20s     |
+| LibraryInfo          | 10                | 40                 |                     | 2               |               |             | 10           | 62             | 1m 2s      |
+| ProjectInfo          | 10                | 40                 | 32                  | 2               |               |             | 2            | 86             | 1m 26s     |
+| RunInfo              | 10                |                    |                     |                 |               |             | 1            | 11             | 11s        |
+| RunReportDataPhasing |                   |                    |                     |                 |               |             | 3600         | 3600           | 60m        |
+| WorkflowInfo         |                   |                    |                     |                 |               | 62          | 83           | 145            | 2m 25s     |
 
 ### Workflow Run Analysis YAML
 This is used to sort the workflow into its respective analysis type (the numbers don't mean anything)

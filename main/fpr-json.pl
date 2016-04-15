@@ -42,7 +42,8 @@ while (!$fprHandle->eof()) {
 	my $date = $linehash{"Last Modified"};
 	my $runName = $linehash{"Sequencer Run Name"};
 	my $filePath = $linehash{"File Path"};
-
+	my $workflowName = $linehash{"Workflow Run Name"};
+	
 	$fileSWID = $linehash{"File SWID"};
 	$IUSSWID = $linehash{"IUS SWID"};
 
