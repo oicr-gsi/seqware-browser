@@ -1,8 +1,6 @@
 // Script takes in pinery data output - sequencer run
-
 var fs = require('fs');
-var functions = require('/u/mcheng/browsertest/fpr.js');
-//var functions = require('/home/mcheng/Documents/workspace/seqware-browser/main/fpr.js');
+var functions = require('functions.js');
 
 // read pinery output files
 fs.readFile(process.argv[2], 'utf8', function(err, data){
