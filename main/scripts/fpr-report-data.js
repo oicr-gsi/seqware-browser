@@ -3,6 +3,7 @@
 
 var fs = require('fs');
 var functions = require('functions.js');
+var JSON = require('JSON');
 
 // Read from the fpr-Library.json file
 fs.readFile(process.argv[2], 'utf8', function(err, data){

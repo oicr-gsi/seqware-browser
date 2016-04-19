@@ -3,6 +3,7 @@
 
 var readMultipleFiles = require('read-multiple-files');
 var functions = require('functions.js');
+var JSON = require('JSON');
 
 // read pinery output files
 readMultipleFiles([process.argv[2], process.argv[3], process.argv[4], process.argv[5]], 'utf8', function(err, data){

@@ -21,7 +21,7 @@ use Report::wideInstrument qw (get_instrument_report get_XML_Data);
 
 my $run = $ARGV[0];
 my %returnObj;
-$returnObj{"_id"} = $run;
+$returnObj{"run_name"} = $run;
 
 for (my $i = 1; $i < 9; $i++) {
 	my $data = decode_json(get_XML_Data ($run, $i));

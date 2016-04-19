@@ -46,7 +46,8 @@ while (!$fprHandle->eof()) {
 	
 	$fileSWID = $linehash{"File SWID"};
 	$IUSSWID = $linehash{"IUS SWID"};
-
+	$workflowRunSWID = $linehash{"Workflow Run SWID"};
+	
 	#By Run
 	$fprData{"Run"}{$runName} = "1";
 
@@ -71,7 +72,8 @@ foreach my $key (keys (%{$fprData{"Run"}})) {
 my @categories = ('File', 'Library');
 my %hash;
 foreach my $key (@categories){
-	open (FH, ">", "./fpr-".$key.".json");
+	mkdir "fpr-output";
+	open (FH, ">", "./fpr-output/fpr-".$key.".json");
 	$hash{$key} = \%{$fprData{$key}};
 	$json = encode_json(\%hash);
 	print FH $json;

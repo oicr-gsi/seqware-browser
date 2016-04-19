@@ -7,6 +7,7 @@ var YAML = require('yamljs');
 var http = require("http");
 var AdmZip = require('adm-zip');
 var config = require('config.js');
+var JSON = require('JSON');
 
 // Initialize mongo config
 var	mongodb = require('mongodb');
@@ -19,11 +20,10 @@ var cp = config.postgres;
 var client = new pg.Client('postgres://' + cp.username + ':' + cp.password + '@' + cp.host + ':' + cp.port + '/' + cp.database);
 
 var analysisYAML;
-
 /////////////////////////////// Functions ///////////////////////////////
 
 ////////////////////////////// ProjectInfo /////////////////////////////
-/** _id: project name
+/**
  * updates a list of projects and associated info
  * @param {json} projectData
  */
@@ -35,12 +35,12 @@ exports.updateProjectInfo = function (projectData) {
 		// Get all project info
 		for (var project in projectInfo) {
 			var returnObj = {};
-			returnObj['_id'] = project;
+			returnObj['project_name'] = project;
 			// Convert date time to same format
 			returnObj['start_date'] = getDateTimeString(projectInfo[project]['Start Date']);
 			returnObj['last_mod'] = getDateTimeString(projectInfo[project]['Last Modified']);
 
-			batch.find({_id: project}).upsert().updateOne(returnObj);
+			batch.find({project_name: project}).upsert().updateOne(returnObj);
 		}
 		batch.execute(function(err, result) {
 			if (err) console.dir(err);
@@ -50,7 +50,7 @@ exports.updateProjectInfo = function (projectData) {
 }
 
 ///////////////////////////////// RunInfo ///////////////////////////////
-/** _id: run name
+/**
  * updates a list of runs and associated info
  * @param {json} sequencerData 
  */
@@ -75,7 +75,7 @@ exports.updateRunInfo = function (sequencerData) {
 				// Get run information
 				for (var i = 0; i < sequencerData.length; i++) {
 					var returnObj = {};
-					returnObj['_id'] = sequencerData[i].name;
+					returnObj['run_name'] = sequencerData[i].name;
 					returnObj['start_date'] = getDateTimeString(sequencerData[i].created_date);
 					returnObj['status'] = sequencerData[i].state;
 
@@ -83,7 +83,7 @@ exports.updateRunInfo = function (sequencerData) {
 					if (sequencerData[i].state === 'Running' && new Date(sequencerData[i].created_date) > new Date('2014-02-01 00:00:00')) {
 						running.push(sequencerData[i].name); 
 					}
-					batch.find({_id: returnObj['_id']}).upsert().updateOne(returnObj);
+					batch.find({run_name: returnObj['run_name']}).upsert().updateOne(returnObj);
 				}
 
 				// Query for running sequencer runs by 
@@ -95,7 +95,7 @@ exports.updateRunInfo = function (sequencerData) {
 				// Change status to 'Complete' if in psql database (even if status is running in pinery)
 				var completed = _.intersection(running, complete);
 				for (var i = 0; i < completed.length; i++) {
-					batch.find({_id: completed[i]}).upsert().updateOne({ $set: {status: 'Completed'} });
+					batch.find({run_name: completed[i]}).upsert().updateOne({ $set: {status: 'Completed'} });
 				}
 
 				batch.execute(function(err, result) {
@@ -109,7 +109,7 @@ exports.updateRunInfo = function (sequencerData) {
 }
 
 ///////////////////////////////// DonorInfo ///////////////////////////////
-/** _id: donor head
+/**
  * updates a list of donors heads and associated info
  * @param {json} sequencerData 
  * @param {json} sampleData
@@ -138,7 +138,7 @@ exports.updateDonorInfo = function (sequencerData, sampleData) {
 			}
 			if (typeof donor !== 'undefined') {
 				returnObj[donor] = {};
-				returnObj[donor]['_id'] = donor;
+				returnObj[donor]['donor_name'] = donor;
 			}
 		}
 
@@ -205,7 +205,7 @@ exports.updateDonorInfo = function (sequencerData, sampleData) {
 			}
 		}
 		for (var donor in returnObj) {
-			batch.find({_id: donor}).upsert().updateOne(returnObj[donor]);
+			batch.find({donor_name: donor}).upsert().updateOne(returnObj[donor]);
 		}
 
 		batch.execute(function(err, result) {
@@ -216,7 +216,7 @@ exports.updateDonorInfo = function (sequencerData, sampleData) {
 }
 
 /////////////////////////////// LibraryInfo /////////////////////////////////
-/** _id: library_id (run.name||lane||template.id)
+/** library_name: (run_name||lane||template_id)
  * updates library information mongodb and inserts if it isn't in the collection
  * @param {json} sequencerData 
  * @param {json} sampleData
@@ -239,29 +239,29 @@ exports.updateLibraryInfo = function (sequencerData, sampleData, skipData, recei
 				for (var j = 0; j < sequencerData[i].positions.length; j++) {
 					for (var k = 0; k < sequencerData[i].positions[j].samples.length; k++) {
 						var id = sequencerData[i].positions[j].samples[k].id; // template id
-						var _id = sequencerData[i].name + '||' + sequencerData[i].positions[j].position + '||' + id; // library id is run_name || lane || template_id
+						var unique_id = sequencerData[i].name + '||' + sequencerData[i].positions[j].position + '||' + id; // library id is run_name || lane || template_id
 						if (/Library Seq$/.test(sampleIDInfo[id]['Sample Type'])) {
 							var libraryName = sampleIDInfo[id]['Library Name'];
-							libraries[_id] = {};
-							libraries[_id]._id = _id;
-							libraries[_id].template_id = id;
-							libraries[_id].library_name = sampleIDInfo[id]['Library Name'];
-							libraries[_id].ProjectInfo_id = sampleIDInfo[id]['Project Name'];
-							libraries[_id].RunInfo_id = sequencerData[i].name;
-							libraries[_id].lane = sequencerData[i].positions[j].position;
+							libraries[unique_id] = {};
+							libraries[unique_id].library_seqname = unique_id;
+							libraries[unique_id].template_id = id;
+							libraries[unique_id].library_name = sampleIDInfo[id]['Library Name'];
+							libraries[unique_id].ProjectInfo_name = sampleIDInfo[id]['Project Name'];
+							libraries[unique_id].RunInfo_name = sequencerData[i].name;
+							libraries[unique_id].lane = sequencerData[i].positions[j].position;
 							// Determine skip (t/f)
-							if (typeof sampleSkipInfo[_id] !== 'undefined') {
-								libraries[_id].skip = sampleSkipInfo[_id].skip;
+							if (typeof sampleSkipInfo[unique_id] !== 'undefined') {
+								libraries[unique_id].skip = sampleSkipInfo[unique_id].skip;
 							} else {
-								libraries[_id].skip = 'n/a';
+								libraries[unique_id].skip = 'n/a';
 							}
 							// Determine create and prepared dates
 							if (typeof sampleDateInfo[id] !== 'undefined') {
-								libraries[_id].create_date = sampleDateInfo[id]['create_date'];
-								libraries[_id].prep_date = sampleDateInfo[id]['prep_date'];
+								libraries[unique_id].create_date = sampleDateInfo[id]['create_date'];
+								libraries[unique_id].prep_date = sampleDateInfo[id]['prep_date'];
 							} else {
-								libraries[_id].create_date = 'n/a';
-								libraries[_id].prep_date = 'n/a';
+								libraries[unique_id].create_date = 'n/a';
+								libraries[unique_id].prep_date = 'n/a';
 							}
 
 							// If library format is w/ 6 underscores
@@ -269,11 +269,11 @@ exports.updateLibraryInfo = function (sequencerData, sampleData, skipData, recei
 							if (/^.*?_.*?_.*?_.*?_.*?_.*?_.*?[^_]$/.test(libraryName)) {
 								if (/.*_(.*?)$/.test(libraryName)) {
 								var match = /.*_(.*?)$/.exec(libraryName);
-								libraries[_id].library_type = match[1];
+								libraries[unique_id].library_type = match[1];
 								}
 								if (/.*?_.*?_.*?_(.*?)_/.test(libraryName)) {
 									var match = /.*?_.*?_.*?_(.*?)_/.exec(libraryName);
-									libraries[_id].tissue_type = match[1];
+									libraries[unique_id].tissue_type = match[1];
 								}
 							}
 							// Donor
@@ -282,54 +282,54 @@ exports.updateLibraryInfo = function (sequencerData, sampleData, skipData, recei
 								var match = /((.*?)_.*?)_/.exec(libraryName);
 								var donor = match[1];
 								var libHead = match[2]; // can sum up totals of donor heads (for runs and donors)
-								libraries[_id].DonorInfo_id = donor;
-								libraries[_id].library_head = libHead; 
+								libraries[unique_id].DonorInfo_name = donor;
+								libraries[unique_id].library_head = libHead; 
 								if (typeof sampleIDInfo[donor] !== 'undefined') {
 									if (typeof sampleIDInfo[donor]['Tissue Origin'] !== 'undefined') {
-										libraries[_id].tissue_origin = sampleIDInfo[donor]['Tissue Origin'];
+										libraries[unique_id].tissue_origin = sampleIDInfo[donor]['Tissue Origin'];
 									} else {
-										libraries[_id].tissue_origin = 'n/a';
+										libraries[unique_id].tissue_origin = 'n/a';
 									}
 								}
 								if (typeof sampleReceiveInfo[donor] !== 'undefined') {
-									libraries[_id].receive_date = sampleReceiveInfo[donor];
+									libraries[unique_id].receive_date = sampleReceiveInfo[donor];
 								} else {
-									libraries[_id].receive_date = 'n/a';
+									libraries[unique_id].receive_date = 'n/a';
 								}
 							}
 							if (typeof sequencerData[i].positions[j].samples[k].barcode !== 'undefined') {
-								libraries[_id].barcode = sequencerData[i].positions[j].samples[k].barcode;
+								libraries[unique_id].barcode = sequencerData[i].positions[j].samples[k].barcode;
 							} else {
-								libraries[_id].barcode = 'noIndex';
+								libraries[unique_id].barcode = 'noIndex';
 							}
 						}
 					}
 				}
 			} else if (typeof sequencerData[i].positions !== 'undefined') {
 				var id = sequencerData[i].positions.id;
-				var _id = sequencerData[i].name + '||' + sequencerData[i].positions[j].position + '||' + id;
+				var unique_id = sequencerData[i].name + '||' + sequencerData[i].positions[j].position + '||' + id;
 				if (/Library Seq$/.test(sampleIDInfo[id]['Sample Type'])) {
 					var libraryName = sampleIDInfo[id]['Library Name'];
-					libraries[_id] = {};
-					libraries[_id]._id = _id;
-					libraries[_id].template_id = id;
-					libraries[_id].library_name = libraryName;
-					libraries[_id].ProjectInfo_id = sampleIDInfo[id]['Project Name'];
-					libraries[_id].RunInfo_id = sequencerData[i].name;
-					libraries[_id].lane = sequencerData[i].positions.position;
+					libraries[unique_id] = {};
+					libraries[unique_id].library_seqname = unique_id;
+					libraries[unique_id].template_id = id;
+					libraries[unique_id].library_name = libraryName;
+					libraries[unique_id].ProjectInfo_name = sampleIDInfo[id]['Project Name'];
+					libraries[unique_id].RunInfo_name = sequencerData[i].name;
+					libraries[unique_id].lane = sequencerData[i].positions.position;
 					// Determine skip (t/f)
-					if (typeof sampleSkipInfo[_id] !== 'undefined') {
-						libraries[_id].skip = sampleSkipInfo[_id].skip;
+					if (typeof sampleSkipInfo[unique_id] !== 'undefined') {
+						libraries[unique_id].skip = sampleSkipInfo[unique_id].skip;
 					} else {
-						libraries[_id].skip = 'n/a';
+						libraries[unique_id].skip = 'n/a';
 					}
 					// Determine create and prepared dates
 					if (typeof sampleDateInfo[id] !== 'undefined') {
-						libraries[_id].create_date = sampleDateInfo[id]['create_date'];
-						libraries[_id].prep_date = sampleDateInfo[id]['prep_date'];
+						libraries[unique_id].create_date = sampleDateInfo[id]['create_date'];
+						libraries[unique_id].prep_date = sampleDateInfo[id]['prep_date'];
 					} else {
-						libraries[_id].create_date = 'n/a';
-						libraries[_id].prep_date = 'n/a';
+						libraries[unique_id].create_date = 'n/a';
+						libraries[unique_id].prep_date = 'n/a';
 					}
 
 					// If library format is w/ 6 underscores
@@ -337,11 +337,11 @@ exports.updateLibraryInfo = function (sequencerData, sampleData, skipData, recei
 					if (/^.*?_.*?_.*?_.*?_.*?_.*?_.*?[^_]$/.test(libraryName)) {
 						if (/.*_(.*?)$/.test(libraryName)) {
 						var match = /.*_(.*?)$/.exec(libraryName);
-						libraries[_id].library_type = match[1];
+						libraries[unique_id].library_type = match[1];
 						}
 						if (/.*?_.*?_.*?_(.*?)_/.test(libraryName)) {
 							var match = /.*?_.*?_.*?_(.*?)_/.exec(libraryName);
-							libraries[_id].tissue_type = match[1];
+							libraries[unique_id].tissue_type = match[1];
 						}
 					}
 					// Assume all samples come from the same donor
@@ -349,32 +349,32 @@ exports.updateLibraryInfo = function (sequencerData, sampleData, skipData, recei
 						var match = /((.*?)_.*?)_/.exec(libraryName);
 						var donor = match[1];
 						var libHead = match[2]; // can sum up totals of donor heads (for runs and donors)
-						libraries[_id].DonorInfo_id = donor;
-						libraries[_id].library_head = libHead;
+						libraries[unique_id].DonorInfo_name = donor;
+						libraries[unique_id].library_head = libHead;
 						if (typeof sampleIDInfo[donor] !== 'undefined') {
 							if (typeof sampleIDInfo[donor]['Tissue Origin'] !== 'undefined') {
-								libraries[_id].tissue_origin = sampleIDInfo[donor]['Tissue Origin'];
+								libraries[unique_id].tissue_origin = sampleIDInfo[donor]['Tissue Origin'];
 							} else {
-								libraries[_id].tissue_origin = 'n/a';
+								libraries[unique_id].tissue_origin = 'n/a';
 							}
 						}
 						if (typeof sampleReceiveInfo[donor] !== 'undefined') {
-							libraries[_id].receive_date = sampleReceiveInfo[donor];
+							libraries[unique_id].receive_date = sampleReceiveInfo[donor];
 						} else {
-							libraries[_id].receive_date = 'n/a';
+							libraries[unique_id].receive_date = 'n/a';
 						}
 					}
 
 					if (typeof sequencerData[i].positions.barcode !== 'undefined') {
-						libraries[_id].barcode = sequencerData[i].positions.barcode;
+						libraries[unique_id].barcode = sequencerData[i].positions.barcode;
 					} else {
-						libraries[_id].barcode = 'noIndex';
+						libraries[unique_id].barcode = 'noIndex';
 					}
 				}
 			}
 		}
-		for (var id in libraries) {
-			batch.find({_id: id}).upsert().updateOne(libraries[id]);
+		for (var name in libraries) {
+			batch.find({library_name: name}).upsert().updateOne(libraries[name]);
 		}
 		batch.execute(function(err, result) {
 			if (err) console.dir(err);
@@ -490,7 +490,7 @@ function getLibraryReceiveDates(jsonData) {
 }
 
 ///////////////////////////////// WorkflowInfo /////////////////////////////////
-/** _id: workflowSWID
+/** 
  * updates data from seqware database and updates mongodb Library, Run, Date, and Workflow collections
  * @param {yaml} analysisYAML
  */
@@ -504,15 +504,16 @@ exports.updateWorkflowInfo = function (analysisYAML) {
 		client.connect(function(err) {
 			if (err) return console.error(err);
 			// query for all workflow runs
-			var query = 'WITH RECURSIVE workflow_run_set AS ( SELECT workflow_run_id from workflow_run),workflow_run_processings (workflow_run_id, processing_id) AS ( SELECT wr.workflow_run_id, p.processing_id from workflow_run wr JOIN workflow_run_set wrs ON wr.workflow_run_id = wrs.workflow_run_id JOIN processing p ON (wr.workflow_run_id = p.workflow_run_id or wr.workflow_run_id = p.ancestor_workflow_run_id) UNION SELECT p.workflow_run_id, pr.parent_id FROM workflow_run_processings p JOIN processing_relationship pr ON p.processing_id = pr.child_id), total_workflow_run_ius AS (SELECT wr.workflow_run_id, i.ius_id FROM workflow_run wr  JOIN workflow_run_set wrs ON wr.workflow_run_id = wrs.workflow_run_id JOIN ius_workflow_runs iwr ON wr.workflow_run_id = iwr.workflow_run_id  JOIN ius i ON iwr.ius_id = i.ius_id UNION SELECT wrp.workflow_run_id, i.ius_id FROM workflow_run_processings wrp JOIN processing_ius pi ON wrp.processing_id = pi.processing_id JOIN ius i ON pi.ius_id = i.ius_id),workflow_run_template_ids AS (SELECT twri.workflow_run_id, array_agg(sa.value) as template_id, array_agg(sr.name || \'||\' || l.lane_index+1 || \'||\' || sa.value || \'||\' || i.sw_accession) as LibraryInfo_id FROM total_workflow_run_ius twri JOIN ius i ON twri.ius_id = i.ius_id JOIN lane AS l ON i.lane_id = l.lane_id JOIN sequencer_run AS sr ON l.sequencer_run_id = sr.sequencer_run_id JOIN sample s ON i.sample_id = s.sample_id JOIN sample_attribute sa ON s.sample_id = sa.sample_id WHERE sa.tag = \'geo_template_id\' GROUP BY twri.workflow_run_id ) SELECT wr.sw_accession as _id,wr.workflow_run_id,wr.status,wr.status_cmd,wr.create_tstmp,COALESCE(p.last_modified, wr.create_tstmp) as last_modified,w.name || \'_\' || w.version as workflow_name, wrti.template_id, wrti.LibraryInfo_id FROM workflow_run_set wrs JOIN workflow_run wr ON wrs.workflow_run_id = wr.workflow_run_id JOIN workflow_run_template_ids wrti ON wrs.workflow_run_id = wrti.workflow_run_id  JOIN workflow AS w ON wr.workflow_id = w.workflow_id LEFT OUTER JOIN (SELECT workflow_run_id, MAX(update_tstmp) AS last_modified FROM processing GROUP BY workflow_run_id ) AS p ON p.workflow_run_id = wr.workflow_run_id;';
+			var query = 'WITH RECURSIVE workflow_run_set AS ( SELECT workflow_run_id from workflow_run),workflow_run_processings (workflow_run_id, processing_id) AS ( SELECT wr.workflow_run_id, p.processing_id from workflow_run wr JOIN workflow_run_set wrs ON wr.workflow_run_id = wrs.workflow_run_id JOIN processing p ON (wr.workflow_run_id = p.workflow_run_id or wr.workflow_run_id = p.ancestor_workflow_run_id) UNION SELECT p.workflow_run_id, pr.parent_id FROM workflow_run_processings p JOIN processing_relationship pr ON p.processing_id = pr.child_id), total_workflow_run_ius AS (SELECT wr.workflow_run_id, i.ius_id FROM workflow_run wr  JOIN workflow_run_set wrs ON wr.workflow_run_id = wrs.workflow_run_id JOIN ius_workflow_runs iwr ON wr.workflow_run_id = iwr.workflow_run_id  JOIN ius i ON iwr.ius_id = i.ius_id UNION SELECT wrp.workflow_run_id, i.ius_id FROM workflow_run_processings wrp JOIN processing_ius pi ON wrp.processing_id = pi.processing_id JOIN ius i ON pi.ius_id = i.ius_id),workflow_run_template_ids AS (SELECT twri.workflow_run_id, array_agg(sa.value) as template_id, array_agg(sr.name || \'||\' || l.lane_index+1 || \'||\' || sa.value || \'||\' || i.sw_accession) as libraryinfo_seqname FROM total_workflow_run_ius twri JOIN ius i ON twri.ius_id = i.ius_id JOIN lane AS l ON i.lane_id = l.lane_id JOIN sequencer_run AS sr ON l.sequencer_run_id = sr.sequencer_run_id JOIN sample s ON i.sample_id = s.sample_id JOIN sample_attribute sa ON s.sample_id = sa.sample_id WHERE sa.tag = \'geo_template_id\' GROUP BY twri.workflow_run_id ) SELECT wr.sw_accession,wr.workflow_run_id,wr.status,wr.status_cmd,wr.create_tstmp,COALESCE(p.last_modified, wr.create_tstmp) as last_modified,w.name || \'_\' || w.version as workflow_name, wrti.template_id, wrti.libraryinfo_seqname FROM workflow_run_set wrs JOIN workflow_run wr ON wrs.workflow_run_id = wr.workflow_run_id JOIN workflow_run_template_ids wrti ON wrs.workflow_run_id = wrti.workflow_run_id  JOIN workflow AS w ON wr.workflow_id = w.workflow_id LEFT OUTER JOIN (SELECT workflow_run_id, MAX(update_tstmp) AS last_modified FROM processing GROUP BY workflow_run_id ) AS p ON p.workflow_run_id = wr.workflow_run_id;';
 
 			client.query(query, function (err, result) {
 				if (err) console.error(err);
 				var jsonData = result.rows;
 
 				for (var i = 0; i < jsonData.length; i++) {
+					jsonData[i].sw_accession = String(jsonData[i].sw_accession);
 					// Update WorkflowInfo
-					var WorkflowInfo_id = jsonData[i]._id;
+					var WorkflowInfo_accession = jsonData[i].sw_accession;
 					if (/(.*?)_.*?/.test(jsonData[i].workflow_name)) {
 						var match = /(.*?)_.*?/.exec(jsonData[i].workflow_name);
 						var workflowName = match[1];
@@ -538,23 +539,23 @@ exports.updateWorkflowInfo = function (analysisYAML) {
 						// Update workflows for each library id
 						if (typeof libraryObj[librarySeq_id] === 'undefined') {
 							libraryObj[librarySeq_id] = {};
-							libraryObj[librarySeq_id]['WorkflowInfo_id'] = [];
+							libraryObj[librarySeq_id]['WorkflowInfo_accession'] = [];
 							libraryObj[librarySeq_id]['iusswid'] = iusswid; //only for libraries with workflows 
 						}
-						libraryObj[librarySeq_id]['WorkflowInfo_id'].push(WorkflowInfo_id);
+						libraryObj[librarySeq_id]['WorkflowInfo_accession'].push(WorkflowInfo_accession);
 					}
 
 					// Update workflow information batch
 					// Do not update with library_ids, omit
-					jsonData[i] = _.omit(jsonData[i], ['libraryinfo_id', 'template_id']);
-					wfBatch.find({'_id':jsonData[i]._id}).upsert().updateOne(jsonData[i]);
+					jsonData[i] = _.omit(jsonData[i], ['libraryinfo_seqname', 'template_id']);
+					wfBatch.find({'sw_accession':jsonData[i].sw_accession}).upsert().updateOne(jsonData[i]);
 				}
 
 				// Sets the workflow arrays and iusswid in LibraryInfo collection
 				for (var librarySeq_id in libraryObj) {
 					var setMod = { $set:{} };
 					setMod.$set = libraryObj[librarySeq_id];
-					libBatch.find({_id: librarySeq_id}).upsert().updateOne(setMod);
+					libBatch.find({sw_accession: librarySeq_id}).upsert().updateOne(setMod);
 				}
 				
 				wfBatch.execute(function(err, result) {
@@ -571,8 +572,8 @@ exports.updateWorkflowInfo = function (analysisYAML) {
 }
 
 ///////////////////////////////// FilesInfo ////////////////////////////////////
-/** _id: fileSWID
- * updates mongodb list of files and links to associated WorkflowInfo_id
+/** fileSWID
+ * updates mongodb list of files and links to associated WorkflowInfo_accessions
  * @param {file-json} fprData
  */
 exports.updateFileInfo = function (fprData) {
@@ -582,11 +583,11 @@ exports.updateFileInfo = function (fprData) {
 		// search file provenance report for file data
 		for (var fileSWID in fprData['File']) {
 			var obj = {};
-			obj['_id'] = fileSWID;
+			obj['fileSWID'] = fileSWID;
 			obj['file_path'] = fprData['File'][fileSWID]['Path'];
-			obj['WorkflowInfo_id'] = fprData['File'][fileSWID]['WorkflowSWID'];
+			obj['WorkflowInfo_accession'] = fprData['File'][fileSWID]['WorkflowSWID'];
 
-			batch.find({_id: fileSWID}).upsert().updateOne(obj);
+			batch.find({fileSWID: fileSWID}).upsert().updateOne(obj);
 		}
 		batch.execute(function(err, result) {
 			if (err) console.dir(err);
@@ -625,15 +626,16 @@ exports.updateRunningWorkflowRuns = function (analysisYAML) {
 			// Connect to postgresql client
 			client.connect(function(err) {
 				if (err) return console.error(err);
-				var query = 'WITH RECURSIVE workflow_run_set AS (SELECT workflow_run_id from workflow_run where ' + ids + ' status = \'running\'), workflow_run_processings (workflow_run_id, processing_id) AS (SELECT wr.workflow_run_id, p.processing_id from workflow_run wr JOIN workflow_run_set wrs ON wr.workflow_run_id = wrs.workflow_run_id JOIN processing p ON (wr.workflow_run_id = p.workflow_run_id or wr.workflow_run_id = p.ancestor_workflow_run_id) UNION SELECT p.workflow_run_id, pr.parent_id FROM workflow_run_processings p JOIN processing_relationship pr ON p.processing_id = pr.child_id), total_workflow_run_ius AS (SELECT wr.workflow_run_id, i.ius_id FROM workflow_run wr  JOIN workflow_run_set wrs ON wr.workflow_run_id = wrs.workflow_run_id JOIN ius_workflow_runs iwr ON wr.workflow_run_id = iwr.workflow_run_id  JOIN ius i ON iwr.ius_id = i.ius_id UNION SELECT wrp.workflow_run_id, i.ius_id FROM workflow_run_processings wrp JOIN processing_ius pi ON wrp.processing_id = pi.processing_id JOIN ius i ON pi.ius_id = i.ius_id),workflow_run_template_ids AS (SELECT twri.workflow_run_id, array_agg(sa.value) as template_id, array_agg(sr.name || \'||\' || l.lane_index+1 || \'||\' || sa.value || \'||\' || i.sw_accession) as LibraryInfo_id FROM total_workflow_run_ius twri JOIN ius i ON twri.ius_id = i.ius_id JOIN lane AS l ON i.lane_id = l.lane_id JOIN sequencer_run AS sr ON l.sequencer_run_id = sr.sequencer_run_id JOIN sample s ON i.sample_id = s.sample_id JOIN sample_attribute sa ON s.sample_id = sa.sample_id WHERE sa.tag = \'geo_template_id\' GROUP BY twri.workflow_run_id ) SELECT wr.sw_accession as _id,wr.workflow_run_id,wr.status,wr.status_cmd,wr.create_tstmp,COALESCE(p.last_modified, wr.create_tstmp) as last_modified,w.name || \'_\' || w.version as workflow_name, wrti.template_id, wrti.LibraryInfo_id FROM workflow_run_set wrs JOIN workflow_run wr ON wrs.workflow_run_id = wr.workflow_run_id JOIN workflow_run_template_ids wrti ON wrs.workflow_run_id = wrti.workflow_run_id  JOIN workflow AS w ON wr.workflow_id = w.workflow_id LEFT OUTER JOIN (SELECT workflow_run_id, MAX(update_tstmp) AS last_modified FROM processing GROUP BY workflow_run_id ) AS p ON p.workflow_run_id = wr.workflow_run_id;';
+				var query = 'WITH RECURSIVE workflow_run_set AS (SELECT workflow_run_id from workflow_run where ' + ids + ' status = \'running\'), workflow_run_processings (workflow_run_id, processing_id) AS (SELECT wr.workflow_run_id, p.processing_id from workflow_run wr JOIN workflow_run_set wrs ON wr.workflow_run_id = wrs.workflow_run_id JOIN processing p ON (wr.workflow_run_id = p.workflow_run_id or wr.workflow_run_id = p.ancestor_workflow_run_id) UNION SELECT p.workflow_run_id, pr.parent_id FROM workflow_run_processings p JOIN processing_relationship pr ON p.processing_id = pr.child_id), total_workflow_run_ius AS (SELECT wr.workflow_run_id, i.ius_id FROM workflow_run wr  JOIN workflow_run_set wrs ON wr.workflow_run_id = wrs.workflow_run_id JOIN ius_workflow_runs iwr ON wr.workflow_run_id = iwr.workflow_run_id  JOIN ius i ON iwr.ius_id = i.ius_id UNION SELECT wrp.workflow_run_id, i.ius_id FROM workflow_run_processings wrp JOIN processing_ius pi ON wrp.processing_id = pi.processing_id JOIN ius i ON pi.ius_id = i.ius_id),workflow_run_template_ids AS (SELECT twri.workflow_run_id, array_agg(sa.value) as template_id, array_agg(sr.name || \'||\' || l.lane_index+1 || \'||\' || sa.value || \'||\' || i.sw_accession) as libraryinfo_seqname FROM total_workflow_run_ius twri JOIN ius i ON twri.ius_id = i.ius_id JOIN lane AS l ON i.lane_id = l.lane_id JOIN sequencer_run AS sr ON l.sequencer_run_id = sr.sequencer_run_id JOIN sample s ON i.sample_id = s.sample_id JOIN sample_attribute sa ON s.sample_id = sa.sample_id WHERE sa.tag = \'geo_template_id\' GROUP BY twri.workflow_run_id ) SELECT wr.sw_accession,wr.workflow_run_id,wr.status,wr.status_cmd,wr.create_tstmp,COALESCE(p.last_modified, wr.create_tstmp) as last_modified,w.name || \'_\' || w.version as workflow_name, wrti.template_id, wrti.libraryinfo_seqname FROM workflow_run_set wrs JOIN workflow_run wr ON wrs.workflow_run_id = wr.workflow_run_id JOIN workflow_run_template_ids wrti ON wrs.workflow_run_id = wrti.workflow_run_id  JOIN workflow AS w ON wr.workflow_id = w.workflow_id LEFT OUTER JOIN (SELECT workflow_run_id, MAX(update_tstmp) AS last_modified FROM processing GROUP BY workflow_run_id ) AS p ON p.workflow_run_id = wr.workflow_run_id;';
 				//console.log(query);
 
 				client.query(query, function (err, result) {
 					if (err) console.error(err);
 
 					for (var i = 0; i < result.rows.length; i++) {
+						result.rows[i].sw_accession = String(result.rows[i].sw_accession);
 						// Update workflow info
-						var WorkflowInfo_id = result.rows[i]._id;
+						var WorkflowInfo_accession = result.rows[i].sw_accession;
 						if (/(.*?)_.*?/.test(result.rows[i].workflow_name)) {
 							var match = /(.*?)_.*?/.exec(result.rows[i].workflow_name);
 							var workflowName = match[1];
@@ -649,21 +651,21 @@ exports.updateRunningWorkflowRuns = function (analysisYAML) {
 						result.rows[i].last_modified = getDateTimeString(result.rows[i].last_modified);
 
 						// Do not update with library_ids, omit
-						result.rows[i] = _.omit(result.rows[i], ['libraryinfo_id', 'template_id']);
+						result.rows[i] = _.omit(result.rows[i], ['libraryinfo_seqname', 'template_id']);
 
 						// Update running workflow collection
 						if (result.rows[i].status === 'running') {
-							currentWFBatch.find({_id: result.rows[i]._id}).upsert().updateOne(result.rows[i]);
-							wfBatch.find({_id: result.rows[i]._id}).upsert().updateOne(result.rows[i]);
+							currentWFBatch.find({sw_accession: result.rows[i].sw_accession}).upsert().updateOne(result.rows[i]);
+							wfBatch.find({sw_accession: result.rows[i].sw_accession}).upsert().updateOne(result.rows[i]);
 						// Update failed workflow collection and workflow info table, remove from running workflow collection
 						} else if (result.rows[i].status === 'failed') {
-							currentWFBatch.find({_id: result.rows[i]._id}).removeOne();
-							failedWFBatch.find({_id: result.rows[i]._id}).upsert().updateOne(result.rows[i]);
-							wfBatch.find({_id: result.rows[i]._id}).upsert().updateOne(result.rows[i]);
+							currentWFBatch.find({sw_accession: result.rows[i].sw_accession}).removeOne();
+							failedWFBatch.find({sw_accession: result.rows[i].sw_accession}).upsert().updateOne(result.rows[i]);
+							wfBatch.find({sw_accession: result.rows[i].sw_accession}).upsert().updateOne(result.rows[i]);
 						// Update completed workflows
 						} else {
-							currentWFBatch.find({_id: result.rows[i]._id}).removeOne();
-							wfBatch.find({_id: result.rows[i]._id}).upsert().updateOne(result.rows[i]);
+							currentWFBatch.find({sw_accession: result.rows[i].sw_accession}).removeOne();
+							wfBatch.find({sw_accession: result.rows[i].sw_accession}).upsert().updateOne(result.rows[i]);
 						}
 					}
 					currentWFBatch.execute(function(err, result) {
@@ -701,15 +703,16 @@ function checkFailedWorkflowRuns () {
 				// Connect to postgresql client
 				client.connect(function(err) {
 					if (err) return console.error(err);
-					var query = 'WITH RECURSIVE workflow_run_set AS (SELECT workflow_run_id from workflow_run where sw_accession in ( ' + docs.join() + ' ) ), workflow_run_processings (workflow_run_id, processing_id) AS (SELECT wr.workflow_run_id, p.processing_id from workflow_run wr JOIN workflow_run_set wrs ON wr.workflow_run_id = wrs.workflow_run_id JOIN processing p ON (wr.workflow_run_id = p.workflow_run_id or wr.workflow_run_id = p.ancestor_workflow_run_id) UNION SELECT p.workflow_run_id, pr.parent_id FROM workflow_run_processings p JOIN processing_relationship pr ON p.processing_id = pr.child_id), total_workflow_run_ius AS (SELECT wr.workflow_run_id, i.ius_id FROM workflow_run wr  JOIN workflow_run_set wrs ON wr.workflow_run_id = wrs.workflow_run_id JOIN ius_workflow_runs iwr ON wr.workflow_run_id = iwr.workflow_run_id  JOIN ius i ON iwr.ius_id = i.ius_id UNION SELECT wrp.workflow_run_id, i.ius_id FROM workflow_run_processings wrp JOIN processing_ius pi ON wrp.processing_id = pi.processing_id JOIN ius i ON pi.ius_id = i.ius_id),workflow_run_template_ids AS (SELECT twri.workflow_run_id, array_agg(sa.value) as template_id, array_agg(sr.name || \'||\' || l.lane_index+1 || \'||\' || sa.value || \'||\' || i.sw_accession) as LibraryInfo_id FROM total_workflow_run_ius twri JOIN ius i ON twri.ius_id = i.ius_id JOIN lane AS l ON i.lane_id = l.lane_id JOIN sequencer_run AS sr ON l.sequencer_run_id = sr.sequencer_run_id JOIN sample s ON i.sample_id = s.sample_id JOIN sample_attribute sa ON s.sample_id = sa.sample_id WHERE sa.tag = \'geo_template_id\' GROUP BY twri.workflow_run_id ) SELECT wr.sw_accession as _id,wr.workflow_run_id,wr.status,wr.status_cmd,wr.create_tstmp,COALESCE(p.last_modified, wr.create_tstmp) as last_modified,w.name || \'_\' || w.version as workflow_name, wrti.template_id, wrti.LibraryInfo_id FROM workflow_run_set wrs JOIN workflow_run wr ON wrs.workflow_run_id = wr.workflow_run_id JOIN workflow_run_template_ids wrti ON wrs.workflow_run_id = wrti.workflow_run_id  JOIN workflow AS w ON wr.workflow_id = w.workflow_id LEFT OUTER JOIN (SELECT workflow_run_id, MAX(update_tstmp) AS last_modified FROM processing GROUP BY workflow_run_id ) AS p ON p.workflow_run_id = wr.workflow_run_id;';
+					var query = 'WITH RECURSIVE workflow_run_set AS (SELECT workflow_run_id from workflow_run where sw_accession in ( ' + docs.join() + ' ) ), workflow_run_processings (workflow_run_id, processing_id) AS (SELECT wr.workflow_run_id, p.processing_id from workflow_run wr JOIN workflow_run_set wrs ON wr.workflow_run_id = wrs.workflow_run_id JOIN processing p ON (wr.workflow_run_id = p.workflow_run_id or wr.workflow_run_id = p.ancestor_workflow_run_id) UNION SELECT p.workflow_run_id, pr.parent_id FROM workflow_run_processings p JOIN processing_relationship pr ON p.processing_id = pr.child_id), total_workflow_run_ius AS (SELECT wr.workflow_run_id, i.ius_id FROM workflow_run wr  JOIN workflow_run_set wrs ON wr.workflow_run_id = wrs.workflow_run_id JOIN ius_workflow_runs iwr ON wr.workflow_run_id = iwr.workflow_run_id  JOIN ius i ON iwr.ius_id = i.ius_id UNION SELECT wrp.workflow_run_id, i.ius_id FROM workflow_run_processings wrp JOIN processing_ius pi ON wrp.processing_id = pi.processing_id JOIN ius i ON pi.ius_id = i.ius_id),workflow_run_template_ids AS (SELECT twri.workflow_run_id, array_agg(sa.value) as template_id, array_agg(sr.name || \'||\' || l.lane_index+1 || \'||\' || sa.value || \'||\' || i.sw_accession) as libraryinfo_seqname FROM total_workflow_run_ius twri JOIN ius i ON twri.ius_id = i.ius_id JOIN lane AS l ON i.lane_id = l.lane_id JOIN sequencer_run AS sr ON l.sequencer_run_id = sr.sequencer_run_id JOIN sample s ON i.sample_id = s.sample_id JOIN sample_attribute sa ON s.sample_id = sa.sample_id WHERE sa.tag = \'geo_template_id\' GROUP BY twri.workflow_run_id ) SELECT wr.sw_accession,wr.workflow_run_id,wr.status,wr.status_cmd,wr.create_tstmp,COALESCE(p.last_modified, wr.create_tstmp) as last_modified,w.name || \'_\' || w.version as workflow_name, wrti.template_id, wrti.libraryinfo_seqname FROM workflow_run_set wrs JOIN workflow_run wr ON wrs.workflow_run_id = wr.workflow_run_id JOIN workflow_run_template_ids wrti ON wrs.workflow_run_id = wrti.workflow_run_id  JOIN workflow AS w ON wr.workflow_id = w.workflow_id LEFT OUTER JOIN (SELECT workflow_run_id, MAX(update_tstmp) AS last_modified FROM processing GROUP BY workflow_run_id ) AS p ON p.workflow_run_id = wr.workflow_run_id;';
 					
 					client.query(query, function (err, result) {
 						if (err) console.error(err);
 
 						for (var i = 0; i < result.rows.length; i++) {
 							if (result.rows[i].status !== 'failed') {
+								result.rows[i].sw_accession = String(result.rows[i].sw_accession);
 								// Update workflow info
-								var WorkflowInfo_id = parseInt(result.rows[i]._id);
+								var WorkflowInfo_accession = parseInt(result.rows[i].sw_accession);
 								if (/(.*?)_.*?/.test(result.rows[i].workflow_name)) {
 									var match = /(.*?)_.*?/.exec(result.rows[i].workflow_name);
 									var workflowName = match[1];
@@ -724,10 +727,10 @@ function checkFailedWorkflowRuns () {
 								result.rows[i].last_modified = getDateTimeString(result.rows[i].last_modified);
 
 								// Do not update with library_ids, omit
-								result.rows[i] = _.omit(result.rows[i], ['libraryinfo_id', 'template_id']);
+								result.rows[i] = _.omit(result.rows[i], ['libraryinfo_seqname', 'template_id']);
 
-								failedWFBatch.find({_id: result.rows[i]._id}).removeOne();
-								wfBatch.find({_id: result.rows[i]._id}).upsert().updateOne(result.rows[i]);
+								failedWFBatch.find({sw_accession: result.rows[i].sw_accession}).removeOne();
+								wfBatch.find({sw_accession: result.rows[i].sw_accession}).upsert().updateOne(result.rows[i]);
 							}
 						}
 
@@ -819,7 +822,7 @@ function getReportData(jsonFile, xenomeFile) {
 	return obj;
 }
 
-/** _id: IUSSWID
+/** IUSSWID
  * updates report data from json file and xenome file into mongodb
  * @param {json} fprData
  */
@@ -834,10 +837,10 @@ exports.updateIUSSWIDReportData = function (fprData) {
 			var xenomeFile = fprData['Library'][IUSSWID]['XenomeFile'];
 			var obj = {};
 			obj = getReportData(json, xenomeFile);
-			obj['_id'] = IUSSWID;
+			obj['iusswid'] = IUSSWID;
 
 			//Update in mongodb
-			batch.find({_id: IUSSWID}).upsert().updateOne(obj);
+			batch.find({iusswid: IUSSWID}).upsert().updateOne(obj);
 		}
 		batch.execute(function(err, result) {
 			if (err) console.dir(err);
@@ -980,7 +983,7 @@ function getRNASeqQCData(zipFile) {
 	return obj;
 }
 
-/** _id: IUSSWID
+/** IUSSWID
  * returns all RNA Seq QC data to mongodb
  * @param {json} fprData
  */
@@ -993,10 +996,10 @@ exports.updateIUSSWIDRNASeqQCData = function (fprData) {
 			if (typeof fprData['Library'][IUSSWID]['RNAZipFile'] !== 'undefined') {
 				var obj = {};
 				obj = getRNASeqQCData(fprData['Library'][IUSSWID]['RNAZipFile']);
-				obj['_id'] = IUSSWID;
+				obj['iusswid'] = IUSSWID;
 
 				//Update in mongodb
-				batch.find({_id: IUSSWID}).upsert().updateOne(obj);
+				batch.find({iusswid: IUSSWID}).upsert().updateOne(obj);
 			}
 		}
 		batch.execute(function(err, result) {
@@ -1006,7 +1009,7 @@ exports.updateIUSSWIDRNASeqQCData = function (fprData) {
 	});
 }
 
-/** _id: IUSSWID
+/** IUSSWID
  * returns graph data
  * @param {json} fprData
  */
@@ -1026,7 +1029,7 @@ exports.updateGraphData = function (fprData) {
 				}
 				var title = lineObj['run name'] + ' Lane: ' + lineObj['lane'] + ' Barcode: ' + lineObj['barcode'] + ' Library: ' + lineObj['library'];
 				var graphData = {};
-				graphData['_id'] = IUSSWID;
+				graphData['iusswid'] = IUSSWID;
 				graphData['Read Breakdown'] = {};
 				graphData['Insert Distribution'] = {};
 				graphData['Soft Clip by Cycle'] = {};
@@ -1125,7 +1128,7 @@ exports.updateGraphData = function (fprData) {
 				graphData['Soft Clip by Cycle']['y values'] = yValSoft;
 
 				// Update in mongodb
-				batch.find({_id: IUSSWID}).upsert().updateOne(graphData);
+				batch.find({iusswid: IUSSWID}).upsert().updateOne(graphData);
 			}
 		}
 		batch.execute(function(err, result) {
@@ -1153,7 +1156,7 @@ function drawGraphsById(id) {
 		if (err) return console.error(err);
 		console.log('connect');
 
-		db.collection('IUSSWIDGraphData').findOne({_id: id}, function (err, item){
+		db.collection('IUSSWIDGraphData').findOne({iusswid: id}, function (err, item){
 			pieValues = _.zip(item['Read Breakdown']['Labels'], item['Read Breakdown']['Data']);
 			pieOptions = {
 				title: item['Title'] + ' Read Breakdown', 
@@ -1341,7 +1344,7 @@ function findAllDocuments(docs, collection, db, callback) {
 	cursor.each(function(err, doc) {
 		if (err) return console.error(err);
 		if (doc != null) {
-			docs.push(doc._id);
+			docs.push(doc.sw_accession);
 		} else {
 			callback();
 			return docs;
@@ -1363,7 +1366,7 @@ function findReportDocuments(docs, db, callback) {
 		if (err) return console.error(err);
 		if (doc != null) {
 			var obj = {};
-			obj._id = doc._id;
+			obj.iusswid = doc.iusswid;
 			obj.run = doc.data['Run Name'];
 			obj.lane = doc.data.Lane;
 			obj.yield = doc.data.Yield;
@@ -1376,7 +1379,7 @@ function findReportDocuments(docs, db, callback) {
 				if (err) return console.error(err);
 				if (doc != null) {
 					var obj = {};
-					obj._id = doc._id;
+					obj.iusswid = doc.iusswid;
 					obj.run = doc.data.run_name;
 					obj.lane = doc.data.lane;
 					obj.yield = parseInt(doc.data.Yield);
