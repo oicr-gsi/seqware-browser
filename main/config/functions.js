@@ -37,8 +37,8 @@ exports.updateProjectInfo = function (projectData) {
 			var returnObj = {};
 			returnObj['project_name'] = project;
 			// Convert date time to same format
-			returnObj['start_date'] = getDateTimeString(projectInfo[project]['Start Date']);
-			returnObj['last_mod'] = getDateTimeString(projectInfo[project]['Last Modified']);
+			returnObj['start_tstmp'] = getDateTimeString(projectInfo[project]['Start Date']);
+			//returnObj['last_mod'] = getDateTimeString(projectInfo[project]['Last Modified']);
 
 			batch.find({project_name: project}).upsert().updateOne(returnObj);
 		}
@@ -76,7 +76,7 @@ exports.updateRunInfo = function (sequencerData) {
 				for (var i = 0; i < sequencerData.length; i++) {
 					var returnObj = {};
 					returnObj['run_name'] = sequencerData[i].name;
-					returnObj['start_date'] = getDateTimeString(sequencerData[i].created_date);
+					returnObj['start_tstmp'] = getDateTimeString(sequencerData[i].created_date);
 					returnObj['status'] = sequencerData[i].state;
 
 					// Get all Running sequencer runs
@@ -257,11 +257,11 @@ exports.updateLibraryInfo = function (sequencerData, sampleData, skipData, recei
 							}
 							// Determine create and prepared dates
 							if (typeof sampleDateInfo[id] !== 'undefined') {
-								libraries[unique_id].create_date = sampleDateInfo[id]['create_date'];
-								libraries[unique_id].prep_date = sampleDateInfo[id]['prep_date'];
+								libraries[unique_id].create_tstmp = sampleDateInfo[id]['create_tstmp'];
+								libraries[unique_id].prep_tstmp = sampleDateInfo[id]['prep_tstmp'];
 							} else {
-								libraries[unique_id].create_date = 'n/a';
-								libraries[unique_id].prep_date = 'n/a';
+								libraries[unique_id].create_tstmp = 'n/a';
+								libraries[unique_id].prep_tstmp = 'n/a';
 							}
 
 							// If library format is w/ 6 underscores
@@ -292,9 +292,9 @@ exports.updateLibraryInfo = function (sequencerData, sampleData, skipData, recei
 									}
 								}
 								if (typeof sampleReceiveInfo[donor] !== 'undefined') {
-									libraries[unique_id].receive_date = sampleReceiveInfo[donor];
+									libraries[unique_id].receive_tstmp = sampleReceiveInfo[donor];
 								} else {
-									libraries[unique_id].receive_date = 'n/a';
+									libraries[unique_id].receive_tstmp = 'n/a';
 								}
 							}
 							if (typeof sequencerData[i].positions[j].samples[k].barcode !== 'undefined') {
@@ -325,11 +325,11 @@ exports.updateLibraryInfo = function (sequencerData, sampleData, skipData, recei
 					}
 					// Determine create and prepared dates
 					if (typeof sampleDateInfo[id] !== 'undefined') {
-						libraries[unique_id].create_date = sampleDateInfo[id]['create_date'];
-						libraries[unique_id].prep_date = sampleDateInfo[id]['prep_date'];
+						libraries[unique_id].create_tstmp = sampleDateInfo[id]['create_tstmp'];
+						libraries[unique_id].prep_tstmp = sampleDateInfo[id]['prep_tstmp'];
 					} else {
-						libraries[unique_id].create_date = 'n/a';
-						libraries[unique_id].prep_date = 'n/a';
+						libraries[unique_id].create_tstmp = 'n/a';
+						libraries[unique_id].prep_tstmp = 'n/a';
 					}
 
 					// If library format is w/ 6 underscores
@@ -359,9 +359,9 @@ exports.updateLibraryInfo = function (sequencerData, sampleData, skipData, recei
 							}
 						}
 						if (typeof sampleReceiveInfo[donor] !== 'undefined') {
-							libraries[unique_id].receive_date = sampleReceiveInfo[donor];
+							libraries[unique_id].receive_tstmp = sampleReceiveInfo[donor];
 						} else {
-							libraries[unique_id].receive_date = 'n/a';
+							libraries[unique_id].receive_tstmp = 'n/a';
 						}
 					}
 
@@ -429,21 +429,21 @@ function getLibraryCreatePrepDates(sampleData) {
 		var parentID = IUSsampleObj[id]['Parent ID'];
 		returnObj[id] = {};
 		if (typeof parentObj[parentID] === 'undefined') { // If the parent is from another IUS sample
-			returnObj[id]['create_date'] = IUSsampleObj[parentID]['Create Date'];
+			returnObj[id]['create_tstmp'] = IUSsampleObj[parentID]['Create Date'];
 			parentID = IUSsampleObj[parentID]['Parent ID'];
 		} else {
-			returnObj[id]['create_date'] = parentObj[parentID]['Create Date'];
+			returnObj[id]['create_tstmp'] = parentObj[parentID]['Create Date'];
 		}
 
 		// Determine Prep date by climbing up sample hierarchy
 		if (parentObj[parentID]['Parent ID'] === 'Identity') { // if parent is donor
-			returnObj[id]['prep_date'] = parentObj[parentID]['Create Date'];
+			returnObj[id]['prep_tstmp'] = parentObj[parentID]['Create Date'];
 		} else {
 			// Keep iterating through hierarchy until the sample type does not end with 'Library'
 			while (/Library$/.test(parentObj[parentID]['Sample Type']) && parentObj[parentID]['Parent ID'] !== 'Identity') {
 				parentID = parentObj[parentID]['Parent ID'];
 			}
-			returnObj[id]['prep_date'] = parentObj[parentID]['Create Date'];
+			returnObj[id]['prep_tstmp'] = parentObj[parentID]['Create Date'];
 		}
 	}
 
@@ -504,7 +504,7 @@ exports.updateWorkflowInfo = function (analysisYAML) {
 		client.connect(function(err) {
 			if (err) return console.error(err);
 			// query for all workflow runs
-			var query = 'WITH RECURSIVE workflow_run_set AS ( SELECT workflow_run_id from workflow_run),workflow_run_processings (workflow_run_id, processing_id) AS ( SELECT wr.workflow_run_id, p.processing_id from workflow_run wr JOIN workflow_run_set wrs ON wr.workflow_run_id = wrs.workflow_run_id JOIN processing p ON (wr.workflow_run_id = p.workflow_run_id or wr.workflow_run_id = p.ancestor_workflow_run_id) UNION SELECT p.workflow_run_id, pr.parent_id FROM workflow_run_processings p JOIN processing_relationship pr ON p.processing_id = pr.child_id), total_workflow_run_ius AS (SELECT wr.workflow_run_id, i.ius_id FROM workflow_run wr  JOIN workflow_run_set wrs ON wr.workflow_run_id = wrs.workflow_run_id JOIN ius_workflow_runs iwr ON wr.workflow_run_id = iwr.workflow_run_id  JOIN ius i ON iwr.ius_id = i.ius_id UNION SELECT wrp.workflow_run_id, i.ius_id FROM workflow_run_processings wrp JOIN processing_ius pi ON wrp.processing_id = pi.processing_id JOIN ius i ON pi.ius_id = i.ius_id),workflow_run_template_ids AS (SELECT twri.workflow_run_id, array_agg(sa.value) as template_id, array_agg(sr.name || \'||\' || l.lane_index+1 || \'||\' || sa.value || \'||\' || i.sw_accession) as libraryinfo_seqname FROM total_workflow_run_ius twri JOIN ius i ON twri.ius_id = i.ius_id JOIN lane AS l ON i.lane_id = l.lane_id JOIN sequencer_run AS sr ON l.sequencer_run_id = sr.sequencer_run_id JOIN sample s ON i.sample_id = s.sample_id JOIN sample_attribute sa ON s.sample_id = sa.sample_id WHERE sa.tag = \'geo_template_id\' GROUP BY twri.workflow_run_id ) SELECT wr.sw_accession,wr.workflow_run_id,wr.status,wr.status_cmd,wr.create_tstmp,COALESCE(p.last_modified, wr.create_tstmp) as last_modified,w.name || \'_\' || w.version as workflow_name, wrti.template_id, wrti.libraryinfo_seqname FROM workflow_run_set wrs JOIN workflow_run wr ON wrs.workflow_run_id = wr.workflow_run_id JOIN workflow_run_template_ids wrti ON wrs.workflow_run_id = wrti.workflow_run_id  JOIN workflow AS w ON wr.workflow_id = w.workflow_id LEFT OUTER JOIN (SELECT workflow_run_id, MAX(update_tstmp) AS last_modified FROM processing GROUP BY workflow_run_id ) AS p ON p.workflow_run_id = wr.workflow_run_id;';
+			var query = 'WITH RECURSIVE workflow_run_set AS ( SELECT workflow_run_id from workflow_run),workflow_run_processings (workflow_run_id, processing_id) AS ( SELECT wr.workflow_run_id, p.processing_id from workflow_run wr JOIN workflow_run_set wrs ON wr.workflow_run_id = wrs.workflow_run_id JOIN processing p ON (wr.workflow_run_id = p.workflow_run_id or wr.workflow_run_id = p.ancestor_workflow_run_id) UNION SELECT p.workflow_run_id, pr.parent_id FROM workflow_run_processings p JOIN processing_relationship pr ON p.processing_id = pr.child_id), total_workflow_run_ius AS (SELECT wr.workflow_run_id, i.ius_id FROM workflow_run wr  JOIN workflow_run_set wrs ON wr.workflow_run_id = wrs.workflow_run_id JOIN ius_workflow_runs iwr ON wr.workflow_run_id = iwr.workflow_run_id  JOIN ius i ON iwr.ius_id = i.ius_id UNION SELECT wrp.workflow_run_id, i.ius_id FROM workflow_run_processings wrp JOIN processing_ius pi ON wrp.processing_id = pi.processing_id JOIN ius i ON pi.ius_id = i.ius_id),workflow_run_template_ids AS (SELECT twri.workflow_run_id, array_agg(sa.value) as template_id, array_agg(sr.name || \'||\' || l.lane_index+1 || \'||\' || sa.value || \'||\' || i.sw_accession) as libraryinfo_seqname FROM total_workflow_run_ius twri JOIN ius i ON twri.ius_id = i.ius_id JOIN lane AS l ON i.lane_id = l.lane_id JOIN sequencer_run AS sr ON l.sequencer_run_id = sr.sequencer_run_id JOIN sample s ON i.sample_id = s.sample_id JOIN sample_attribute sa ON s.sample_id = sa.sample_id WHERE sa.tag = \'geo_template_id\' GROUP BY twri.workflow_run_id ) SELECT wr.sw_accession,wr.workflow_run_id,wr.status,wr.status_cmd,wr.create_tstmp as start_tstmp,COALESCE(p.last_modified, wr.create_tstmp) as end_tstmp,w.name || \'_\' || w.version as workflow_name, wrti.template_id, wrti.libraryinfo_seqname FROM workflow_run_set wrs JOIN workflow_run wr ON wrs.workflow_run_id = wr.workflow_run_id JOIN workflow_run_template_ids wrti ON wrs.workflow_run_id = wrti.workflow_run_id  JOIN workflow AS w ON wr.workflow_id = w.workflow_id LEFT OUTER JOIN (SELECT workflow_run_id, MAX(update_tstmp) AS last_modified FROM processing GROUP BY workflow_run_id ) AS p ON p.workflow_run_id = wr.workflow_run_id;';
 
 			client.query(query, function (err, result) {
 				if (err) console.error(err);
@@ -524,8 +524,8 @@ exports.updateWorkflowInfo = function (analysisYAML) {
 							}
 						}
 					}
-					jsonData[i].create_tstmp = getDateTimeString(jsonData[i].create_tstmp);
-					jsonData[i].last_modified = getDateTimeString(jsonData[i].last_modified);
+					jsonData[i].start_tstmp = getDateTimeString(jsonData[i].start_tstmp);
+					jsonData[i].end_tstmp = getDateTimeString(jsonData[i].end_tstmp);
 
 					for (var j = 0; j < jsonData[i].libraryinfo_seqname.length; j++) {
 						// Parse out ids from libraryinfo_seqname
@@ -626,7 +626,7 @@ exports.updateRunningWorkflowRuns = function (analysisYAML) {
 			// Connect to postgresql client
 			client.connect(function(err) {
 				if (err) return console.error(err);
-				var query = 'WITH RECURSIVE workflow_run_set AS (SELECT workflow_run_id from workflow_run where ' + ids + ' status = \'running\'), workflow_run_processings (workflow_run_id, processing_id) AS (SELECT wr.workflow_run_id, p.processing_id from workflow_run wr JOIN workflow_run_set wrs ON wr.workflow_run_id = wrs.workflow_run_id JOIN processing p ON (wr.workflow_run_id = p.workflow_run_id or wr.workflow_run_id = p.ancestor_workflow_run_id) UNION SELECT p.workflow_run_id, pr.parent_id FROM workflow_run_processings p JOIN processing_relationship pr ON p.processing_id = pr.child_id), total_workflow_run_ius AS (SELECT wr.workflow_run_id, i.ius_id FROM workflow_run wr  JOIN workflow_run_set wrs ON wr.workflow_run_id = wrs.workflow_run_id JOIN ius_workflow_runs iwr ON wr.workflow_run_id = iwr.workflow_run_id  JOIN ius i ON iwr.ius_id = i.ius_id UNION SELECT wrp.workflow_run_id, i.ius_id FROM workflow_run_processings wrp JOIN processing_ius pi ON wrp.processing_id = pi.processing_id JOIN ius i ON pi.ius_id = i.ius_id),workflow_run_template_ids AS (SELECT twri.workflow_run_id, array_agg(sa.value) as template_id, array_agg(sr.name || \'||\' || l.lane_index+1 || \'||\' || sa.value || \'||\' || i.sw_accession) as libraryinfo_seqname FROM total_workflow_run_ius twri JOIN ius i ON twri.ius_id = i.ius_id JOIN lane AS l ON i.lane_id = l.lane_id JOIN sequencer_run AS sr ON l.sequencer_run_id = sr.sequencer_run_id JOIN sample s ON i.sample_id = s.sample_id JOIN sample_attribute sa ON s.sample_id = sa.sample_id WHERE sa.tag = \'geo_template_id\' GROUP BY twri.workflow_run_id ) SELECT wr.sw_accession,wr.workflow_run_id,wr.status,wr.status_cmd,wr.create_tstmp,COALESCE(p.last_modified, wr.create_tstmp) as last_modified,w.name || \'_\' || w.version as workflow_name, wrti.template_id, wrti.libraryinfo_seqname FROM workflow_run_set wrs JOIN workflow_run wr ON wrs.workflow_run_id = wr.workflow_run_id JOIN workflow_run_template_ids wrti ON wrs.workflow_run_id = wrti.workflow_run_id  JOIN workflow AS w ON wr.workflow_id = w.workflow_id LEFT OUTER JOIN (SELECT workflow_run_id, MAX(update_tstmp) AS last_modified FROM processing GROUP BY workflow_run_id ) AS p ON p.workflow_run_id = wr.workflow_run_id;';
+				var query = 'WITH RECURSIVE workflow_run_set AS (SELECT workflow_run_id from workflow_run where ' + ids + ' status = \'running\'), workflow_run_processings (workflow_run_id, processing_id) AS (SELECT wr.workflow_run_id, p.processing_id from workflow_run wr JOIN workflow_run_set wrs ON wr.workflow_run_id = wrs.workflow_run_id JOIN processing p ON (wr.workflow_run_id = p.workflow_run_id or wr.workflow_run_id = p.ancestor_workflow_run_id) UNION SELECT p.workflow_run_id, pr.parent_id FROM workflow_run_processings p JOIN processing_relationship pr ON p.processing_id = pr.child_id), total_workflow_run_ius AS (SELECT wr.workflow_run_id, i.ius_id FROM workflow_run wr  JOIN workflow_run_set wrs ON wr.workflow_run_id = wrs.workflow_run_id JOIN ius_workflow_runs iwr ON wr.workflow_run_id = iwr.workflow_run_id  JOIN ius i ON iwr.ius_id = i.ius_id UNION SELECT wrp.workflow_run_id, i.ius_id FROM workflow_run_processings wrp JOIN processing_ius pi ON wrp.processing_id = pi.processing_id JOIN ius i ON pi.ius_id = i.ius_id),workflow_run_template_ids AS (SELECT twri.workflow_run_id, array_agg(sa.value) as template_id, array_agg(sr.name || \'||\' || l.lane_index+1 || \'||\' || sa.value || \'||\' || i.sw_accession) as libraryinfo_seqname FROM total_workflow_run_ius twri JOIN ius i ON twri.ius_id = i.ius_id JOIN lane AS l ON i.lane_id = l.lane_id JOIN sequencer_run AS sr ON l.sequencer_run_id = sr.sequencer_run_id JOIN sample s ON i.sample_id = s.sample_id JOIN sample_attribute sa ON s.sample_id = sa.sample_id WHERE sa.tag = \'geo_template_id\' GROUP BY twri.workflow_run_id ) SELECT wr.sw_accession,wr.workflow_run_id,wr.status,wr.status_cmd,wr.create_tstmp as start_tstmp,COALESCE(p.last_modified, wr.create_tstmp) as end_tstmp,w.name || \'_\' || w.version as workflow_name, wrti.template_id, wrti.libraryinfo_seqname FROM workflow_run_set wrs JOIN workflow_run wr ON wrs.workflow_run_id = wr.workflow_run_id JOIN workflow_run_template_ids wrti ON wrs.workflow_run_id = wrti.workflow_run_id  JOIN workflow AS w ON wr.workflow_id = w.workflow_id LEFT OUTER JOIN (SELECT workflow_run_id, MAX(update_tstmp) AS last_modified FROM processing GROUP BY workflow_run_id ) AS p ON p.workflow_run_id = wr.workflow_run_id;';
 				//console.log(query);
 
 				client.query(query, function (err, result) {
@@ -647,8 +647,8 @@ exports.updateRunningWorkflowRuns = function (analysisYAML) {
 							}
 						}
 						
-						result.rows[i].create_tstmp = getDateTimeString(result.rows[i].create_tstmp);
-						result.rows[i].last_modified = getDateTimeString(result.rows[i].last_modified);
+						result.rows[i].start_tstmp = getDateTimeString(result.rows[i].start_tstmp);
+						result.rows[i].end_tstmp = getDateTimeString(result.rows[i].end_tstmp);
 
 						// Do not update with library_ids, omit
 						result.rows[i] = _.omit(result.rows[i], ['libraryinfo_seqname', 'template_id']);
@@ -703,7 +703,7 @@ function checkFailedWorkflowRuns () {
 				// Connect to postgresql client
 				client.connect(function(err) {
 					if (err) return console.error(err);
-					var query = 'WITH RECURSIVE workflow_run_set AS (SELECT workflow_run_id from workflow_run where sw_accession in ( ' + docs.join() + ' ) ), workflow_run_processings (workflow_run_id, processing_id) AS (SELECT wr.workflow_run_id, p.processing_id from workflow_run wr JOIN workflow_run_set wrs ON wr.workflow_run_id = wrs.workflow_run_id JOIN processing p ON (wr.workflow_run_id = p.workflow_run_id or wr.workflow_run_id = p.ancestor_workflow_run_id) UNION SELECT p.workflow_run_id, pr.parent_id FROM workflow_run_processings p JOIN processing_relationship pr ON p.processing_id = pr.child_id), total_workflow_run_ius AS (SELECT wr.workflow_run_id, i.ius_id FROM workflow_run wr  JOIN workflow_run_set wrs ON wr.workflow_run_id = wrs.workflow_run_id JOIN ius_workflow_runs iwr ON wr.workflow_run_id = iwr.workflow_run_id  JOIN ius i ON iwr.ius_id = i.ius_id UNION SELECT wrp.workflow_run_id, i.ius_id FROM workflow_run_processings wrp JOIN processing_ius pi ON wrp.processing_id = pi.processing_id JOIN ius i ON pi.ius_id = i.ius_id),workflow_run_template_ids AS (SELECT twri.workflow_run_id, array_agg(sa.value) as template_id, array_agg(sr.name || \'||\' || l.lane_index+1 || \'||\' || sa.value || \'||\' || i.sw_accession) as libraryinfo_seqname FROM total_workflow_run_ius twri JOIN ius i ON twri.ius_id = i.ius_id JOIN lane AS l ON i.lane_id = l.lane_id JOIN sequencer_run AS sr ON l.sequencer_run_id = sr.sequencer_run_id JOIN sample s ON i.sample_id = s.sample_id JOIN sample_attribute sa ON s.sample_id = sa.sample_id WHERE sa.tag = \'geo_template_id\' GROUP BY twri.workflow_run_id ) SELECT wr.sw_accession,wr.workflow_run_id,wr.status,wr.status_cmd,wr.create_tstmp,COALESCE(p.last_modified, wr.create_tstmp) as last_modified,w.name || \'_\' || w.version as workflow_name, wrti.template_id, wrti.libraryinfo_seqname FROM workflow_run_set wrs JOIN workflow_run wr ON wrs.workflow_run_id = wr.workflow_run_id JOIN workflow_run_template_ids wrti ON wrs.workflow_run_id = wrti.workflow_run_id  JOIN workflow AS w ON wr.workflow_id = w.workflow_id LEFT OUTER JOIN (SELECT workflow_run_id, MAX(update_tstmp) AS last_modified FROM processing GROUP BY workflow_run_id ) AS p ON p.workflow_run_id = wr.workflow_run_id;';
+					var query = 'WITH RECURSIVE workflow_run_set AS (SELECT workflow_run_id from workflow_run where sw_accession in ( ' + docs.join() + ' ) ), workflow_run_processings (workflow_run_id, processing_id) AS (SELECT wr.workflow_run_id, p.processing_id from workflow_run wr JOIN workflow_run_set wrs ON wr.workflow_run_id = wrs.workflow_run_id JOIN processing p ON (wr.workflow_run_id = p.workflow_run_id or wr.workflow_run_id = p.ancestor_workflow_run_id) UNION SELECT p.workflow_run_id, pr.parent_id FROM workflow_run_processings p JOIN processing_relationship pr ON p.processing_id = pr.child_id), total_workflow_run_ius AS (SELECT wr.workflow_run_id, i.ius_id FROM workflow_run wr  JOIN workflow_run_set wrs ON wr.workflow_run_id = wrs.workflow_run_id JOIN ius_workflow_runs iwr ON wr.workflow_run_id = iwr.workflow_run_id  JOIN ius i ON iwr.ius_id = i.ius_id UNION SELECT wrp.workflow_run_id, i.ius_id FROM workflow_run_processings wrp JOIN processing_ius pi ON wrp.processing_id = pi.processing_id JOIN ius i ON pi.ius_id = i.ius_id),workflow_run_template_ids AS (SELECT twri.workflow_run_id, array_agg(sa.value) as template_id, array_agg(sr.name || \'||\' || l.lane_index+1 || \'||\' || sa.value || \'||\' || i.sw_accession) as libraryinfo_seqname FROM total_workflow_run_ius twri JOIN ius i ON twri.ius_id = i.ius_id JOIN lane AS l ON i.lane_id = l.lane_id JOIN sequencer_run AS sr ON l.sequencer_run_id = sr.sequencer_run_id JOIN sample s ON i.sample_id = s.sample_id JOIN sample_attribute sa ON s.sample_id = sa.sample_id WHERE sa.tag = \'geo_template_id\' GROUP BY twri.workflow_run_id ) SELECT wr.sw_accession,wr.workflow_run_id,wr.status,wr.status_cmd,wr.create_tstmp as start_tstmp,COALESCE(p.last_modified, wr.create_tstmp) as end_tstmp,w.name || \'_\' || w.version as workflow_name, wrti.template_id, wrti.libraryinfo_seqname FROM workflow_run_set wrs JOIN workflow_run wr ON wrs.workflow_run_id = wr.workflow_run_id JOIN workflow_run_template_ids wrti ON wrs.workflow_run_id = wrti.workflow_run_id  JOIN workflow AS w ON wr.workflow_id = w.workflow_id LEFT OUTER JOIN (SELECT workflow_run_id, MAX(update_tstmp) AS last_modified FROM processing GROUP BY workflow_run_id ) AS p ON p.workflow_run_id = wr.workflow_run_id;';
 					
 					client.query(query, function (err, result) {
 						if (err) console.error(err);
@@ -723,8 +723,8 @@ function checkFailedWorkflowRuns () {
 										}
 									}
 								}
-								result.rows[i].create_tstmp = getDateTimeString(result.rows[i].create_tstmp);
-								result.rows[i].last_modified = getDateTimeString(result.rows[i].last_modified);
+								result.rows[i].start_tstmp = getDateTimeString(result.rows[i].start_tstmp);
+								result.rows[i].end_tstmp = getDateTimeString(result.rows[i].end_tstmp);
 
 								// Do not update with library_ids, omit
 								result.rows[i] = _.omit(result.rows[i], ['libraryinfo_seqname', 'template_id']);
@@ -1288,7 +1288,7 @@ function getProjectDataInfo(projectData) {
 	for (var i = 0; i < projectData.length; i++) {
 		returnObj[projectData[i].name] = {};
 		returnObj[projectData[i].name]['Start Date'] = projectData[i].earliest;
-		returnObj[projectData[i].name]['Last Modified'] = projectData[i].latest;
+		//returnObj[projectData[i].name]['Last Modified'] = projectData[i].latest;
 		//returnObj[projectData[i].name]['Count'] = projectData[i].count;
 	}
 
