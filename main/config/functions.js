@@ -373,8 +373,8 @@ exports.updateLibraryInfo = function (sequencerData, sampleData, skipData, recei
 				}
 			}
 		}
-		for (var name in libraries) {
-			batch.find({library_name: name}).upsert().updateOne(libraries[name]);
+		for (var unique_id in libraries) {
+			batch.find({library_seqname: unique_id}).upsert().updateOne(libraries[unique_id]);
 		}
 		batch.execute(function(err, result) {
 			if (err) console.dir(err);
@@ -527,14 +527,14 @@ exports.updateWorkflowInfo = function (analysisYAML) {
 					jsonData[i].create_tstmp = getDateTimeString(jsonData[i].create_tstmp);
 					jsonData[i].last_modified = getDateTimeString(jsonData[i].last_modified);
 
-					for (var j = 0; j < jsonData[i].libraryinfo_id.length; j++) {
-						// Parse out ids from libraryinfo_id
-						var match = /(.*?\|\|.*?\|\|.*?)\|\|(.*?)$/.exec(jsonData[i].libraryinfo_id[j]);
+					for (var j = 0; j < jsonData[i].libraryinfo_seqname.length; j++) {
+						// Parse out ids from libraryinfo_seqname
+						var match = /(.*?\|\|.*?\|\|.*?)\|\|(.*?)$/.exec(jsonData[i].libraryinfo_seqname[j]);
 						var librarySeq_id = match[1];
 						var iusswid = match[2];
 
 						// Update workflow info library ids to library seq ids
-						jsonData[i].libraryinfo_id[j] = librarySeq_id;
+						jsonData[i].libraryinfo_seqname[j] = librarySeq_id;
 
 						// Update workflows for each library id
 						if (typeof libraryObj[librarySeq_id] === 'undefined') {
@@ -555,7 +555,7 @@ exports.updateWorkflowInfo = function (analysisYAML) {
 				for (var librarySeq_id in libraryObj) {
 					var setMod = { $set:{} };
 					setMod.$set = libraryObj[librarySeq_id];
-					libBatch.find({sw_accession: librarySeq_id}).upsert().updateOne(setMod);
+					libBatch.find({library_seqname: librarySeq_id}).upsert().updateOne(setMod);
 				}
 				
 				wfBatch.execute(function(err, result) {
