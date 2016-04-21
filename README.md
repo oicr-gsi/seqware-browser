@@ -162,8 +162,8 @@ Runs a query in seqware database for all completed sequencer runs after 2014-02-
 - workflow_run_id: workflow run id given by seqware
 - status: workflow run status
 - status_cmd: oozie id
-- create_tstmp: create date
-- last_modified: last modified date
+- start_tstmp: create date
+- end_tstmp: based on last modified date
 - workflow_name: workflow name and version
 - analysis_type: workflow analysis type
 
@@ -175,8 +175,8 @@ Runs a query in seqware database for all completed sequencer runs after 2014-02-
   "workflow_run_id": 201917,
   "status": "running",
   "status_cmd": "0000757-160202125311466-oozie-oozi-W",
-  "create_tstmp": "2016-03-22 10:46:37",
-  "last_modified": "2016-03-22 15:04:21",
+  "start_tstmp": "2016-03-22 10:46:37",
+  "end_tstmp": "2016-03-22 15:04:21",
   "workflow_name": "CASAVA_2.8",
   "analysis_type": "Base calling"
 }{
@@ -185,8 +185,8 @@ Runs a query in seqware database for all completed sequencer runs after 2014-02-
   "workflow_run_id": 201886,
   "status": "running",
   "status_cmd": "0000721-160202125311466-oozie-oozi-W",
-  "create_tstmp": "2016-03-21 10:45:40",
-  "last_modified": "2016-03-21 14:46:04",
+  "start_tstmp": "2016-03-21 10:45:40",
+  "end_tstmp": "2016-03-21 14:46:04",
   "workflow_name": "CASAVA_2.8",
   "analysis_type": "Base calling"
 }{
@@ -195,8 +195,8 @@ Runs a query in seqware database for all completed sequencer runs after 2014-02-
   "workflow_run_id": 201816,
   "status": "running",
   "status_cmd": "0000628-160202125311466-oozie-oozi-W",
-  "create_tstmp": "2016-03-15 15:43:45",
-  "last_modified": "2016-03-15 19:44:02",
+  "start_tstmp": "2016-03-15 15:43:45",
+  "end_tstmp": "2016-03-15 19:44:02",
   "workflow_name": "CASAVA_2.8",
   "analysis_type": "Base calling"
 }
@@ -214,8 +214,8 @@ The _id for all documents in the CurrentWorkflowRuns collection are also queried
 - workflow_run_id: workflow run id given by seqware
 - status: workflow run status
 - status_cmd: oozie id
-- create_tstmp: create date
-- last_modified: last modified date
+- start_tstmp: create date
+- end_tstmp: based on last modified date
 - workflow_name: workflow name and version
 - analysis_type: workflow analysis type
 
@@ -253,58 +253,63 @@ Note: Library Info documents refer to the **sequenced libraries** and not the ge
 - library_seqname: a combination of [run name || lane || template id] for uniqueness for a library seq (library on a sequencer run)
 - template_id: the library id
 - library_name: name of the library
-- ProjectInfo_id: reference to project document in ProjectInfo collection
-- RunInfo_id: reference to run document in RunInfo collection
+- ProjectInfo_name: reference to project document in ProjectInfo collection
+- RunInfo_name: reference to run document in RunInfo collection
 - lane: lane library was sequenced on
 - skip: boolean, whether or not the library was skipped
-- create_date: date the library was created
-- prep_date: date the sample for the library was prepared
+- create_tstmp: date the library was created
+- prep_tstmp: date the sample for the library was prepared
 - library_type: type of library
 - tissue_type: type of tissue the library is from
 - DonorInfo_id: reference to donor document in DonorInfo collection
 - library_head: used to determine library totals counts for run
 - tissue_origin: tissue where the sample originates from
-- receive_date: date when the donor sample was received 
+- receive_tstmp: date when the donor sample was received 
 - barcode: unique IUS tag/barcode of the sequenced library 
-- WorkflowInfo_id: array of workflows associated with the library seq
+- WorkflowInfo_accession: array of workflows associated with the library seq
 - iusswid: the ius SWID (seqware accession for the particular library seq)
 
 ```
 > db.LibraryInfo.find()
 {
-  "_id": ObjectId("57168415ba507b1cd34cdc4d"),
-  "library_seqname": "110520_SN203_0108_A816TKABXX||5||9993",
-  "template_id": 9993,
-  "library_name": "POP_037_Li_X_PE_400_EX",
-  "ProjectInfo_name": "POP",
-  "RunInfo_name": "110520_SN203_0108_A816TKABXX",
-  "lane": 5,
+  "_id": ObjectId("5717954eba507b1cd353a2d6"),
+  "library_seqname": "111110_h1080_0084_AC08UPACXX||3||12788",
+  "template_id": 12788,
+  "library_name": "PCSI_0105_Ly_R_PE_384_EX",
+  "ProjectInfo_name": "PCSI",
+  "RunInfo_name": "111110_h1080_0084_AC08UPACXX",
+  "lane": 3,
   "skip": 0,
-  "create_date": "2011-05-24 17:08:07",
-  "prep_date": "2011-02-23 12:19:53",
+  "create_tstmp": "2011-09-02 09:46:37",
+  "prep_tstmp": "2011-08-15 11:46:46",
   "library_type": "EX",
-  "tissue_type": "X",
-  "DonorInfo_name": "POP_037",
-  "library_head": "POP",
-  "tissue_origin": "Large Intestine",
-  "receive_date": "n/a",
-  "barcode": "noIndex",
-  "WorkflowInfo_id": [
-    467927,
-    399167,
-    464529,
-    1706844,
-    2056628,
-    342931,
-    600000,
-    1529562,
-    340888,
-    438218,
-    2897931,
-    458889,
-    543372
+  "tissue_type": "R",
+  "DonorInfo_name": "PCSI_0105",
+  "library_head": "PCSI",
+  "tissue_origin": "PANCREAS:Partial Pancreatectomy",
+  "receive_tstmp": "2012-04-02",
+  "barcode": "TAGCTT",
+  "WorkflowInfo_accession": [
+    "638352",
+    "2964658",
+    "351593",
+    "637530",
+    "49886",
+    "555438",
+    "467298",
+    "95666",
+    "62458",
+    "1715762",
+    "50844",
+    "178549",
+    "711579",
+    "424170",
+    "1816935",
+    "404355",
+    "887340",
+    "1662193"
   ],
-  "iusswid": "322947"
+  "iusswid": "16939"
 }
 ```
 
@@ -314,16 +319,14 @@ functions: updateLibraryInfo, updateWorkflowInfo
 
 #### Project Info
 - project_name: project name
-- start_date: start date of the project
-- last_mod: last modified date
+- start_tstmp: start date of the project
 
 ```
 > db.ProjectInfo.find()
 {
   "_id": ObjectId("57166874ba507b1cd3491f6d"),
   "project_name": "ACC",
-  "start_date": "2011-05-18 11:18:44",
-  "last_mod": "2015-10-21 16:49:14"
+  "start_tstmp": "2011-05-18 11:18:44"
 }
 ```
 
@@ -333,7 +336,7 @@ functions: updateProjectInfo
 
 #### Run Info
 - run_name: run name
-- start_date: start date of sequencer run
+- start_tstmp: start date of sequencer run
 - status: sequencer run status
 
 ```
@@ -341,7 +344,7 @@ functions: updateProjectInfo
 {
   "_id": ObjectId("571669c7ba507b1cd349793f"),
   "run_name": "141120_SN7001205_0255_AHALRRADXX",
-  "start_date": "2014-11-25 09:40:51",
+  "start_tstmp": "2014-11-25 09:40:51",
   "status": "Completed"
 }
 ```
@@ -355,8 +358,8 @@ functions: updateRunInfo
 - workflow_run_id: workflow run id given by seqware
 - status: workflow run status
 - status_cmd: oozie id
-- create_tstmp: create date
-- last_modified: last modified date
+- start_tstmp: create date
+- end_tstmp: last modified date
 - workflow_name: workflow name and version
 - analysis_type: workflow analysis type
 
@@ -368,8 +371,8 @@ functions: updateRunInfo
   "workflow_run_id": 161361,
   "status": "completed",
   "status_cmd": "0008012-150807151645068-oozie-oozi-W",
-  "create_tstmp": "2015-09-17 12:01:24",
-  "last_modified": "2015-09-17 12:20:36",
+  "start_tstmp": "2015-09-17 12:01:24",
+  "end_tstmp": "2015-09-17 12:20:36",
   "workflow_name": "BamQC_2.5",
   "analysis_type": "Quality Control"
 }
@@ -382,15 +385,15 @@ functions: updateWorkflowInfo
 #### File Info
 - fileSWID: fileSWID
 - file_path: path of file
-- WorkflowInfo_id: associated workflow SWID, references WorkflowInfo collection
+- WorkflowInfo_accession: associated workflow SWID, references WorkflowInfo collection
 
 ```
 > db.FileInfo.find()
 {
-  "_id": ObjectId("57166b88ba507b1cd349e3da"),
-  "fileSWID": "30548",
-  "file_path": "/oicr/data/archive/i581/110218_I581_00030_612RT_LT/Data/Intensities/Bustard1.8.0_24-02-2011_rdenroche/GERALD_24-02-2011_rdenroche/s_8_sequence.txt.gz",
-  "WorkflowInfo_id": "25831"
+  "_id": ObjectId("57166b89ba507b1cd349e3f0"),
+  "fileSWID": "27470",
+  "file_path": "/oicr/data/archive/i278/100913_I278_00018_62A2T_AP/Data/Intensities/Bustard1.8.0_27-09-2010_mchan/GERALD_27-09-2010_mchan/s_5_1_sequence.txt.gz",
+  "WorkflowInfo_accession": "25831"
 }
 
 ```
@@ -407,17 +410,17 @@ To query for all files associated with WorkflowInfo_id:
   "_id": ObjectId("57166b89ba507b1cd349e404"),
   "fileSWID": "12047",
   "file_path": "/oicr/data/archive/seqware/seqware_analysis/results/seqware-0.10.0_IlluminaBaseCalling-1.8.2/913119/Unaligned_111028_h803_0070_BC087YACXX_2/Project_na/Sample_11783/11783_CGATGT_L002_R1_001.fastq.gz",
-  "WorkflowInfo_id": "11805"
+  "WorkflowInfo_accession": "11805"
 }{
   "_id": ObjectId("57166b89ba507b1cd349e405"),
   "fileSWID": "12048",
   "file_path": "/oicr/data/archive/seqware/seqware_analysis/results/seqware-0.10.0_IlluminaBaseCalling-1.8.2/913119/Unaligned_111028_h803_0070_BC087YACXX_2/Project_na/Sample_11783/11783_CGATGT_L002_R2_001.fastq.gz",
-  "WorkflowInfo_id": "11805"
+  "WorkflowInfo_accession": "11805"
 }{
   "_id": ObjectId("57166b89ba507b1cd349e406"),
   "fileSWID": "12055",
   "file_path": "/oicr/data/archive/seqware/seqware_analysis/results/seqware-0.10.0_IlluminaBaseCalling-1.8.2/913119/Unaligned_111028_h803_0070_BC087YACXX_2/Project_na/Sample_11779/11779_ACAGTG_L002_R1_001.fastq.gz",
-  "WorkflowInfo_id": "11805"
+  "WorkflowInfo_accession": "11805"
 }
 ...
 ```
@@ -569,7 +572,7 @@ This table demonstrates the dependencies of collection updates on download times
 | LibraryInfo          | 10                | 40                 |                     | 2               |               |             | 10           | 62             | 1m 2s      |
 | ProjectInfo          | 10                | 40                 | 32                  | 2               |               |             | 2            | 86             | 1m 26s     |
 | RunInfo              | 10                |                    |                     |                 |               |             | 1            | 11             | 11s        |
-| RunReportData |                   |                    |                     |                 |               |             | 3600         | 3600           | 60m        |
+| RunReportData        |                   |                    |                     |                 |               |             | 3600         | 3600           | 60m        |
 | WorkflowInfo         |                   |                    |                     |                 |               | 62          | 83           | 145            | 2m 25s     |
 
 ### Workflow Run Analysis YAML

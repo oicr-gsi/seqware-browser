@@ -1,7 +1,7 @@
 // Script takes in pinery data output - project
 
 var fs = require('fs');
-var functions = require('functions.js');
+var functions = require('./functions.js');
 var JSON = require('JSON');
 
 // read pinery output files

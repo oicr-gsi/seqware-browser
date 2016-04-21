@@ -1,7 +1,7 @@
 // Script takes in pinery data output - sequencer runs and samples
 
 var readMultipleFiles = require('read-multiple-files');
-var functions = require('functions.js');
+var functions = require('./functions.js');
 var JSON = require('JSON');
 
 // read pinery output files

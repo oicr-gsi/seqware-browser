@@ -2,7 +2,7 @@
 // Functions are based off of fpr-File.json and update file data to mongodb
 
 var fs = require('fs');
-var functions = require('functions.js');
+var functions = require('./functions.js');
 var JSON = require('JSON');
 
 fs.readFile(process.argv[2], 'utf8', function(err, data) {
