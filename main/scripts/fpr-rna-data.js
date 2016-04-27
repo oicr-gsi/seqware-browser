@@ -2,7 +2,7 @@
 // Functions are based off of fpr-Library.json and update IUSSWIDRNAReportData to mongodb
 
 var fs = require('fs');
-var functions = require('./functions.js');
+var functions = require('functions.js');
 var JSON = require('JSON');
 
 // Read from the fpr-Library.json file

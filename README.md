@@ -481,7 +481,7 @@ function: updateIUSSIWDRNASeqQCData
 #### IUSSWIDGraphData
 Note: Graphs are generated using Google charts and the data is in the format that is required for the function: drawGraphsById to plot graphs
 
-- _id: ius SWID (seqware accession for the particular library seq)
+- iusswid: ius SWID (seqware accession for the particular library seq)
 - Read Breakdown: data required to plot read breakdown graph
 - Insert Distribution: data required to plot insert distribution graph
 - Soft Clip by Cycle: data required to plot soft clip by cycle graph
