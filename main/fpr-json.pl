@@ -9,14 +9,13 @@ use IO::Uncompress::Gunzip qw($GunzipError);
 our @ISA = qw (Exporter);
 our @EXPORT_OK;
 
-my ($fpr) = @ARGV;
+my ($fpr, $outputDir) = @ARGV;
 my %fprData;
 my $json;
 
 my $workflowRunSWID;
 my $IUSSWID;
 my $fileSWID;
-my $sequencerRunSWID;
 
 ########################################################################
 # Extract data from File Provenance Report
@@ -38,18 +37,13 @@ while (!$fprHandle->eof()) {
 	$line = $fprHandle->getline();
 	chomp $line;
 	@linehash{@header} = split("\t", $line);
-
-	my $date = $linehash{"Last Modified"};
-	my $runName = $linehash{"Sequencer Run Name"};
+	
 	my $filePath = $linehash{"File Path"};
 	my $workflowName = $linehash{"Workflow Run Name"};
 	
 	$fileSWID = $linehash{"File SWID"};
 	$IUSSWID = $linehash{"IUS SWID"};
 	$workflowRunSWID = $linehash{"Workflow Run SWID"};
-	
-	#By Run
-	$fprData{"Run"}{$runName} = "1";
 
 	# By File
 	$fprData{"File"}{$fileSWID}{"Path"} = $filePath;
@@ -64,16 +58,11 @@ while (!$fprHandle->eof()) {
    		$fprData{"Library"}{$IUSSWID}{"RNAZipFile"} = $filePath;
    	}
 }
-open (runFH, ">", "./runs.txt");
-foreach my $key (keys (%{$fprData{"Run"}})) {
-	print runFH "$key \n";
-}
 
 my @categories = ('File', 'Library');
 my %hash;
 foreach my $key (@categories){
-	mkdir "fpr-output";
-	open (FH, ">", "./fpr-output/fpr-".$key.".json");
+	open (FH, ">", "$outputDir/fpr-".$key.".json");
 	$hash{$key} = \%{$fprData{$key}};
 	$json = encode_json(\%hash);
 	print FH $json;
