@@ -771,49 +771,67 @@ function checkFailedWorkflowRuns () {
 function getReportData(jsonFile, xenomeFile) {
 	var obj = {};
 	if (typeof jsonFile !== 'undefined') {
-		var jsonString = fs.readFileSync(jsonFile, 'utf8'); 
-		var lineObj = JSON.parse(jsonString);
+		fs.exists(jsonFile, function (exists) {
+			if (exists) {
+				var jsonString = fs.readFileSync(jsonFile, 'utf8'); 
+				var lineObj = JSON.parse(jsonString);
 
-		// Initialize
-		var readsSP = parseFloat(lineObj['reads per start point']).toFixed(2);
-		var onTargetRate = lineObj['reads on target']/lineObj['mapped reads'];
+				// Initialize
+				var readsSP = parseFloat(lineObj['reads per start point']).toFixed(2);
+				var onTargetRate = lineObj['reads on target']/lineObj['mapped reads'];
 
-		// Reads per start point
-		obj['Reads/SP'] = readsSP;
+				// Reads per start point
+				obj['Reads/SP'] = readsSP;
 
-		// Map %, Raw Reads, Raw Yield
-		var rawReads = (parseInt(lineObj['mapped reads']) + parseInt(lineObj['unmapped reads']) + parseInt(lineObj['qual fail reads']));
+				// Map %, Raw Reads, Raw Yield
+				var rawReads = (parseInt(lineObj['mapped reads']) + parseInt(lineObj['unmapped reads']) + parseInt(lineObj['qual fail reads']));
 
-		if (rawReads > 0) {
-			obj['Map %'] = ((lineObj['mapped reads']/rawReads)*100).toFixed(2) + '%';
-			obj['Reads'] = rawReads;
-			obj['Yield'] = parseInt(rawReads*lineObj['average read length']);
-		} else {
-			obj['Map %'] = 0;
-			obj['Reads'] = 0;
-			obj['Yield'] = 0;
-		}
+				if (rawReads > 0) {
+					obj['Map %'] = ((lineObj['mapped reads']/rawReads)*100).toFixed(2) + '%';
+					obj['Reads'] = rawReads;
+					obj['Yield'] = parseInt(rawReads*lineObj['average read length']);
+				} else {
+					obj['Map %'] = 0;
+					obj['Reads'] = 0;
+					obj['Yield'] = 0;
+				}
 
-		// % on Target
-		obj['% on Target'] = (onTargetRate*100).toFixed(2) + '%';
+				// % on Target
+				obj['% on Target'] = (onTargetRate*100).toFixed(2) + '%';
 
-		// Insert mean, insert stdev, read length
-		if (lineObj['number of ends'] === 'paired end') {
-			obj['Insert Mean'] = parseFloat(lineObj['insert mean']).toFixed(2);
-			obj['Insert Stdev'] = parseFloat(lineObj['insert stdev']).toFixed(2);
-			obj['Read Length'] = lineObj['read 1 average length'] + ',' + lineObj['read 2 average length'];
-		} else {
-			obj['Insert Mean'] = 'n/a';
-			obj['Insert Stdev'] = 'n/a';
-			obj['Read Length'] = lineObj['read ? average length'];
-		}
+				// Insert mean, insert stdev, read length
+				if (lineObj['number of ends'] === 'paired end') {
+					obj['Insert Mean'] = parseFloat(lineObj['insert mean']).toFixed(2);
+					obj['Insert Stdev'] = parseFloat(lineObj['insert stdev']).toFixed(2);
+					obj['Read Length'] = lineObj['read 1 average length'] + ',' + lineObj['read 2 average length'];
+				} else {
+					obj['Insert Mean'] = 'n/a';
+					obj['Insert Stdev'] = 'n/a';
+					obj['Read Length'] = lineObj['read ? average length'];
+				}
 
-		// Coverage
-		var rawEstYield = lineObj['aligned bases'] * onTargetRate;
-		var collapsedEstYield = rawEstYield/readsSP;
+				// Coverage
+				var rawEstYield = lineObj['aligned bases'] * onTargetRate;
+				var collapsedEstYield = rawEstYield/readsSP;
 
-		obj['Coverage (collapsed)'] = (collapsedEstYield/lineObj['target size']).toFixed(2);
-		obj['Coverage (raw)'] = (rawEstYield/lineObj['target size']).toFixed(2);
+				obj['Coverage (collapsed)'] = (collapsedEstYield/lineObj['target size']).toFixed(2);
+				obj['Coverage (raw)'] = (rawEstYield/lineObj['target size']).toFixed(2);
+			} else {
+				console.log(jsonFile + " does not exist");
+
+				// Reads per start point
+				obj['Reads/SP'] = 'n/a';
+				obj['Map %'] = 'n/a';
+				obj['Reads'] = 'n/a';
+				obj['Yield'] = 'n/a';
+				obj['% on Target'] = 'n/a';
+				obj['Insert Mean'] = 'n/a';
+				obj['Insert Stdev'] = 'n/a';
+				obj['Read Length'] = 'n/a';
+				obj['Coverage (collapsed)'] = 'n/a';
+				obj['Coverage (raw)'] = 'n/a';
+			}
+		});
 	}
 
 	// Get Mouse Data
