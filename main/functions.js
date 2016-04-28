@@ -1095,13 +1095,14 @@ exports.updateGraphData = function (fprData) {
 			var ids = [];
 			findReportDocumentsIUSSWID(ids, 'IUSSWIDGraphData', db, function (err) {
 				var newIUSSWID = _.difference(Object.keys(fprData['Library']), ids);
-				for (var i = 0; i < newIUSSWID.length; i++) {
-					//console.log(fprData['Library'][newIUSSWID[i]]);
-					if (typeof fprData['Library'][newIUSSWID[i]]['JSON'] !== 'undefined') {
+				//console.log(newIUSSWID);
+				for (var ius = 0; ius < newIUSSWID.length; ius++) {
+					//console.log(fprData['Library'][newIUSSWID[ius]]);
+					if (typeof fprData['Library'][newIUSSWID[ius]]['JSON'] !== 'undefined') {
 						// Get graph data from JSON file
-						jsonExists = fs.existsSync(fprData['Library'][newIUSSWID[i]]['JSON']);
+						jsonExists = fs.existsSync(fprData['Library'][newIUSSWID[ius]]['JSON']);
 						if (jsonExists) {
-							var jsonString = fs.readFileSync(fprData['Library'][newIUSSWID[i]]['JSON'], 'utf8');
+							var jsonString = fs.readFileSync(fprData['Library'][newIUSSWID[ius]]['JSON'], 'utf8');
 							var lineObj = JSON.parse(jsonString);
 
 							if (typeof lineObj['barcode'] === 'undefined'){
@@ -1109,7 +1110,7 @@ exports.updateGraphData = function (fprData) {
 							}
 							var title = lineObj['run name'] + ' Lane: ' + lineObj['lane'] + ' Barcode: ' + lineObj['barcode'] + ' Library: ' + lineObj['library'];
 							var graphData = {};
-							graphData['iusswid'] = newIUSSWID[i];
+							graphData['iusswid'] = newIUSSWID[ius];
 							graphData['Read Breakdown'] = {};
 							graphData['Insert Distribution'] = {};
 							graphData['Soft Clip by Cycle'] = {};
@@ -1207,10 +1208,11 @@ exports.updateGraphData = function (fprData) {
 							graphData['Soft Clip by Cycle']['x values'] = xValSoft;
 							graphData['Soft Clip by Cycle']['y values'] = yValSoft;
 
+							//console.log(graphData);
 							// Update in mongodb
-							batch.find({iusswid: newIUSSWID[i]}).upsert().updateOne(graphData);
+							batch.find({iusswid: newIUSSWID[ius]}).upsert().updateOne(graphData);
 						} else {
-							console.log(fprData['Library'][newIUSSWID[i]]['JSON'] + " does not exist")
+							console.log(fprData['Library'][newIUSSWID[ius]]['JSON'] + " does not exist")
 						}
 					}
 				}
