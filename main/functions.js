@@ -625,7 +625,7 @@ exports.updateRunningWorkflowRuns = function (analysisYAML) {
 		var wfBatch = db.collection('WorkflowInfo').initializeUnorderedBulkOp();
 
 		var docs = [];
-		findAllDocuments(docs, 'CurrentWorkflowRuns', db, function() {
+		findWorkflowDocuments(docs, 'CurrentWorkflowRuns', db, function() {
 			// If ids exist, add to query, else just search for status = 'running'
 			var ids;
 			if (docs.length > 0) {
@@ -708,7 +708,7 @@ function checkFailedWorkflowRuns () {
 		var wfBatch = db.collection('WorkflowInfo').initializeUnorderedBulkOp();
 
 		var docs = [];
-		findAllDocuments(docs, 'FailedWorkflowRuns', db, function() {
+		findWorkflowDocuments(docs, 'FailedWorkflowRuns', db, function() {
 			if (typeof docs !== 'undefined') {
 
 				// Connect to postgresql client
@@ -768,86 +768,89 @@ function checkFailedWorkflowRuns () {
  * @param {log} xenomeFile
  * @return {object} reportData
  */
-function getReportData(jsonFile, xenomeFile) {
+function getReportData(jsonFile, xenomeFile, IUSSWID) {
 	var obj = {};
-	if (typeof jsonFile !== 'undefined') {
-		fs.exists(jsonFile, function (exists) {
-			if (exists) {
-				var jsonString = fs.readFileSync(jsonFile, 'utf8'); 
-				var lineObj = JSON.parse(jsonString);
+	var jsonExists = fs.existsSync(jsonFile);
+	if (jsonExists) {
+		var jsonString = fs.readFileSync(jsonFile, 'utf8'); 
+		var lineObj = JSON.parse(jsonString);
 
-				// Initialize
-				var readsSP = parseFloat(lineObj['reads per start point']).toFixed(2);
-				var onTargetRate = lineObj['reads on target']/lineObj['mapped reads'];
+		// Initialize
+		var readsSP = parseFloat(lineObj['reads per start point']).toFixed(2);
+		var onTargetRate = lineObj['reads on target']/lineObj['mapped reads'];
 
-				// Reads per start point
-				obj['Reads/SP'] = readsSP;
+		// IUSSWID
+		obj['iusswid'] = IUSSWID;
 
-				// Map %, Raw Reads, Raw Yield
-				var rawReads = (parseInt(lineObj['mapped reads']) + parseInt(lineObj['unmapped reads']) + parseInt(lineObj['qual fail reads']));
+		// Reads per start point
+		obj['Reads/SP'] = readsSP;
 
-				if (rawReads > 0) {
-					obj['Map %'] = ((lineObj['mapped reads']/rawReads)*100).toFixed(2) + '%';
-					obj['Reads'] = rawReads;
-					obj['Yield'] = parseInt(rawReads*lineObj['average read length']);
-				} else {
-					obj['Map %'] = 0;
-					obj['Reads'] = 0;
-					obj['Yield'] = 0;
-				}
+		// Map %, Raw Reads, Raw Yield
+		var rawReads = (parseInt(lineObj['mapped reads']) + parseInt(lineObj['unmapped reads']) + parseInt(lineObj['qual fail reads']));
 
-				// % on Target
-				obj['% on Target'] = (onTargetRate*100).toFixed(2) + '%';
-
-				// Insert mean, insert stdev, read length
-				if (lineObj['number of ends'] === 'paired end') {
-					obj['Insert Mean'] = parseFloat(lineObj['insert mean']).toFixed(2);
-					obj['Insert Stdev'] = parseFloat(lineObj['insert stdev']).toFixed(2);
-					obj['Read Length'] = lineObj['read 1 average length'] + ',' + lineObj['read 2 average length'];
-				} else {
-					obj['Insert Mean'] = 'n/a';
-					obj['Insert Stdev'] = 'n/a';
-					obj['Read Length'] = lineObj['read ? average length'];
-				}
-
-				// Coverage
-				var rawEstYield = lineObj['aligned bases'] * onTargetRate;
-				var collapsedEstYield = rawEstYield/readsSP;
-
-				obj['Coverage (collapsed)'] = (collapsedEstYield/lineObj['target size']).toFixed(2);
-				obj['Coverage (raw)'] = (rawEstYield/lineObj['target size']).toFixed(2);
-			} else {
-				console.log(jsonFile + " does not exist");
-
-				// Reads per start point
-				obj['Reads/SP'] = 'n/a';
-				obj['Map %'] = 'n/a';
-				obj['Reads'] = 'n/a';
-				obj['Yield'] = 'n/a';
-				obj['% on Target'] = 'n/a';
-				obj['Insert Mean'] = 'n/a';
-				obj['Insert Stdev'] = 'n/a';
-				obj['Read Length'] = 'n/a';
-				obj['Coverage (collapsed)'] = 'n/a';
-				obj['Coverage (raw)'] = 'n/a';
-			}
-		});
-	}
-
-	// Get Mouse Data
-	if (typeof xenomeFile !== 'undefined') {
-		var xenomeLog = fs.readFileSync(xenomeFile, 'utf8');
-		var lines = xenomeLog.toString().split('\n');
-		var match;
-		for (var i = 0; i < lines.length; i++){
-			if (/\t(.*)\tmouse?/.test(lines[i])) {
-				match = /\t(.*)\tmouse?/.exec(lines[i]);
-			}
+		if (rawReads > 0) {
+			obj['Map %'] = ((lineObj['mapped reads']/rawReads)*100).toFixed(2) + '%';
+			obj['Reads'] = rawReads;
+			obj['Yield'] = parseInt(rawReads*lineObj['average read length']);
+		} else {
+			obj['Map %'] = 0;
+			obj['Reads'] = 0;
+			obj['Yield'] = 0;
 		}
-		obj['% Mouse Content'] = parseFloat(match[1]).toFixed(2);
+
+		// % on Target
+		obj['% on Target'] = (onTargetRate*100).toFixed(2) + '%';
+
+		// Insert mean, insert stdev, read length
+		if (lineObj['number of ends'] === 'paired end') {
+			obj['Insert Mean'] = parseFloat(lineObj['insert mean']).toFixed(2);
+			obj['Insert Stdev'] = parseFloat(lineObj['insert stdev']).toFixed(2);
+			obj['Read Length'] = lineObj['read 1 average length'] + ',' + lineObj['read 2 average length'];
+		} else {
+			obj['Insert Mean'] = 'n/a';
+			obj['Insert Stdev'] = 'n/a';
+			obj['Read Length'] = lineObj['read ? average length'];
+		}
+
+		// Coverage
+		var rawEstYield = lineObj['aligned bases'] * onTargetRate;
+		var collapsedEstYield = rawEstYield/readsSP;
+
+		obj['Coverage (collapsed)'] = (collapsedEstYield/lineObj['target size']).toFixed(2);
+		obj['Coverage (raw)'] = (rawEstYield/lineObj['target size']).toFixed(2);
 	} else {
-		obj['% Mouse Content'] = 'N/A';
+		console.log(jsonFile + " does not exist");
+
+		// Reads per start point
+		obj['Reads/SP'] = 'n/a';
+		obj['Map %'] = 'n/a';
+		obj['Reads'] = 'n/a';
+		obj['Yield'] = 'n/a';
+		obj['% on Target'] = 'n/a';
+		obj['Insert Mean'] = 'n/a';
+		obj['Insert Stdev'] = 'n/a';
+		obj['Read Length'] = 'n/a';
+		obj['Coverage (collapsed)'] = 'n/a';
+		obj['Coverage (raw)'] = 'n/a';
 	}
+	if (typeof xenomeFile !== 'undefined') {
+		var xenomeExists = fs.existsSync(xenomeFile);
+		if (xenomeExists) {
+			var xenomeLog = fs.readFileSync(xenomeFile, 'utf8');
+			var lines = xenomeLog.toString().split('\n');
+			var match;
+			for (var i = 0; i < lines.length; i++){
+				if (/\t(.*)\tmouse?/.test(lines[i])) {
+					match = /\t(.*)\tmouse?/.exec(lines[i]);
+				}
+			}
+			obj['% Mouse Content'] = parseFloat(match[1]).toFixed(2);
+		} else {
+			//console.log(xenomeFile + " does not exist");
+			obj['% Mouse Content'] = 'N/A';
+		}
+	}
+	//console.log(obj);
 	return obj;
 }
 
@@ -861,20 +864,30 @@ exports.updateIUSSWIDReportData = function (fprData) {
 		if (err) console.error(err);
 		var batch = db.collection('IUSSWIDReportData').initializeUnorderedBulkOp();
 		db.collection('IUSSWIDReportData').createIndex({'iusswid': 1}, {unique: true}, function (err, result) {
-			// Individual library report data
-			for (var IUSSWID in fprData['Library']) {
-				var json = fprData['Library'][IUSSWID]['JSON'];
-				var xenomeFile = fprData['Library'][IUSSWID]['XenomeFile'];
-				var obj = {};
-				obj = getReportData(json, xenomeFile);
-				obj['iusswid'] = IUSSWID;
-
-				//Update in mongodb
-				batch.find({iusswid: IUSSWID}).upsert().updateOne(obj);
-			}
-			batch.execute(function(err, result) {
-				if (err) console.dir(err);
-				db.close();
+			var ids = [];
+			findReportDocumentsIUSSWID(ids, 'IUSSWIDReportData', db, function (err) {
+				var newIUSSWID = _.difference(Object.keys(fprData['Library']), ids);
+				// Individual library report data
+				for (var i = 0; i < newIUSSWID.length; i++) {
+					//console.log(newIUSSWID[i]);
+					if (typeof fprData['Library'][newIUSSWID[i]]['JSON'] !== 'undefined') {
+						var json = fprData['Library'][newIUSSWID[i]]['JSON'];
+						var xenomeFile = fprData['Library'][newIUSSWID[i]]['XenomeFile'];
+						var obj = {};
+						obj = getReportData(json, xenomeFile, newIUSSWID[i]);
+					
+						//Update in mongodb
+						batch.find({iusswid: newIUSSWID[i]}).upsert().updateOne(obj);
+					}
+				}
+				if (batch.s.currentBatch !== null) {
+					batch.execute(function(err, result) {
+						if (err) console.dir(err);
+						db.close();
+					});
+				} else {
+					db.close();
+				}
 			});
 		});
 	});
@@ -885,135 +898,154 @@ exports.updateIUSSWIDReportData = function (fprData) {
  * @param {zip} zipFile
  * @return {object} RNASeqQCData
  */
-function getRNASeqQCData(zipFile) {
-	var zip = new AdmZip(zipFile);
-	var zipEntries = zip.getEntries();
-	var dir = zipEntries[0].entryName;
-	var obj = {};
+function getRNASeqQCData(zipFile, IUSSWID) {
+	zipExists = fs.existsSync(zipFile);
+	if (zipExists) {
+		var zip = new AdmZip(zipFile);
+		var zipEntries = zip.getEntries();
+		var dir = zipEntries[0].entryName;
+		var obj = {};
 
-	var picard;
-	var metrics;
-	var uniq;
-	var contam;
-	var TOTAL_READS = 0;
-	var RIBOSOMAL_READS;
-	var UNIQ_READS;
-	var START_POINTS;
+		var picard;
+		var metrics;
+		var uniq;
+		var contam;
+		var TOTAL_READS = 0;
+		var RIBOSOMAL_READS;
+		var UNIQ_READS;
+		var START_POINTS;
 
-	// Read from zip files without extracting
-	zipEntries.forEach(function(zipEntry) {
-		// Data
-		if (zipEntry.name === 'CollectRNASeqMetricsSummary.txt'){
-			picard = zipEntry.getData().toString('utf8').split('\n');
-			metrics = picard[1].split('\t');
-		} else if (zipEntry.name === 'ReadsPerStartPoint.txt'){
-			uniq = zipEntry.getData().toString('utf8').split('\n');
-		} else if (zipEntry.name === 'rRNAcontaminationSummary.txt'){
-			contam = zipEntry.getData().toString('utf8').split('\n');
-		// Graphs (images to base64)
-		} else if (zipEntry.name === 'pieChart.jpeg'){
-			//console.log(zipEntry.getData().toString());
-			obj['Bases Breakdown'] = zipEntry.getData().toString('base64');
-		} else if (/.*\.junctionSaturation_plot\.jpeg/.test(zipEntry.name)){
-			obj['Junction Saturation'] = zipEntry.getData().toString('base64');
-		} else if (/.*\.geneBodyCoverage\.curves\.jpeg/.test(zipEntry.name) || /.*\.geneBodyCoverage\.jpeg/.test(zipEntry.name)){
-			obj['RSeQC Gene Body Coverage'] = zipEntry.getData().toString('base64');
+		// IUSSWID
+		obj['iusswid'] = IUSSWID;
+
+		// Read from zip files without extracting
+		zipEntries.forEach(function(zipEntry) {
+			// Data
+			if (zipEntry.name === 'CollectRNASeqMetricsSummary.txt'){
+				picard = zipEntry.getData().toString('utf8').split('\n');
+				metrics = picard[1].split('\t');
+			} else if (zipEntry.name === 'ReadsPerStartPoint.txt'){
+				uniq = zipEntry.getData().toString('utf8').split('\n');
+			} else if (zipEntry.name === 'rRNAcontaminationSummary.txt'){
+				contam = zipEntry.getData().toString('utf8').split('\n');
+			// Graphs (images to base64)
+			} else if (zipEntry.name === 'pieChart.jpeg'){
+				//console.log(zipEntry.getData().toString());
+				obj['Bases Breakdown'] = zipEntry.getData().toString('base64');
+			} else if (/.*\.junctionSaturation_plot\.jpeg/.test(zipEntry.name)){
+				obj['Junction Saturation'] = zipEntry.getData().toString('base64');
+			} else if (/.*\.geneBodyCoverage\.curves\.jpeg/.test(zipEntry.name) || /.*\.geneBodyCoverage\.jpeg/.test(zipEntry.name)){
+				obj['RSeQC Gene Body Coverage'] = zipEntry.getData().toString('base64');
+			}
+		});
+
+		//Parse Metrics
+		// Read/Start Point Metrics
+		UNIQ_READS = uniq[0];
+		START_POINTS = uniq[1]+'\n';
+		// RNA Summary Metrics
+		for (var i = 0; i < contam.length; i++) {
+			if (/total/.exec(contam[i])) {
+				var parts = contam[i].split(' ');
+				TOTAL_READS = parts[0];
+			}
+			if (/0 mapped/.exec(contam[i])) {
+				var parts = contam[i].split(' ');
+				RIBOSOMAL_READS = parts[0];
+			}
 		}
-	});
+		
+		// Picard
+		var PF_BASES=metrics[0];
+		var PF_ALIGNED_BASES=metrics[1];
+		//***var RIBOSOMAL_BASES=metrics[2];
+		var CODING_BASES=metrics[3];
+		var UTR_BASES=metrics[4];
+		var INTRONIC_BASES=metrics[5];
+		var INTERGENIC_BASES=metrics[6];
+		var IGNORED_READS=metrics[7];
+		var CORRECT_STRAND_READS=metrics[8];
+		var INCORRECT_STRAND_READS=metrics[9];
+		var PCT_RIBOSOMAL_BASES=metrics[10];
+		var PCT_CODING_BASES=metrics[11];
+		var PCT_UTR_BASES=metrics[12];
+		var PCT_INTRONIC_BASES=metrics[13];
+		var PCT_INTERGENIC_BASES=metrics[14];
+		var PCT_MRNA_BASES=metrics[15];
+		var PCT_USABLE_BASES=metrics[16];
+		var PCT_CORRECT_STRAND_READS=metrics[17];
+		var MEDIAN_CV_COVERAGE=metrics[18];
+		var MEDIAN_5PRIME_BIAS=metrics[19];
+		var MEDIAN_3PRIME_BIAS=metrics[20];
+		var MEDIAN_5PRIME_TO_3PRIME_BIAS=metrics[21];
 
-	//Parse Metrics
-	// Read/Start Point Metrics
-	UNIQ_READS = uniq[0];
-	START_POINTS = uniq[1]+'\n';
-	// RNA Summary Metrics
-	for (var i = 0; i < contam.length; i++) {
-		if (/total/.exec(contam[i])) {
-			var parts = contam[i].split(' ');
-			TOTAL_READS = parts[0];
+		// Add to object
+		obj['Total Reads'] = TOTAL_READS; // including unaligned
+		obj['Uniq Reads'] = UNIQ_READS;
+		// Reads per start point
+		if (START_POINTS != 0) {
+			obj['Reads/SP'] = (UNIQ_READS/START_POINTS).toFixed(2);
+		} else {
+			obj['Reads/SP'] = '#Start Points Job Failed -> rerun!'
 		}
-		if (/0 mapped/.exec(contam[i])) {
-			var parts = contam[i].split(' ');
-			RIBOSOMAL_READS = parts[0];
+		obj['Yield'] = PF_BASES; // Passed Filter Bases
+		/*
+		obj['Passed Filter Aligned Bases'] = PF_ALIGNED_BASES;
+		obj['Coding Bases'] = CODING_BASES;
+		obj['UTR Bases'] = UTR_BASES;
+		obj['Intronic Bases'] = INTRONIC_BASES;
+		obj['Intergenic Bases'] = INTERGENIC_BASES;
+		if (CORRECT_STRAND_READS !== 0) {
+			obj['Correct Strand Reads'] = CORRECT_STRAND_READS;
+		} else {
+			obj['Correct Strand Reads'] = 'Not a Strand Specific Library';
 		}
-	}
-	
-	// Picard
-	var PF_BASES=metrics[0];
-	var PF_ALIGNED_BASES=metrics[1];
-	//***var RIBOSOMAL_BASES=metrics[2];
-	var CODING_BASES=metrics[3];
-	var UTR_BASES=metrics[4];
-	var INTRONIC_BASES=metrics[5];
-	var INTERGENIC_BASES=metrics[6];
-	var IGNORED_READS=metrics[7];
-	var CORRECT_STRAND_READS=metrics[8];
-	var INCORRECT_STRAND_READS=metrics[9];
-	var PCT_RIBOSOMAL_BASES=metrics[10];
-	var PCT_CODING_BASES=metrics[11];
-	var PCT_UTR_BASES=metrics[12];
-	var PCT_INTRONIC_BASES=metrics[13];
-	var PCT_INTERGENIC_BASES=metrics[14];
-	var PCT_MRNA_BASES=metrics[15];
-	var PCT_USABLE_BASES=metrics[16];
-	var PCT_CORRECT_STRAND_READS=metrics[17];
-	var MEDIAN_CV_COVERAGE=metrics[18];
-	var MEDIAN_5PRIME_BIAS=metrics[19];
-	var MEDIAN_3PRIME_BIAS=metrics[20];
-	var MEDIAN_5PRIME_TO_3PRIME_BIAS=metrics[21];
 
-	// Add to object
-	obj['Total Reads'] = TOTAL_READS; // including unaligned
-	obj['Uniq Reads'] = UNIQ_READS;
-	// Reads per start point
-	if (START_POINTS != 0) {
-		obj['Reads/SP'] = (UNIQ_READS/START_POINTS).toFixed(2);
-	} else {
-		obj['Reads/SP'] = '#Start Points Job Failed -> rerun!'
-	}
-	obj['Yield'] = PF_BASES; // Passed Filter Bases
-	/*
-	obj['Passed Filter Aligned Bases'] = PF_ALIGNED_BASES;
-	obj['Coding Bases'] = CODING_BASES;
-	obj['UTR Bases'] = UTR_BASES;
-	obj['Intronic Bases'] = INTRONIC_BASES;
-	obj['Intergenic Bases'] = INTERGENIC_BASES;
-	if (CORRECT_STRAND_READS !== 0) {
-		obj['Correct Strand Reads'] = CORRECT_STRAND_READS;
-	} else {
-		obj['Correct Strand Reads'] = 'Not a Strand Specific Library';
-	}
+		if (INCORRECT_STRAND_READS !== 0) {
+			obj['Incorrect Strand Reads'] = INCORRECT_STRAND_READS;
+		} else {
+			obj['Incorrect Strand Reads'] = 'Not a Strand Specific Library';
+		}
 
-	if (INCORRECT_STRAND_READS !== 0) {
-		obj['Incorrect Strand Reads'] = INCORRECT_STRAND_READS;
+		obj['Proportion Coding Bases'] = PCT_CODING_BASES;
+		obj['Proportion UTR Bases'] = PCT_UTR_BASES;
+		obj['Proportion Intronic Bases'] = PCT_INTRONIC_BASES;
+		obj['Proportion Intergenic Bases'] = PCT_INTERGENIC_BASES;
+		obj['Proportion mRNA Bases'] = PCT_MRNA_BASES;
+		obj['Proportion Usable Bases'] = PCT_USABLE_BASES;
+		*/
+		if (PCT_CORRECT_STRAND_READS !== 0) {
+			obj['Proportion Correct Strand Reads'] = PCT_CORRECT_STRAND_READS;
+		} else {
+			obj['Proportion Correct Strand Reads'] = 'Not a Strand Specific Library';
+		}
+		//obj['Median CV Coverage'] = MEDIAN_CV_COVERAGE;
+		//obj['Median 5Prime Bias'] = MEDIAN_5PRIME_BIAS;
+		//obj['Median 3Prime Bias'] = MEDIAN_3PRIME_BIAS;
+		obj['Median 5Prime to 3Prime Bias'] = MEDIAN_5PRIME_TO_3PRIME_BIAS;
+		// rRNA Contamination (%reads aligned)
+		if (TOTAL_READS !== 0) {
+			obj['% rRNA Content'] = ((RIBOSOMAL_READS/TOTAL_READS)*100).toFixed(2);
+		} else {
+			obj['% rRNA Content'] = 'Total Reads Job Failed -> re-run report';
+		}
 	} else {
-		obj['Incorrect Strand Reads'] = 'Not a Strand Specific Library';
-	}
+		console.log(zipFile + " does not exist");
 
-	obj['Proportion Coding Bases'] = PCT_CODING_BASES;
-	obj['Proportion UTR Bases'] = PCT_UTR_BASES;
-	obj['Proportion Intronic Bases'] = PCT_INTRONIC_BASES;
-	obj['Proportion Intergenic Bases'] = PCT_INTERGENIC_BASES;
-	obj['Proportion mRNA Bases'] = PCT_MRNA_BASES;
-	obj['Proportion Usable Bases'] = PCT_USABLE_BASES;
-	*/
-	if (PCT_CORRECT_STRAND_READS !== 0) {
-		obj['Proportion Correct Strand Reads'] = PCT_CORRECT_STRAND_READS;
-	} else {
-		obj['Proportion Correct Strand Reads'] = 'Not a Strand Specific Library';
-	}
-	//obj['Median CV Coverage'] = MEDIAN_CV_COVERAGE;
-	//obj['Median 5Prime Bias'] = MEDIAN_5PRIME_BIAS;
-	//obj['Median 3Prime Bias'] = MEDIAN_3PRIME_BIAS;
-	obj['Median 5Prime to 3Prime Bias'] = MEDIAN_5PRIME_TO_3PRIME_BIAS;
-	// rRNA Contamination (%reads aligned)
-	if (TOTAL_READS !== 0) {
-		obj['% rRNA Content'] = ((RIBOSOMAL_READS/TOTAL_READS)*100).toFixed(2);
-	} else {
-		obj['% rRNA Content'] = 'Total Reads Job Failed -> re-run report';
+		// Add to object
+		obj['Bases Breakdown'] = 'n/a';
+		obj['Junction Saturation'] = 'n/a';
+		obj['RSeQC Gene Body Coverage'] = 'n/a';
+		obj['Total Reads'] = 'n/a';
+		obj['Uniq Reads'] = 'n/a';
+		obj['Reads/SP'] = 'n/a';
+		obj['Yield'] = 'n/a';
+		obj['Proportion Correct Strand Reads'] = 'n/a';
+		obj['Median 5Prime to 3Prime Bias'] = 'n/a';
+		obj['% rRNA Content'] = 'n/a';
 	}
 	return obj;
 }
-
 /** IUSSWID
  * returns all RNA Seq QC data to mongodb
  * @param {json} fprData
@@ -1023,19 +1055,27 @@ exports.updateIUSSWIDRNASeqQCData = function (fprData) {
 		if (err) console.error(err);
 		var batch = db.collection('IUSSWIDRNASeqQCData').initializeUnorderedBulkOp();
 		db.collection('IUSSWIDRNASeqQCData').createIndex({'iusswid': 1}, {unique: true}, function (err, result) {
-			for (var IUSSWID in fprData['Library']) {
-				if (typeof fprData['Library'][IUSSWID]['RNAZipFile'] !== 'undefined') {
-					var obj = {};
-					obj = getRNASeqQCData(fprData['Library'][IUSSWID]['RNAZipFile']);
-					obj['iusswid'] = IUSSWID;
+			var ids = [];
+			findReportDocumentsIUSSWID(ids, 'IUSSWIDRNASeqQCData', db, function (err) {
+				var newIUSSWID = _.difference(Object.keys(fprData['Library']), ids);
+				// RNA Seq QC Data
+				for (var i = 0; i < newIUSSWID.length; i++) {
+					if (typeof fprData['Library'][newIUSSWID[i]]['RNAZipFile'] !== 'undefined') {
+						var obj = {};
+						obj = getRNASeqQCData(fprData['Library'][newIUSSWID[i]]['RNAZipFile'], newIUSSWID[i]);
 
-					//Update in mongodb
-					batch.find({iusswid: IUSSWID}).upsert().updateOne(obj);
+						//Update in mongodb
+						batch.find({iusswid: newIUSSWID[i]}).upsert().updateOne(obj);	
+					}
 				}
-			}
-			batch.execute(function(err, result) {
-				if (err) console.dir(err);
-				db.close();
+				if (batch.s.currentBatch !== null) {
+					batch.execute(function(err, result) {
+						if (err) console.dir(err);
+						db.close();
+					});
+				} else {
+					db.close();
+				}
 			});
 		});
 	});
@@ -1045,129 +1085,144 @@ exports.updateIUSSWIDRNASeqQCData = function (fprData) {
  * returns graph data
  * @param {json} fprData
  */
+
 exports.updateGraphData = function (fprData) {
 	// Charts generated using Google charts
 	MongoClient.connect(url, function (err, db) {
 		if (err) console.error(err);
 		var batch = db.collection('IUSSWIDGraphData').initializeUnorderedBulkOp();
 		db.collection('IUSSWIDGraphData').createIndex({'iusswid': 1}, {unique: true}, function (err, result) {
-			for (var IUSSWID in fprData['Library']) {
-				// Get graph data from JSON file
-				if (typeof fprData['Library'][IUSSWID]['JSON'] !== 'undefined') {
-					var jsonString = fs.readFileSync(fprData['Library'][IUSSWID]['JSON'], 'utf8');
-					var lineObj = JSON.parse(jsonString);
+			var ids = [];
+			findReportDocumentsIUSSWID(ids, 'IUSSWIDGraphData', db, function (err) {
+				var newIUSSWID = _.difference(Object.keys(fprData['Library']), ids);
+				for (var i = 0; i < newIUSSWID.length; i++) {
+					//console.log(fprData['Library'][newIUSSWID[i]]);
+					if (typeof fprData['Library'][newIUSSWID[i]]['JSON'] !== 'undefined') {
+						// Get graph data from JSON file
+						jsonExists = fs.existsSync(fprData['Library'][newIUSSWID[i]]['JSON']);
+						if (jsonExists) {
+							var jsonString = fs.readFileSync(fprData['Library'][newIUSSWID[i]]['JSON'], 'utf8');
+							var lineObj = JSON.parse(jsonString);
 
-					if (typeof lineObj['barcode'] === 'undefined'){
-						lineObj['barcode'] = 'NoIndex';
-					}
-					var title = lineObj['run name'] + ' Lane: ' + lineObj['lane'] + ' Barcode: ' + lineObj['barcode'] + ' Library: ' + lineObj['library'];
-					var graphData = {};
-					graphData['iusswid'] = IUSSWID;
-					graphData['Read Breakdown'] = {};
-					graphData['Insert Distribution'] = {};
-					graphData['Soft Clip by Cycle'] = {};
-					graphData['Title'] = title;
+							if (typeof lineObj['barcode'] === 'undefined'){
+								lineObj['barcode'] = 'NoIndex';
+							}
+							var title = lineObj['run name'] + ' Lane: ' + lineObj['lane'] + ' Barcode: ' + lineObj['barcode'] + ' Library: ' + lineObj['library'];
+							var graphData = {};
+							graphData['iusswid'] = newIUSSWID[i];
+							graphData['Read Breakdown'] = {};
+							graphData['Insert Distribution'] = {};
+							graphData['Soft Clip by Cycle'] = {};
+							graphData['Title'] = title;
 
-					// pie chart - read breakdown
-					// initialize variables
-					var pieArray = ['Number'];
-					var colors = ['#878BB6', '#4ACAB4', '#FF8153', '#FFEA88'];
-					var labels = ['Reads', 'on target', 'off target', 'repeat/low quality', 'unmapped'];
-					pieArray.push(parseInt(lineObj['mapped reads']));
-					pieArray.push(parseInt(lineObj['mapped reads']) - parseInt(lineObj['reads on target']));
-					pieArray.push(parseInt(lineObj['qual fail reads']));
-					pieArray.push(parseInt(lineObj['unmapped reads']));
+							// pie chart - read breakdown
+							// initialize variables
+							var pieArray = ['Number'];
+							var colors = ['#878BB6', '#4ACAB4', '#FF8153', '#FFEA88'];
+							var labels = ['Reads', 'on target', 'off target', 'repeat/low quality', 'unmapped'];
+							pieArray.push(parseInt(lineObj['mapped reads']));
+							pieArray.push(parseInt(lineObj['mapped reads']) - parseInt(lineObj['reads on target']));
+							pieArray.push(parseInt(lineObj['qual fail reads']));
+							pieArray.push(parseInt(lineObj['unmapped reads']));
 
-					graphData['Read Breakdown']['Colors'] = colors;
-					graphData['Read Breakdown']['Labels'] = labels;
-					graphData['Read Breakdown']['Data'] = pieArray;
-					
-					// area chart - insert distribution
-					var xValInsert = [{label: 'Insert size', id: 'Insert size', type: 'number'}];
-					var yValInsert = [{label: 'Pairs', id: 'Pairs', type: 'number'}];
-					var insertColors = [{type: 'string', role: 'style'}];
-					var red = '#FF4D4D';
-					var yellow = '#FFFF4D';
-					var green = '#A6FF4D';
-					var insertMean = parseInt(lineObj['insert mean']);
-					var histObj = lineObj['insert histogram'];
-					var insertMax = 650;
-					var insertStep = 50;
-					for (var i in histObj) {
-						if (i < insertMax) {
-							xValInsert.push(i);
-							yValInsert.push(histObj[i]);
-						}
-					}
-					for (var i = 0; i < xValInsert.length; i++) {
-						if ((xValInsert[i] < (insertMean - (2 * insertStep))) || (xValInsert[i] > (insertMean + (2 * insertStep)))) {
-							insertColors.push(red);
-						} else if ((xValInsert[i] < (insertMean - insertStep)) || (xValInsert[i] > (insertMean + insertStep))) {
-							insertColors.push(yellow);
-						} else {
-							insertColors.push(green);
-						}
-					}
-
-				    graphData['Insert Distribution']['x values'] = xValInsert;
-				    graphData['Insert Distribution']['y values'] = yValInsert;
-				    graphData['Insert Distribution']['Colors'] = insertColors;
-
-				    // area chart - soft clip by cycle
-					var readArray = ['read 1', 'read 2', 'read ?'];
-					var alignedObj = {};
-					var insertObj = {};
-					for (var i = 0; i < readArray.length; i++) {
-						alignedObj[readArray[i]] = {};
-						insertObj[readArray[i]] = {};
-						alignedObj[readArray[i]] = lineObj[readArray[i] + ' aligned by cycle'];
-						insertObj[readArray[i]] = lineObj[readArray[i] + ' insertion by cycle'];
-					}
-
-					var xValSoft = [{label: 'Cycle', id: 'Cycle', type: 'number'}];
-					var yValSoft = [{label: '% Bases Soft Clipped', id: '% Bases Soft Clipped', type: 'number'}];
-					var read1max = 0;
-					var errorObj;
-					for (var i = 0; i < readArray.length; i++) {
-						if (Object.keys(lineObj[readArray[i] + ' soft clip by cycle']).length > 0) {
-							errorObj = lineObj[readArray[i] + ' soft clip by cycle'];
-							for (var j in errorObj) {
-								j = parseInt(j);
-								if (lineObj['number of ends'] === 'single end'){
-									xValSoft.push(j);
+							graphData['Read Breakdown']['Colors'] = colors;
+							graphData['Read Breakdown']['Labels'] = labels;
+							graphData['Read Breakdown']['Data'] = pieArray;
+							
+							// area chart - insert distribution
+							var xValInsert = [{label: 'Insert size', id: 'Insert size', type: 'number'}];
+							var yValInsert = [{label: 'Pairs', id: 'Pairs', type: 'number'}];
+							var insertColors = [{type: 'string', role: 'style'}];
+							var red = '#FF4D4D';
+							var yellow = '#FFFF4D';
+							var green = '#A6FF4D';
+							var insertMean = parseInt(lineObj['insert mean']);
+							var histObj = lineObj['insert histogram'];
+							var insertMax = 650;
+							var insertStep = 50;
+							for (var i in histObj) {
+								if (i < insertMax) {
+									xValInsert.push(i);
+									yValInsert.push(histObj[i]);
+								}
+							}
+							for (var i = 0; i < xValInsert.length; i++) {
+								if ((xValInsert[i] < (insertMean - (2 * insertStep))) || (xValInsert[i] > (insertMean + (2 * insertStep)))) {
+									insertColors.push(red);
+								} else if ((xValInsert[i] < (insertMean - insertStep)) || (xValInsert[i] > (insertMean + insertStep))) {
+									insertColors.push(yellow);
 								} else {
+									insertColors.push(green);
+								}
+							}
+
+						    graphData['Insert Distribution']['x values'] = xValInsert;
+						    graphData['Insert Distribution']['y values'] = yValInsert;
+						    graphData['Insert Distribution']['Colors'] = insertColors;
+
+						    // area chart - soft clip by cycle
+							var readArray = ['read 1', 'read 2', 'read ?'];
+							var alignedObj = {};
+							var insertObj = {};
+							for (var i = 0; i < readArray.length; i++) {
+								alignedObj[readArray[i]] = {};
+								insertObj[readArray[i]] = {};
+								alignedObj[readArray[i]] = lineObj[readArray[i] + ' aligned by cycle'];
+								insertObj[readArray[i]] = lineObj[readArray[i] + ' insertion by cycle'];
+							}
+
+							var xValSoft = [{label: 'Cycle', id: 'Cycle', type: 'number'}];
+							var yValSoft = [{label: '% Bases Soft Clipped', id: '% Bases Soft Clipped', type: 'number'}];
+							var read1max = 0;
+							var errorObj;
+							for (var i = 0; i < readArray.length; i++) {
+								if (Object.keys(lineObj[readArray[i] + ' soft clip by cycle']).length > 0) {
+									errorObj = lineObj[readArray[i] + ' soft clip by cycle'];
+									for (var j in errorObj) {
+										j = parseInt(j);
+										if (lineObj['number of ends'] === 'single end'){
+											xValSoft.push(j);
+										} else {
+											if (readArray[i] === 'read 1') {
+												xValSoft.push(j);
+												read1max++;
+											} else if (readArray[i] === 'read 2') {
+												xValSoft.push(j + read1max);
+											}
+										}
+										if (alignedObj[readArray[i]][j] + insertObj[readArray[i]][j] + errorObj[j] > 0) {
+											yValSoft.push((errorObj[j]/(alignedObj[readArray[i]][j] + errorObj[j] + insertObj[readArray[i]][j])) * 100);
+										} else {
+											yValSoft.push(0);
+										}
+									}
 									if (readArray[i] === 'read 1') {
-										xValSoft.push(j);
+										xValSoft.push(read1max);
+										yValSoft.push(0);
 										read1max++;
-									} else if (readArray[i] === 'read 2') {
-										xValSoft.push(j + read1max);
 									}
 								}
-								if (alignedObj[readArray[i]][j] + insertObj[readArray[i]][j] + errorObj[j] > 0) {
-									yValSoft.push((errorObj[j]/(alignedObj[readArray[i]][j] + errorObj[j] + insertObj[readArray[i]][j])) * 100);
-								} else {
-									yValSoft.push(0);
-								}
 							}
-							if (readArray[i] === 'read 1') {
-								xValSoft.push(read1max);
-								yValSoft.push(0);
-								read1max++;
-							}
+
+							graphData['Soft Clip by Cycle']['x values'] = xValSoft;
+							graphData['Soft Clip by Cycle']['y values'] = yValSoft;
+
+							// Update in mongodb
+							batch.find({iusswid: newIUSSWID[i]}).upsert().updateOne(graphData);
+						} else {
+							console.log(fprData['Library'][newIUSSWID[i]]['JSON'] + " does not exist")
 						}
 					}
-
-					graphData['Soft Clip by Cycle']['x values'] = xValSoft;
-					graphData['Soft Clip by Cycle']['y values'] = yValSoft;
-
-					// Update in mongodb
-					batch.find({iusswid: IUSSWID}).upsert().updateOne(graphData);
 				}
-			}
-			batch.execute(function(err, result) {
-				if (err) console.dir(err);
-				db.close();
-			});	
+				if (batch.s.currentBatch !== null) {
+					batch.execute(function(err, result) {
+						if (err) console.dir(err);
+						db.close();
+					});
+				} else {
+					db.close();
+				}
+			});
 		});		
 	});
 }
@@ -1373,7 +1428,7 @@ function getDateTimeString(date) {
  * @param {function} callback
  * @return {array} docs
  */
-function findAllDocuments(docs, collection, db, callback) {
+function findWorkflowDocuments(docs, collection, db, callback) {
 	var cursor = db.collection(collection).find();
 	cursor.each(function(err, doc) {
 		if (err) return console.error(err);
@@ -1384,47 +1439,24 @@ function findAllDocuments(docs, collection, db, callback) {
 			return docs;
 		}
 	});
-};
+}
 
 /**
- * returns all report documents information in a collection
+ * returns all report documents iusswids
  * @param {array} docs
  * @param {db} db
  * @param {function} callback
  * @return {array} docs
  */
-function findReportDocuments(docs, db, callback) {
-	var cursor1 = db.collection('IUSSWIDReportData').find();
-	var cursor2 = db.collection('IUSSWIDRNASeqQCData').find();
-	cursor1.each(function(err, doc) {
+function findReportDocumentsIUSSWID(docs, collection, db, callback) {
+	var cursor = db.collection(collection).find();
+	cursor.each(function(err, doc) {
 		if (err) return console.error(err);
 		if (doc != null) {
-			var obj = {};
-			obj.iusswid = doc.iusswid;
-			obj.run = doc.data['Run Name'];
-			obj.lane = doc.data.Lane;
-			obj.yield = doc.data.Yield;
-			obj.reads = doc.data.Reads;
-			var match = /(\d*.\d*)/.exec(doc.data['% on Target']);
-			obj.target = parseInt(match[1]);
-			docs.push(obj);
+			docs.push(doc.iusswid);
 		} else {
-			cursor2.each(function(err, doc) {
-				if (err) return console.error(err);
-				if (doc != null) {
-					var obj = {};
-					obj.iusswid = doc.iusswid;
-					obj.run = doc.data.run_name;
-					obj.lane = doc.data.lane;
-					obj.yield = parseInt(doc.data.Yield);
-					obj.reads = parseInt(doc.data['Total Reads']);
-					docs.push(obj);
-				} else {
-					callback();
-					console.log(docs);
-					return docs;
-				}
-			});
+			callback();
+			return docs;
 		}
 	});
 }
