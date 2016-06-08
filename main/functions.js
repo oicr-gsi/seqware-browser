@@ -1251,7 +1251,7 @@ function drawGraphsById(id) {
 		console.log('connect');
 
 		db.collection('IUSSWIDGraphData').findOne({iusswid: id}, function (err, item){
-			pieValues = _.zip(item['Read Breakdown']['Labels'], item['Read Breakdown']['Data']);
+			pieValues = _.zip(item['read_breakdown']['labels'], item['read_breakdown']['data']);
 			pieOptions = {
 				title: item['title'] + ' read_breakdown', 
 				width: 600, height: 400, 
