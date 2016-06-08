@@ -519,7 +519,7 @@ exports.updateWorkflowInfo = function (analysisYAML) {
 					var jsonData = result.rows;
 
 					for (var i = 0; i < jsonData.length; i++) {
-						jsonData[i].sw_accession = String(jsonData[i].sw_accession);
+						jsonData[i].sw_accession = jsonData[i].sw_accession;
 						// Update WorkflowInfo
 						var WorkflowInfo_accession = jsonData[i].sw_accession;
 						if (/(.*?)_.*?/.test(jsonData[i].workflow_name)) {
