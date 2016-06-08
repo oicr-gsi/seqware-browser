@@ -593,9 +593,19 @@ exports.updateFileInfo = function (fprData) {
 			// search file provenance report for file data
 			for (var fileSWID in fprData['File']) {
 				var obj = {};
-				obj['fileSWID'] = fileSWID;
+				if (isNaN(parseInt(fileSWID))) {
+					obj['fileSWID'] = fileSWID;
+				}
+				else {
+					obj['fileSWID'] = parseInt(fileSWID);
+				}
 				obj['file_path'] = fprData['File'][fileSWID]['Path'];
-				obj['WorkflowInfo_accession'] = fprData['File'][fileSWID]['WorkflowSWID'];
+				if (isNaN(parseInt(fprData['File'][fileSWID]['WorkflowSWID']))) {
+					obj['WorkflowInfo_accession'] = fprData['File'][fileSWID]['WorkflowSWID'];
+				}
+				else {
+					obj['WorkflowInfo_accession'] = parseInt(fprData['File'][fileSWID]['WorkflowSWID']);
+				}
 
 				batch.find({fileSWID: fileSWID}).upsert().updateOne(obj);
 			}
@@ -780,7 +790,12 @@ function getReportData(jsonFile, xenomeFile, IUSSWID) {
 		var onTargetRate = lineObj['reads on target']/lineObj['mapped reads'];
 
 		// IUSSWID
-		obj['iusswid'] = IUSSWID;
+		if (isNaN(parseInt(IUSSWID))) {
+			obj['iusswid'] = IUSSWID;
+		}
+		else {
+			obj['iusswid'] = parseInt(IUSSWID);
+		}
 
 		// Reads per start point
 		obj['Reads/SP'] = readsSP;
@@ -845,15 +860,52 @@ function getReportData(jsonFile, xenomeFile, IUSSWID) {
 				}
 			}
 			obj['% Mouse Content'] = parseFloat(match[1]).toFixed(2);
-			obj['source'] = 'xenome';
 		} else {
+			//console.log(xenomeFile + " does not exist");
 			obj['% Mouse Content'] = 'N/A';
-			obj['source'] = 'bam_qc';
 		}
 	}
-	obj['type'] = 'dna';
-
+	//console.log(obj);
 	return obj;
+}
+
+/** IUSSWID
+ * updates report data from json file and xenome file into mongodb
+ * @param {json} fprData
+ */
+exports.updateIUSSWIDReportData = function (fprData) {
+	// ALL DATA BASED ON REPORTS FROM JSON FILES
+	MongoClient.connect(url, function(err, db) {
+		if (err) console.error(err);
+		var batch = db.collection('IUSSWIDReportData').initializeUnorderedBulkOp();
+		db.collection('IUSSWIDReportData').createIndex({'iusswid': 1}, {unique: true}, function (err, result) {
+			var ids = [];
+			findReportDocumentsIUSSWID(ids, 'IUSSWIDReportData', db, function (err) {
+				var newIUSSWID = _.difference(Object.keys(fprData['Library']), ids);
+				// Individual library report data
+				for (var i = 0; i < newIUSSWID.length; i++) {
+					//console.log(newIUSSWID[i]);
+					if (typeof fprData['Library'][newIUSSWID[i]]['JSON'] !== 'undefined') {
+						var json = fprData['Library'][newIUSSWID[i]]['JSON'];
+						var xenomeFile = fprData['Library'][newIUSSWID[i]]['XenomeFile'];
+						var obj = {};
+						obj = getReportData(json, xenomeFile, newIUSSWID[i]);
+					
+						//Update in mongodb
+						batch.find({iusswid: newIUSSWID[i]}).upsert().updateOne(obj);
+					}
+				}
+				if (batch.s.currentBatch !== null) {
+					batch.execute(function(err, result) {
+						if (err) console.dir(err);
+						db.close();
+					});
+				} else {
+					db.close();
+				}
+			});
+		});
+	});
 }
 
 /**
@@ -879,7 +931,12 @@ function getRNASeqQCData(zipFile, IUSSWID) {
 		var START_POINTS;
 
 		// IUSSWID
-		obj['iusswid'] = IUSSWID;
+		if (isNaN(parseInt(IUSSWID))) {
+			obj['iusswid'] = IUSSWID;
+		}
+		else {
+			obj['iusswid'] = parseInt(IUSSWID);
+		}
 
 		// Read from zip files without extracting
 		zipEntries.forEach(function(zipEntry) {
@@ -1007,43 +1064,28 @@ function getRNASeqQCData(zipFile, IUSSWID) {
 		obj['Median 5Prime to 3Prime Bias'] = 'n/a';
 		obj['% rRNA Content'] = 'n/a';
 	}
-	obj['type'] = 'rna';
-	obj['source'] = 'rna_seq_qc';
 	return obj;
 }
 /** IUSSWID
- * returns all RNA Seq QC data, json file and xenome file into mongodb
+ * returns all RNA Seq QC data to mongodb
  * @param {json} fprData
  */
-exports.updateIUSSWIDQCData = function (fprData) {
-	// ALL DATA BASED ON REPORTS FROM JSON FILES
+exports.updateIUSSWIDRNASeqQCData = function (fprData) {
 	MongoClient.connect(url, function(err, db) {
 		if (err) console.error(err);
-		var batch = db.collection('QC').initializeUnorderedBulkOp();
-		db.collection('QC').createIndex({'iusswid': 1}, {unique: true}, function (err, result) {
+		var batch = db.collection('IUSSWIDRNASeqQCData').initializeUnorderedBulkOp();
+		db.collection('IUSSWIDRNASeqQCData').createIndex({'iusswid': 1}, {unique: true}, function (err, result) {
 			var ids = [];
-			findReportDocumentsIUSSWID(ids, 'QC', db, function (err) {
+			findReportDocumentsIUSSWID(ids, 'IUSSWIDRNASeqQCData', db, function (err) {
 				var newIUSSWID = _.difference(Object.keys(fprData['Library']), ids);
-				// Individual library report data
+				// RNA Seq QC Data
 				for (var i = 0; i < newIUSSWID.length; i++) {
-					//console.log(newIUSSWID[i]);
 					if (typeof fprData['Library'][newIUSSWID[i]]['RNAZipFile'] !== 'undefined') {
 						var obj = {};
 						obj = getRNASeqQCData(fprData['Library'][newIUSSWID[i]]['RNAZipFile'], newIUSSWID[i]);
 
 						//Update in mongodb
 						batch.find({iusswid: newIUSSWID[i]}).upsert().updateOne(obj);	
-					}
-
-					if (typeof fprData['Library'][newIUSSWID[i]]['JSON'] !== 'undefined') {
-						var json = fprData['Library'][newIUSSWID[i]]['JSON'];
-						var xenomeFile = fprData['Library'][newIUSSWID[i]]['XenomeFile'];
-						//console.log("xenomeFile: "+xenomeFile);
-						var obj = {};
-						obj = getReportData(json, xenomeFile, newIUSSWID[i]);
-					
-						//Update in mongodb
-						batch.find({iusswid: newIUSSWID[i]}).upsert().updateOne(obj);
 					}
 				}
 				if (batch.s.currentBatch !== null) {
@@ -1088,7 +1130,12 @@ exports.updateGraphData = function (fprData) {
 							}
 							var title = lineObj['run name'] + ' Lane: ' + lineObj['lane'] + ' Barcode: ' + lineObj['barcode'] + ' Library: ' + lineObj['library'];
 							var graphData = {};
-							graphData['iusswid'] = newIUSSWID[ius];
+							if (isNaN(parseInt(newIUSSWID[ius]))) {
+								graphData['iusswid'] = newIUSSWID[ius];
+							}
+							else {
+								graphData['iusswid'] = parseInt(newIUSSWID[ius]);
+							}
 							graphData['Read Breakdown'] = {};
 							graphData['Insert Distribution'] = {};
 							graphData['Soft Clip by Cycle'] = {};
