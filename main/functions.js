@@ -79,6 +79,12 @@ exports.updateRunInfo = function (sequencerData) {
 						var returnObj = {};
 						returnObj['run_name'] = sequencerData[i].name;
 						returnObj['start_tstmp'] = getDateTimeString(sequencerData[i].created_date);
+						if (typeof sequencerData[i].completion_date !== 'undefined') {
+							 returnObj['end_tstmp'] = getDateTimeString(sequencerData[i].completion_date);
+						}
+						else {
+							returnObj['end_tstmp'] = "n/a";
+						}
 						returnObj['status'] = sequencerData[i].state;
 
 						// Get all Running sequencer runs
@@ -380,7 +386,7 @@ exports.updateLibraryInfo = function (sequencerData, sampleData, skipData, recei
 				}
 			}
 			for (var unique_id in libraries) {
-				batch.find({library_seqname: unique_id}).upsert().updateOne(libraries[unique_id]);
+				batch.find({library_seqname: unique_id}).upsert().updateOne({$set: libraries[unique_id]});
 			}
 			batch.execute(function(err, result) {
 				if (err) console.dir(err);
@@ -409,8 +415,8 @@ function getLibraryCreatePrepDates(sampleData) {
 			IUSsampleObj[id]['IUS Sample Name'] = sampleData[i].name;
 			IUSsampleObj[id]['Create Date'] = getDateTimeString(sampleData[i].created_date);
 
-			if (/\/(\d*)$/.test(sampleData[i].parents[0])) {
-				var match = /\/(\d*)$/.exec(sampleData[i].parents[0]);
+			if (/\/(\d*)$/.test(sampleData[i].parents[0].url)) {
+				var match = /\/(\d*)$/.exec(sampleData[i].parents[0].url);
 				IUSsampleObj[id]['Parent ID'] = match[1];
 			}
 		} else { // Not a library seq (parents) everything else
@@ -420,8 +426,8 @@ function getLibraryCreatePrepDates(sampleData) {
 			parentObj[id]['Sample Type'] = sampleData[i].sample_type;
 			if (typeof sampleData[i].parents !== 'undefined') {
 				// get the parent id
-				if (/\/(\d*)$/.test(sampleData[i].parents[0])) {
-					var match = /\/(\d*)$/.exec(sampleData[i].parents[0]);
+				if (/\/(\d*)$/.test(sampleData[i].parents[0].url)) {
+					var match = /\/(\d*)$/.exec(sampleData[i].parents[0].url);
 					parentObj[id]['Parent ID'] = match[1];
 				}
 			} else {
@@ -593,19 +599,9 @@ exports.updateFileInfo = function (fprData) {
 			// search file provenance report for file data
 			for (var fileSWID in fprData['File']) {
 				var obj = {};
-				if (isNaN(parseInt(fileSWID))) {
-					obj['fileSWID'] = fileSWID;
-				}
-				else {
-					obj['fileSWID'] = parseInt(fileSWID);
-				}
+				obj['fileSWID'] = fileSWID;
 				obj['file_path'] = fprData['File'][fileSWID]['Path'];
-				if (isNaN(parseInt(fprData['File'][fileSWID]['WorkflowSWID']))) {
-					obj['WorkflowInfo_accession'] = fprData['File'][fileSWID]['WorkflowSWID'];
-				}
-				else {
-					obj['WorkflowInfo_accession'] = parseInt(fprData['File'][fileSWID]['WorkflowSWID']);
-				}
+				obj['WorkflowInfo_accession'] = fprData['File'][fileSWID]['WorkflowSWID'];
 
 				batch.find({fileSWID: fileSWID}).upsert().updateOne(obj);
 			}
@@ -790,12 +786,7 @@ function getReportData(jsonFile, xenomeFile, IUSSWID) {
 		var onTargetRate = lineObj['reads on target']/lineObj['mapped reads'];
 
 		// IUSSWID
-		if (isNaN(parseInt(IUSSWID))) {
-			obj['iusswid'] = IUSSWID;
-		}
-		else {
-			obj['iusswid'] = parseInt(IUSSWID);
-		}
+		obj['iusswid'] = IUSSWID;
 
 		// Reads per start point
 		obj['Reads/SP'] = readsSP;
@@ -931,12 +922,7 @@ function getRNASeqQCData(zipFile, IUSSWID) {
 		var START_POINTS;
 
 		// IUSSWID
-		if (isNaN(parseInt(IUSSWID))) {
-			obj['iusswid'] = IUSSWID;
-		}
-		else {
-			obj['iusswid'] = parseInt(IUSSWID);
-		}
+		obj['iusswid'] = IUSSWID;
 
 		// Read from zip files without extracting
 		zipEntries.forEach(function(zipEntry) {
@@ -1130,12 +1116,7 @@ exports.updateGraphData = function (fprData) {
 							}
 							var title = lineObj['run name'] + ' Lane: ' + lineObj['lane'] + ' Barcode: ' + lineObj['barcode'] + ' Library: ' + lineObj['library'];
 							var graphData = {};
-							if (isNaN(parseInt(newIUSSWID[ius]))) {
-								graphData['iusswid'] = newIUSSWID[ius];
-							}
-							else {
-								graphData['iusswid'] = parseInt(newIUSSWID[ius]);
-							}
+							graphData['iusswid'] = newIUSSWID[ius];
 							graphData['Read Breakdown'] = {};
 							graphData['Insert Distribution'] = {};
 							graphData['Soft Clip by Cycle'] = {};
