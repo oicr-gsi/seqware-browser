@@ -263,8 +263,8 @@ exports.updateLibraryInfo = function (sequencerData, sampleData, skipData, recei
 								}
 								// Determine create and prepared dates
 								if (typeof sampleDateInfo[id] !== 'undefined') {
-									libraries[unique_id].create_tstmp = sampleDateInfo[id]['create_tstmp'];
-									libraries[unique_id].prep_tstmp = sampleDateInfo[id]['prep_tstmp'];
+									libraries[unique_id].create_tstmp = new Date(sampleDateInfo[id]['create_tstmp']);
+									libraries[unique_id].prep_tstmp = new Date(sampleDateInfo[id]['prep_tstmp']);
 								} else {
 									libraries[unique_id].create_tstmp = 'n/a';
 									libraries[unique_id].prep_tstmp = 'n/a';
@@ -298,7 +298,7 @@ exports.updateLibraryInfo = function (sequencerData, sampleData, skipData, recei
 										}
 									}
 									if (typeof sampleReceiveInfo[donor] !== 'undefined') {
-										libraries[unique_id].receive_tstmp = sampleReceiveInfo[donor];
+										libraries[unique_id].receive_tstmp = new Date(sampleReceiveInfo[donor]);
 									} else {
 										libraries[unique_id].receive_tstmp = 'n/a';
 									}
@@ -331,8 +331,8 @@ exports.updateLibraryInfo = function (sequencerData, sampleData, skipData, recei
 						}
 						// Determine create and prepared dates
 						if (typeof sampleDateInfo[id] !== 'undefined') {
-							libraries[unique_id].create_tstmp = sampleDateInfo[id]['create_tstmp'];
-							libraries[unique_id].prep_tstmp = sampleDateInfo[id]['prep_tstmp'];
+							libraries[unique_id].create_tstmp = new Date(sampleDateInfo[id]['create_tstmp']);
+							libraries[unique_id].prep_tstmp = new Date(sampleDateInfo[id]['prep_tstmp']);
 						} else {
 							libraries[unique_id].create_tstmp = 'n/a';
 							libraries[unique_id].prep_tstmp = 'n/a';
@@ -365,7 +365,7 @@ exports.updateLibraryInfo = function (sequencerData, sampleData, skipData, recei
 								}
 							}
 							if (typeof sampleReceiveInfo[donor] !== 'undefined') {
-								libraries[unique_id].receive_tstmp = sampleReceiveInfo[donor];
+								libraries[unique_id].receive_tstmp = new Date(sampleReceiveInfo[donor]);
 							} else {
 								libraries[unique_id].receive_tstmp = 'n/a';
 							}
@@ -593,19 +593,9 @@ exports.updateFileInfo = function (fprData) {
 			// search file provenance report for file data
 			for (var fileSWID in fprData['File']) {
 				var obj = {};
-				if (isNaN(parseInt(fileSWID))) {
-					obj['fileSWID'] = fileSWID;
-				}
-				else {
-					obj['fileSWID'] = parseInt(fileSWID);
-				}
+				obj['fileSWID'] = fileSWID;
 				obj['file_path'] = fprData['File'][fileSWID]['Path'];
-				if (isNaN(parseInt(fprData['File'][fileSWID]['WorkflowSWID']))) {
-					obj['WorkflowInfo_accession'] = fprData['File'][fileSWID]['WorkflowSWID'];
-				}
-				else {
-					obj['WorkflowInfo_accession'] = parseInt(fprData['File'][fileSWID]['WorkflowSWID']);
-				}
+				obj['WorkflowInfo_accession'] = fprData['File'][fileSWID]['WorkflowSWID'];
 
 				batch.find({fileSWID: fileSWID}).upsert().updateOne(obj);
 			}
@@ -790,12 +780,7 @@ function getReportData(jsonFile, xenomeFile, IUSSWID) {
 		var onTargetRate = lineObj['reads on target']/lineObj['mapped reads'];
 
 		// IUSSWID
-		if (isNaN(parseInt(IUSSWID))) {
-			obj['iusswid'] = IUSSWID;
-		}
-		else {
-			obj['iusswid'] = parseInt(IUSSWID);
-		}
+		obj['iusswid'] = IUSSWID;
 
 		// Reads per start point
 		obj['Reads/SP'] = readsSP;
@@ -931,12 +916,7 @@ function getRNASeqQCData(zipFile, IUSSWID) {
 		var START_POINTS;
 
 		// IUSSWID
-		if (isNaN(parseInt(IUSSWID))) {
-			obj['iusswid'] = IUSSWID;
-		}
-		else {
-			obj['iusswid'] = parseInt(IUSSWID);
-		}
+		obj['iusswid'] = IUSSWID;
 
 		// Read from zip files without extracting
 		zipEntries.forEach(function(zipEntry) {
@@ -1130,12 +1110,7 @@ exports.updateGraphData = function (fprData) {
 							}
 							var title = lineObj['run name'] + ' Lane: ' + lineObj['lane'] + ' Barcode: ' + lineObj['barcode'] + ' Library: ' + lineObj['library'];
 							var graphData = {};
-							if (isNaN(parseInt(newIUSSWID[ius]))) {
-								graphData['iusswid'] = newIUSSWID[ius];
-							}
-							else {
-								graphData['iusswid'] = parseInt(newIUSSWID[ius]);
-							}
+							graphData['iusswid'] = newIUSSWID[ius];
 							graphData['Read Breakdown'] = {};
 							graphData['Insert Distribution'] = {};
 							graphData['Soft Clip by Cycle'] = {};
@@ -1443,8 +1418,9 @@ function getDateTimeString(date) {
 		var second = '0' + second;
 	}   
 	var dateTime = year+'-'+month+'-'+day+' '+hour+':'+minute+':'+second;
+	var dateType = new Date(dateTime);
 	
-    return dateTime;
+    return dateType;
 }
 
 /**
