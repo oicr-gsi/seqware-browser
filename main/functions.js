@@ -983,8 +983,8 @@ function getRNASeqQCData(zipFile, IUSSWID) {
 		var MEDIAN_5PRIME_TO_3PRIME_BIAS=metrics[21];
 
 		// Add to object
-		obj['Total Reads'] = TOTAL_READS; // including unaligned
-		obj['Uniq Reads'] = UNIQ_READS;
+		obj['Total Reads'] = parseFloat(TOTAL_READS); // including unaligned
+		obj['Uniq Reads'] = parseFloat(UNIQ_READS);
 		// Reads per start point
 		if (START_POINTS != 0) {
 			obj['Reads/SP'] = parseFloat((UNIQ_READS/START_POINTS).toFixed(2));
