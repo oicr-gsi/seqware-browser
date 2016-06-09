@@ -604,6 +604,7 @@ exports.updateFileInfo = function (fprData) {
 				db.close();
 			});
 		});
+		db.collection('FileInfo').createIndex({workflowinfo_accession: 1});
 	});
 }
 
