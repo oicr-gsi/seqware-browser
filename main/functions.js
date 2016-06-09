@@ -845,11 +845,13 @@ function getReportData(jsonFile, xenomeFile, IUSSWID) {
 				}
 			}
 			obj['% Mouse Content'] = parseFloat(match[1]).toFixed(2);
-			obj['source'] = 'xenome';
 		} else {
 			obj['% Mouse Content'] = 'N/A';
-			obj['source'] = 'bam_qc';
 		}
+		obj['source'] = 'xenome';
+	}else {
+		obj['% Mouse Content'] = 'N/A';
+		obj['source'] = 'bam_qc';
 	}
 	obj['type'] = 'dna';
 
@@ -943,7 +945,7 @@ function getRNASeqQCData(zipFile, IUSSWID) {
 		var MEDIAN_5PRIME_TO_3PRIME_BIAS=metrics[21];
 
 		// Add to object
-		obj['Total Reads'] = TOTAL_READS; // including unaligned
+		obj['Reads'] = TOTAL_READS; // including unaligned
 		obj['Uniq Reads'] = UNIQ_READS;
 		// Reads per start point
 		if (START_POINTS != 0) {
@@ -999,7 +1001,7 @@ function getRNASeqQCData(zipFile, IUSSWID) {
 		obj['Bases Breakdown'] = 'n/a';
 		obj['Junction Saturation'] = 'n/a';
 		obj['RSeQC Gene Body Coverage'] = 'n/a';
-		obj['Total Reads'] = 'n/a';
+		obj['Reads'] = 'n/a';
 		obj['Uniq Reads'] = 'n/a';
 		obj['Reads/SP'] = 'n/a';
 		obj['Yield'] = 'n/a';
