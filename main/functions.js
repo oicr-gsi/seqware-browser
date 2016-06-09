@@ -983,7 +983,7 @@ function getRNASeqQCData(zipFile, IUSSWID) {
 		var MEDIAN_5PRIME_TO_3PRIME_BIAS=metrics[21];
 
 		// Add to object
-		obj['total_reads'] = TOTAL_READS; // including unaligned
+		obj['reads'] = TOTAL_READS; // including unaligned
 		obj['uniq_reads'] = UNIQ_READS;
 		// Reads per start point
 		if (START_POINTS != 0) {
@@ -1039,7 +1039,7 @@ function getRNASeqQCData(zipFile, IUSSWID) {
 		obj['bases_breakdown'] = 'n/a';
 		obj['junction_saturation'] = 'n/a';
 		obj['rseqc_gene_body_coverage'] = 'n/a';
-		obj['total_reads'] = 'n/a';
+		obj['reads'] = 'n/a';
 		obj['uniq_reads'] = 'n/a';
 		obj['reads_sp'] = 'n/a';
 		obj['yield'] = 'n/a';
