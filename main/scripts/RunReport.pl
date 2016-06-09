@@ -20,7 +20,7 @@
 use warnings;
 use strict;
 
-use lib '/u/silioukhina/illumina-run-dirs/report';
+use lib '<path to /illumina-run-dirs/report>';
 use File::Basename qw(dirname);
 use JSON;
 use Data::Dumper;
