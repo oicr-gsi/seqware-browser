@@ -808,10 +808,10 @@ function getReportData(jsonFile, xenomeFile, IUSSWID) {
 			obj['Read Length_1'] = parseFloat(lineObj['read 1 average length']);
 			obj['Read Length_2'] = parseFloat(lineObj['read 2 average length']);
 		} else {
-			obj['Insert Mean'] = -1;
-			obj['Insert Stdev'] = -1;
+			obj['Insert Mean'] = 'n/a';
+			obj['Insert Stdev'] = 'n/a';
 			obj['Read Length_1'] = lineObj['read ? average length'];
-			obj['read_length_2'] = -1;
+			obj['read_length_2'] = 'n/a';
 		}
 
 		// Coverage
@@ -824,17 +824,17 @@ function getReportData(jsonFile, xenomeFile, IUSSWID) {
 		console.log(jsonFile + " does not exist");
 
 		// Reads per start point
-		obj['Reads/SP'] = -1;
-		obj['Map %'] = -1;
-		obj['Reads'] = -1;
-		obj['Yield'] = -1;
-		obj['% on Target'] = -1;
-		obj['Insert Mean'] = -1;
-		obj['Insert Stdev'] = -1;
-		obj['Read Length_1'] = -1;
-		obj['Read Length_2'] = -1;
-		obj['Coverage (collapsed)'] = -1;
-		obj['Coverage (raw)'] = -1;
+		obj['Reads/SP'] = 'n/a';
+		obj['Map %'] = 'n/a';
+		obj['Reads'] = 'n/a';
+		obj['Yield'] = 'n/a';
+		obj['% on Target'] = 'n/a';
+		obj['Insert Mean'] = 'n/a';
+		obj['Insert Stdev'] = 'n/a';
+		obj['Read Length_1'] = 'n/a';
+		obj['Read Length_2'] = 'n/a';
+		obj['Coverage (collapsed)'] = 'n/a';
+		obj['Coverage (raw)'] = 'n/a';
 	}
 	if (typeof xenomeFile !== 'undefined') {
 		var xenomeExists = fs.existsSync(xenomeFile);
@@ -850,7 +850,7 @@ function getReportData(jsonFile, xenomeFile, IUSSWID) {
 			obj['% Mouse Content'] = parseFloat(match[1]).toFixed(2);
 		} else {
 			//console.log(xenomeFile + " does not exist");
-			obj['% Mouse Content'] = 'N/A';
+			obj['% Mouse Content'] = 'n/a';
 		}
 	}
 	//console.log(obj);
@@ -1036,16 +1036,16 @@ function getRNASeqQCData(zipFile, IUSSWID) {
 		console.log(zipFile + " does not exist");
 
 		// Add to object
-		obj['Bases Breakdown'] = -1;
-		obj['Junction Saturation'] = -1;
-		obj['RSeQC Gene Body Coverage'] = -1;
-		obj['Total Reads'] = -1;
-		obj['Uniq Reads'] = -1;
-		obj['Reads/SP'] = -1;
-		obj['Yield'] = -1;
-		obj['Proportion Correct Strand Reads'] = -1;
-		obj['Median 5Prime to 3Prime Bias'] = -1;
-		obj['% rRNA Content'] = -1;
+		obj['Bases Breakdown'] = 'n/a';
+		obj['Junction Saturation'] = 'n/a';
+		obj['RSeQC Gene Body Coverage'] = 'n/a';
+		obj['Total Reads'] = 'n/a';
+		obj['Uniq Reads'] = 'n/a';
+		obj['Reads/SP'] = 'n/a';
+		obj['Yield'] = 'n/a';
+		obj['Proportion Correct Strand Reads'] = 'n/a';
+		obj['Median 5Prime to 3Prime Bias'] = 'n/a';
+		obj['% rRNA Content'] = 'n/a';
 	}
 	return obj;
 }
