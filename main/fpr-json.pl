@@ -39,7 +39,7 @@ while (!$fprHandle->eof()) {
 	@linehash{@header} = split("\t", $line);
 	
 	my $filePath = $linehash{"File Path"};
-	my $workflowName = $linehash{"Workflow Run Name"};
+	my $workflowName = $linehash{"Workflow Name"};
 	
 	$fileSWID = $linehash{"File SWID"};
 	$IUSSWID = $linehash{"IUS SWID"};

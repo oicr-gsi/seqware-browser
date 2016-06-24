@@ -519,7 +519,7 @@ exports.updateWorkflowInfo = function (analysisYAML) {
 					var jsonData = result.rows;
 
 					for (var i = 0; i < jsonData.length; i++) {
-						jsonData[i].sw_accession = jsonData[i].sw_accession;
+						jsonData[i].sw_accession = String(jsonData[i].sw_accession);
 						// Update WorkflowInfo
 						var WorkflowInfo_accession = jsonData[i].sw_accession;
 						if (/(.*?)_.*?/.test(jsonData[i].workflow_name)) {
@@ -547,15 +547,10 @@ exports.updateWorkflowInfo = function (analysisYAML) {
 							// Update workflows for each library id
 							if (typeof libraryObj[librarySeq_id] === 'undefined') {
 								libraryObj[librarySeq_id] = {};
-								libraryObj[librarySeq_id]['workflowinfo_accession'] = [];
-								if (isNaN(parseInt(iusswid))) { //only parseInt if there are no letters in id
-									libraryObj[librarySeq_id]['iusswid'] = (iusswid);
-								}
-								else {
-									libraryObj[librarySeq_id]['iusswid'] = parseInt(iusswid); //only for libraries with workflows
-								}							 
+								libraryObj[librarySeq_id]['WorkflowInfo_accession'] = [];
+								libraryObj[librarySeq_id]['iusswid'] = iusswid; //only for libraries with workflows 
 							}
-							libraryObj[librarySeq_id]['workflowinfo_accession'].push(WorkflowInfo_accession);
+							libraryObj[librarySeq_id]['WorkflowInfo_accession'].push(WorkflowInfo_accession);
 						}
 
 						// Update workflow information batch
@@ -625,9 +620,11 @@ exports.updateRunningWorkflowRuns = function (analysisYAML) {
 
 	MongoClient.connect(url, function(err, db) {
 		if (err) return console.error(err);
+		var currentWFBatch = db.collection('CurrentWorkflowRuns').initializeUnorderedBulkOp();
+		var failedWFBatch = db.collection('FailedWorkflowRuns').initializeUnorderedBulkOp();
 		var wfBatch = db.collection('WorkflowInfo').initializeUnorderedBulkOp();
 		var docs = [];
-		findWorkflowDocuments(docs, 'CurrentWorkflowRuns', 'running', 'pending', 'submitted', db, function() {
+		findWorkflowDocuments(docs, 'CurrentWorkflowRuns', db, function() {
 			// If ids exist, add to query, else just search for status = 'running'
 			var ids;
 			if (docs.length > 0) {
@@ -647,6 +644,7 @@ exports.updateRunningWorkflowRuns = function (analysisYAML) {
 					for (var i = 0; i < result.rows.length; i++) {
 						result.rows[i].sw_accession = String(result.rows[i].sw_accession);
 						// Update workflow info
+						var WorkflowInfo_accession = result.rows[i].sw_accession;
 						if (/(.*?)_.*?/.test(result.rows[i].workflow_name)) {
 							var match = /(.*?)_.*?/.exec(result.rows[i].workflow_name);
 							var workflowName = match[1];
@@ -664,8 +662,28 @@ exports.updateRunningWorkflowRuns = function (analysisYAML) {
 						// Do not update with library_ids, omit
 						result.rows[i] = _.omit(result.rows[i], ['libraryinfo_seqname', 'template_id']);
 
-						// Update workflow in collection, regardless if it is running, failed or completed
-						wfBatch.find({sw_accession: result.rows[i].sw_accession}).upsert().updateOne(result.rows[i]);
+						// Update running workflow collection
+						if (result.rows[i].status === 'running') {
+							currentWFBatch.find({sw_accession: result.rows[i].sw_accession}).upsert().updateOne(result.rows[i]);
+							wfBatch.find({sw_accession: result.rows[i].sw_accession}).upsert().updateOne(result.rows[i]);
+						// Update failed workflow collection and workflow info table, remove from running workflow collection
+						} else if (result.rows[i].status === 'failed') {
+							currentWFBatch.find({sw_accession: result.rows[i].sw_accession}).removeOne();
+							failedWFBatch.find({sw_accession: result.rows[i].sw_accession}).upsert().updateOne(result.rows[i]);
+							wfBatch.find({sw_accession: result.rows[i].sw_accession}).upsert().updateOne(result.rows[i]);
+						// Update completed workflows
+						} else {
+							currentWFBatch.find({sw_accession: result.rows[i].sw_accession}).removeOne();
+							wfBatch.find({sw_accession: result.rows[i].sw_accession}).upsert().updateOne(result.rows[i]);
+						}
+					}
+					currentWFBatch.execute(function(err, result) {
+						if (err) console.dir(err);
+					});
+					if (failedWFBatch.s.currentBatch !== null) {
+						failedWFBatch.execute(function(err, result) {
+							if (err) console.dir(err);
+						});
 					}
 
 					if (result.rows.length!==0){
@@ -690,10 +708,11 @@ exports.updateRunningWorkflowRuns = function (analysisYAML) {
 function checkFailedWorkflowRuns () {
 	MongoClient.connect(url, function(err, db) {
 		if (err) return console.error(err);
+		var failedWFBatch = db.collection('FailedWorkflowRuns').initializeUnorderedBulkOp();
 		var wfBatch = db.collection('WorkflowInfo').initializeUnorderedBulkOp();
 
 		var docs = [];
-		findWorkflowDocuments(docs, 'FailedWorkflowRuns', 'failed', '', '', db, function() {
+		findWorkflowDocuments(docs, 'FailedWorkflowRuns', db, function() {
 			if (typeof docs !== 'undefined') {
 
 				// Connect to postgresql client
@@ -725,10 +744,14 @@ function checkFailedWorkflowRuns () {
 								// Do not update with library_ids, omit
 								result.rows[i] = _.omit(result.rows[i], ['libraryinfo_seqname', 'template_id']);
 
+								failedWFBatch.find({sw_accession: result.rows[i].sw_accession}).removeOne();
 								wfBatch.find({sw_accession: result.rows[i].sw_accession}).upsert().updateOne(result.rows[i]);
 							}
 						}
 
+						failedWFBatch.execute(function(err, result) {
+							if (err) console.dir(err);
+						});
 						wfBatch.execute(function(err, result) {
 							if (err) console.dir(err);
 							db.close();
@@ -802,6 +825,13 @@ function getReportData(jsonFile, xenomeFile, IUSSWID) {
 	} else {
 		console.log(jsonFile + " does not exist");
 
+		if (isNaN(parseInt(IUSSWID))) {
+			obj['iusswid'] = IUSSWID;
+		}
+		else {
+			obj['iusswid'] = parseInt(IUSSWID);
+		}
+
 		// Reads per start point
 		obj['Reads/SP'] = 'n/a';
 		obj['Map %'] = 'n/a';
@@ -827,51 +857,16 @@ function getReportData(jsonFile, xenomeFile, IUSSWID) {
 			}
 			obj['% Mouse Content'] = parseFloat(match[1]).toFixed(2);
 		} else {
-			//console.log(xenomeFile + " does not exist");
 			obj['% Mouse Content'] = 'N/A';
 		}
+		obj['source'] = 'xenome';
+	}else {
+		obj['% Mouse Content'] = 'N/A';
+		obj['source'] = 'bam_qc';
 	}
-	//console.log(obj);
-	return obj;
-}
+	obj['type'] = 'dna';
 
-/** IUSSWID
- * updates report data from json file and xenome file into mongodb
- * @param {json} fprData
- */
-exports.updateIUSSWIDReportData = function (fprData) {
-	// ALL DATA BASED ON REPORTS FROM JSON FILES
-	MongoClient.connect(url, function(err, db) {
-		if (err) console.error(err);
-		var batch = db.collection('IUSSWIDReportData').initializeUnorderedBulkOp();
-		db.collection('IUSSWIDReportData').createIndex({'iusswid': 1}, {unique: true}, function (err, result) {
-			var ids = [];
-			findReportDocumentsIUSSWID(ids, 'IUSSWIDReportData', db, function (err) {
-				var newIUSSWID = _.difference(Object.keys(fprData['Library']), ids);
-				// Individual library report data
-				for (var i = 0; i < newIUSSWID.length; i++) {
-					//console.log(newIUSSWID[i]);
-					if (typeof fprData['Library'][newIUSSWID[i]]['JSON'] !== 'undefined') {
-						var json = fprData['Library'][newIUSSWID[i]]['JSON'];
-						var xenomeFile = fprData['Library'][newIUSSWID[i]]['XenomeFile'];
-						var obj = {};
-						obj = getReportData(json, xenomeFile, newIUSSWID[i]);
-					
-						//Update in mongodb
-						batch.find({iusswid: newIUSSWID[i]}).upsert().updateOne(obj);
-					}
-				}
-				if (batch.s.currentBatch !== null) {
-					batch.execute(function(err, result) {
-						if (err) console.dir(err);
-						db.close();
-					});
-				} else {
-					db.close();
-				}
-			});
-		});
-	});
+	return obj;
 }
 
 /**
@@ -961,7 +956,7 @@ function getRNASeqQCData(zipFile, IUSSWID) {
 		var MEDIAN_5PRIME_TO_3PRIME_BIAS=metrics[21];
 
 		// Add to object
-		obj['Total Reads'] = TOTAL_READS; // including unaligned
+		obj['Reads'] = TOTAL_READS; // including unaligned
 		obj['Uniq Reads'] = UNIQ_READS;
 		// Reads per start point
 		if (START_POINTS != 0) {
@@ -1017,7 +1012,7 @@ function getRNASeqQCData(zipFile, IUSSWID) {
 		obj['Bases Breakdown'] = 'n/a';
 		obj['Junction Saturation'] = 'n/a';
 		obj['RSeQC Gene Body Coverage'] = 'n/a';
-		obj['Total Reads'] = 'n/a';
+		obj['Reads'] = 'n/a';
 		obj['Uniq Reads'] = 'n/a';
 		obj['Reads/SP'] = 'n/a';
 		obj['Yield'] = 'n/a';
@@ -1025,22 +1020,29 @@ function getRNASeqQCData(zipFile, IUSSWID) {
 		obj['Median 5Prime to 3Prime Bias'] = 'n/a';
 		obj['% rRNA Content'] = 'n/a';
 	}
+	obj['type'] = 'rna';
+	obj['source'] = 'rna_seq_qc';
 	return obj;
 }
 /** IUSSWID
- * returns all RNA Seq QC data to mongodb
+ * returns all RNA Seq QC data, json file and xenome file into mongodb
  * @param {json} fprData
  */
-exports.updateIUSSWIDRNASeqQCData = function (fprData) {
+exports.updateIUSSWIDQCData = function (fprData) {
+	// ALL DATA BASED ON REPORTS FROM JSON FILES
 	MongoClient.connect(url, function(err, db) {
 		if (err) console.error(err);
-		var batch = db.collection('IUSSWIDRNASeqQCData').initializeUnorderedBulkOp();
-		db.collection('IUSSWIDRNASeqQCData').createIndex({'iusswid': 1}, {unique: true}, function (err, result) {
+		var batch = db.collection('QC').initializeUnorderedBulkOp();
+		db.collection('QC').createIndex({'iusswid': 1}, {unique: true}, function (err, result) {
 			var ids = [];
-			findReportDocumentsIUSSWID(ids, 'IUSSWIDRNASeqQCData', db, function (err) {
+			console.log("retrieving iusswids from given file");
+			findReportDocumentsIUSSWID(ids, 'QC', db, function (err) {
 				var newIUSSWID = _.difference(Object.keys(fprData['Library']), ids);
-				// RNA Seq QC Data
+				// Individual library report data
+				console.log("starting loop through all iusswids");
+				console.log("there are %d new iusswids", newIUSSWID.length);
 				for (var i = 0; i < newIUSSWID.length; i++) {
+					//console.log(newIUSSWID[i]);
 					if (typeof fprData['Library'][newIUSSWID[i]]['RNAZipFile'] !== 'undefined') {
 						var obj = {};
 						obj = getRNASeqQCData(fprData['Library'][newIUSSWID[i]]['RNAZipFile'], newIUSSWID[i]);
@@ -1048,7 +1050,41 @@ exports.updateIUSSWIDRNASeqQCData = function (fprData) {
 						//Update in mongodb
 						batch.find({iusswid: newIUSSWID[i]}).upsert().updateOne(obj);	
 					}
+					else if (typeof fprData['Library'][newIUSSWID[i]]['JSON'] !== 'undefined') {
+						var json = fprData['Library'][newIUSSWID[i]]['JSON'];
+						var xenomeFile = fprData['Library'][newIUSSWID[i]]['XenomeFile'];
+						//console.log("xenomeFile: "+xenomeFile);
+						var obj = {};
+						obj = getReportData(json, xenomeFile, newIUSSWID[i]);
+					
+						//Update in mongodb
+						batch.find({iusswid: newIUSSWID[i]}).upsert().updateOne(obj);
+					}
+					else if (typeof fprData['Library'][newIUSSWID[i]]['XenomeFile'] !== 'undefined') {
+						console.log("error: %s only contains a xenome file", newIUSSWID[i]);
+						var xenomeFile = fprData['Library'][newIUSSWID[i]]['XenomeFile'];
+						var obj = {};
+						obj = getReportData(null, xenomeFile, newIUSSWID[i]);
+					
+						//Update in mongodb
+						batch.find({iusswid: newIUSSWID[i]}).upsert().updateOne(obj);
+					}
+					else {
+						console.log("error: no given paths for iusswid %s, loaded collection with empty data sets", newIUSSWID[i]);
+						if (isNaN(parseInt(IUSSWID))) {
+							obj['iusswid'] = IUSSWID;
+						}
+						else {
+							obj['iusswid'] = parseInt(IUSSWID);
+						}
+						obj['reads'] = 'n/a';
+						obj['yield'] = 'n/a';
+						obj['type'] = 'n/a';
+						obj['source'] = 'n/a';
+						batch.find({iusswid: newIUSSWID[i]}).upsert().updateOne(obj);
+					}
 				}
+				console.log("finished adding all iusswids to bulk");
 				if (batch.s.currentBatch !== null) {
 					batch.execute(function(err, result) {
 						if (err) console.dir(err);
@@ -1399,7 +1435,7 @@ function getDateTimeString(date) {
 		var second = '0' + second;
 	}   
 	var dateTime = year+'-'+month+'-'+day+' '+hour+':'+minute+':'+second;
-
+	
     return dateTime;
 }
 
@@ -1411,8 +1447,8 @@ function getDateTimeString(date) {
  * @param {function} callback
  * @return {array} docs
  */
-function findWorkflowDocuments(docs, collection, restrictionOne, restrictionTwo, restrictionThree, db, callback) {
-	var cursor = db.collection(collection).find({status: restrictionOne, status: restrictionTwo, status: restrictionThree});
+function findWorkflowDocuments(docs, collection, db, callback) {
+	var cursor = db.collection(collection).find();
 	cursor.each(function(err, doc) {
 		if (err) return console.error(err);
 		if (doc != null) {
@@ -1436,10 +1472,11 @@ function findReportDocumentsIUSSWID(docs, collection, db, callback) {
 	cursor.each(function(err, doc) {
 		if (err) return console.error(err);
 		if (doc != null) {
-			docs.push(doc.iusswid);
+			if (doc != null) {
+				docs.push(doc.iusswid.toString()); }
 		} else {
 			callback();
 			return docs;
 		}
 	});
-}
+} 
