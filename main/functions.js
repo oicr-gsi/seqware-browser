@@ -770,9 +770,9 @@ function getReportData(jsonFile, xenomeFile, IUSSWID) {
 		var rawReads = (parseInt(lineObj['mapped reads']) + parseInt(lineObj['unmapped reads']) + parseInt(lineObj['qual fail reads']));
 
 		if (rawReads > 0) {
-			obj['Map %'] = ((lineObj['mapped reads']/rawReads)*100).toFixed(2) + '%';
+			obj['Map %'] = parseFloat(((lineObj['mapped reads']/rawReads)*100).toFixed(2));
 			obj['Reads'] = rawReads;
-			obj['Yield'] = parseInt(rawReads*lineObj['average read length']);
+			obj['Yield'] = parseFloat(rawReads*lineObj['average read length']);
 		} else {
 			obj['Map %'] = 0;
 			obj['Reads'] = 0;
@@ -780,25 +780,27 @@ function getReportData(jsonFile, xenomeFile, IUSSWID) {
 		}
 
 		// % on Target
-		obj['% on Target'] = (onTargetRate*100).toFixed(2) + '%';
+		obj['% on Target'] = parseFloat(onTargetRate*100).toFixed(2));
 
 		// Insert mean, insert stdev, read length
 		if (lineObj['number of ends'] === 'paired end') {
-			obj['Insert Mean'] = parseFloat(lineObj['insert mean']).toFixed(2);
-			obj['Insert Stdev'] = parseFloat(lineObj['insert stdev']).toFixed(2);
-			obj['Read Length'] = lineObj['read 1 average length'] + ',' + lineObj['read 2 average length'];
+			obj['Insert Mean'] = parseFloat(parseFloat(lineObj['insert mean']).toFixed(2));
+			obj['Insert Stdev'] = parseFloat(parseFloat(lineObj['insert stdev']).toFixed(2));
+			obj['read_length_1'] = parseFloat(lineObj['read 1 average length']);
+			obj['read_length_2'] = parseFloat(lineObj['read 2 average length']);
 		} else {
 			obj['Insert Mean'] = 'n/a';
 			obj['Insert Stdev'] = 'n/a';
-			obj['Read Length'] = lineObj['read ? average length'];
+			obj['read_length_1'] = lineObj['read ? average length'];
+			obj['read_length_2'] = 'n/a';
 		}
 
 		// Coverage
 		var rawEstYield = lineObj['aligned bases'] * onTargetRate;
 		var collapsedEstYield = rawEstYield/readsSP;
 
-		obj['Coverage (collapsed)'] = (collapsedEstYield/lineObj['target size']).toFixed(2);
-		obj['Coverage (raw)'] = (rawEstYield/lineObj['target size']).toFixed(2);
+		obj['Coverage (collapsed)'] = parseFloat((collapsedEstYield/lineObj['target size']).toFixed(2));
+		obj['Coverage (raw)'] = parseFloat((rawEstYield/lineObj['target size']).toFixed(2));
 	} else {
 		console.log(jsonFile + " does not exist");
 
@@ -810,7 +812,8 @@ function getReportData(jsonFile, xenomeFile, IUSSWID) {
 		obj['% on Target'] = 'n/a';
 		obj['Insert Mean'] = 'n/a';
 		obj['Insert Stdev'] = 'n/a';
-		obj['Read Length'] = 'n/a';
+		obj['read_length_1'] = 'n/a';
+		obj['read_length_2'] = 'n/a';
 		obj['Coverage (collapsed)'] = 'n/a';
 		obj['Coverage (raw)'] = 'n/a';
 	}
@@ -961,15 +964,15 @@ function getRNASeqQCData(zipFile, IUSSWID) {
 		var MEDIAN_5PRIME_TO_3PRIME_BIAS=metrics[21];
 
 		// Add to object
-		obj['Total Reads'] = TOTAL_READS; // including unaligned
-		obj['Uniq Reads'] = UNIQ_READS;
+		obj['Total Reads'] = parseFloat(TOTAL_READS); // including unaligned
+		obj['Uniq Reads'] = parseFloat(UNIQ_READS);
 		// Reads per start point
 		if (START_POINTS != 0) {
-			obj['Reads/SP'] = (UNIQ_READS/START_POINTS).toFixed(2);
+			obj['Reads/SP'] = parseFloat((UNIQ_READS/START_POINTS).toFixed(2));
 		} else {
 			obj['Reads/SP'] = '#Start Points Job Failed -> rerun!'
 		}
-		obj['Yield'] = PF_BASES; // Passed Filter Bases
+		obj['Yield'] = parseFloat(PF_BASES); // Passed Filter Bases
 		/*
 		obj['Passed Filter Aligned Bases'] = PF_ALIGNED_BASES;
 		obj['Coding Bases'] = CODING_BASES;
@@ -996,17 +999,17 @@ function getRNASeqQCData(zipFile, IUSSWID) {
 		obj['Proportion Usable Bases'] = PCT_USABLE_BASES;
 		*/
 		if (PCT_CORRECT_STRAND_READS !== 0) {
-			obj['Proportion Correct Strand Reads'] = PCT_CORRECT_STRAND_READS;
+			obj['Proportion Correct Strand Reads'] = parseFloat(PCT_CORRECT_STRAND_READS);
 		} else {
 			obj['Proportion Correct Strand Reads'] = 'Not a Strand Specific Library';
 		}
 		//obj['Median CV Coverage'] = MEDIAN_CV_COVERAGE;
 		//obj['Median 5Prime Bias'] = MEDIAN_5PRIME_BIAS;
 		//obj['Median 3Prime Bias'] = MEDIAN_3PRIME_BIAS;
-		obj['Median 5Prime to 3Prime Bias'] = MEDIAN_5PRIME_TO_3PRIME_BIAS;
+		obj['Median 5Prime to 3Prime Bias'] = parseFloat(MEDIAN_5PRIME_TO_3PRIME_BIAS);
 		// rRNA Contamination (%reads aligned)
 		if (TOTAL_READS !== 0) {
-			obj['% rRNA Content'] = ((RIBOSOMAL_READS/TOTAL_READS)*100).toFixed(2);
+			obj['% rRNA Content'] = parseFloat(((RIBOSOMAL_READS/TOTAL_READS)*100).toFixed(2));
 		} else {
 			obj['% rRNA Content'] = 'Total Reads Job Failed -> re-run report';
 		}
