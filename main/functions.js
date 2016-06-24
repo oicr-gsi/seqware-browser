@@ -598,9 +598,19 @@ exports.updateFileInfo = function (fprData) {
 			// search file provenance report for file data
 			for (var fileSWID in fprData['File']) {
 				var obj = {};
-				obj['fileSWID'] = fileSWID;
+				if (isNaN(parseInt(file_swid))) {
+					obj['file_swid'] = fileSWID;
+				}
+				else {
+					obj['file_swid'] = parseInt(fileSWID);
+				}
 				obj['file_path'] = fprData['File'][fileSWID]['Path'];
-				obj['WorkflowInfo_accession'] = fprData['File'][fileSWID]['WorkflowSWID'];
+				if (isNaN(parseInt(fprData['File'][fileSWID]['WorkflowSWID']))) {
+					obj['workflow_info_accession'] = fprData['File'][fileSWID]['WorkflowSWID'];
+				}
+				else {
+					obj['workflow_info_accession'] = parseInt(fprData['File'][fileSWID]['WorkflowSWID']);
+				}
 
 				batch.find({fileSWID: fileSWID}).upsert().updateOne(obj);
 			}
@@ -761,7 +771,12 @@ function getReportData(jsonFile, xenomeFile, IUSSWID) {
 		var onTargetRate = lineObj['reads on target']/lineObj['mapped reads'];
 
 		// IUSSWID
-		obj['iusswid'] = IUSSWID;
+		if (isNaN(parseInt(IUSSWID))) {
+			obj['iusswid'] = IUSSWID;
+		}
+		else {
+			obj['iusswid'] = parseInt(IUSSWID);
+		};
 
 		// Reads per start point
 		obj['Reads/SP'] = readsSP;
@@ -897,7 +912,12 @@ function getRNASeqQCData(zipFile, IUSSWID) {
 		var START_POINTS;
 
 		// IUSSWID
-		obj['iusswid'] = IUSSWID;
+		if (isNaN(parseInt(IUSSWID))) {
+			obj['iusswid'] = IUSSWID;
+		}
+		else {
+			obj['iusswid'] = parseInt(IUSSWID);
+		}
 
 		// Read from zip files without extracting
 		zipEntries.forEach(function(zipEntry) {
@@ -1091,7 +1111,12 @@ exports.updateGraphData = function (fprData) {
 							}
 							var title = lineObj['run name'] + ' Lane: ' + lineObj['lane'] + ' Barcode: ' + lineObj['barcode'] + ' Library: ' + lineObj['library'];
 							var graphData = {};
-							graphData['iusswid'] = newIUSSWID[ius];
+							if (isNaN(parseInt(newIUSSWID[ius]))) {
+								graphData['iusswid'] = newIUSSWID[ius];
+							}
+							else {
+								graphData['iusswid'] = parseInt(newIUSSWID[ius]);
+							}
 							graphData['Read Breakdown'] = {};
 							graphData['Insert Distribution'] = {};
 							graphData['Soft Clip by Cycle'] = {};
