@@ -252,8 +252,8 @@ exports.updateLibraryInfo = function (sequencerData, sampleData, skipData, recei
 								libraries[unique_id].library_seqname = unique_id;
 								libraries[unique_id].template_id = id;
 								libraries[unique_id].library_name = sampleIDInfo[id]['Library Name'];
-								libraries[unique_id].ProjectInfo_name = sampleIDInfo[id]['Project Name'];
-								libraries[unique_id].RunInfo_name = sequencerData[i].name;
+								libraries[unique_id].project_info_name = sampleIDInfo[id]['Project Name'];
+								libraries[unique_id].run_info_name = sequencerData[i].name;
 								libraries[unique_id].lane = sequencerData[i].positions[j].position;
 								// Determine skip (t/f)
 								if (typeof sampleSkipInfo[unique_id] !== 'undefined') {
@@ -288,7 +288,7 @@ exports.updateLibraryInfo = function (sequencerData, sampleData, skipData, recei
 									var match = /((.*?)_.*?)_/.exec(libraryName);
 									var donor = match[1];
 									var libHead = match[2]; // can sum up totals of donor heads (for runs and donors)
-									libraries[unique_id].DonorInfo_name = donor;
+									libraries[unique_id].donor_info_name = donor;
 									libraries[unique_id].library_head = libHead; 
 									if (typeof sampleIDInfo[donor] !== 'undefined') {
 										if (typeof sampleIDInfo[donor]['Tissue Origin'] !== 'undefined') {
@@ -320,8 +320,8 @@ exports.updateLibraryInfo = function (sequencerData, sampleData, skipData, recei
 						libraries[unique_id].library_seqname = unique_id;
 						libraries[unique_id].template_id = id;
 						libraries[unique_id].library_name = libraryName;
-						libraries[unique_id].ProjectInfo_name = sampleIDInfo[id]['Project Name'];
-						libraries[unique_id].RunInfo_name = sequencerData[i].name;
+						libraries[unique_id].project_info_name = sampleIDInfo[id]['Project Name'];
+						libraries[unique_id].run_info_name = sequencerData[i].name;
 						libraries[unique_id].lane = sequencerData[i].positions.position;
 						// Determine skip (t/f)
 						if (typeof sampleSkipInfo[unique_id] !== 'undefined') {
@@ -355,7 +355,7 @@ exports.updateLibraryInfo = function (sequencerData, sampleData, skipData, recei
 							var match = /((.*?)_.*?)_/.exec(libraryName);
 							var donor = match[1];
 							var libHead = match[2]; // can sum up totals of donor heads (for runs and donors)
-							libraries[unique_id].DonorInfo_name = donor;
+							libraries[unique_id].donor_info_name = donor;
 							libraries[unique_id].library_head = libHead;
 							if (typeof sampleIDInfo[donor] !== 'undefined') {
 								if (typeof sampleIDInfo[donor]['Tissue Origin'] !== 'undefined') {
@@ -555,7 +555,7 @@ exports.updateWorkflowInfo = function (analysisYAML) {
 									libraryObj[librarySeq_id]['iusswid'] = parseInt(iusswid); //only for libraries with workflows
 								}							 
 							}
-							libraryObj[librarySeq_id]['workflowinfo_accession'].push(WorkflowInfo_accession);
+							libraryObj[librarySeq_id]['workflowinfo_accession'].push(workflowinfo_accession);
 						}
 
 						// Update workflow information batch
@@ -593,16 +593,16 @@ exports.updateWorkflowInfo = function (analysisYAML) {
 exports.updateFileInfo = function (fprData) {
 	MongoClient.connect(url, function (err, db) {
 		var batch = db.collection('FileInfo').initializeUnorderedBulkOp();
-		db.collection('FileInfo').createIndex({'fileSWID': 1}, {unique: true}, function (err, result) {
+		db.collection('FileInfo').createIndex({'file_swid': 1}, {unique: true}, function (err, result) {
 
 			// search file provenance report for file data
 			for (var fileSWID in fprData['File']) {
 				var obj = {};
-				obj['fileSWID'] = fileSWID;
+				obj['file_swid'] = fileSWID;
 				obj['file_path'] = fprData['File'][fileSWID]['Path'];
-				obj['WorkflowInfo_accession'] = fprData['File'][fileSWID]['WorkflowSWID'];
+				obj['workflowinfo_accession'] = fprData['File'][fileSWID]['WorkflowSWID'];
 
-				batch.find({fileSWID: fileSWID}).upsert().updateOne(obj);
+				batch.find({file_swid: fileSWID}).upsert().updateOne(obj);
 			}
 			batch.execute(function(err, result) {
 				if (err) console.dir(err);
@@ -627,7 +627,7 @@ exports.updateRunningWorkflowRuns = function (analysisYAML) {
 		if (err) return console.error(err);
 		var wfBatch = db.collection('WorkflowInfo').initializeUnorderedBulkOp();
 		var docs = [];
-		findWorkflowDocuments(docs, 'CurrentWorkflowRuns', 'running', 'pending', 'submitted', db, function() {
+		findWorkflowDocuments(docs, 'WorkflowInfo', 'running', 'pending', 'submitted', db, function() {
 			// If ids exist, add to query, else just search for status = 'running'
 			var ids;
 			if (docs.length > 0) {
@@ -764,55 +764,58 @@ function getReportData(jsonFile, xenomeFile, IUSSWID) {
 		obj['iusswid'] = IUSSWID;
 
 		// Reads per start point
-		obj['Reads/SP'] = readsSP;
+		obj['reads_sp'] = readsSP;
 
 		// Map %, Raw Reads, Raw Yield
 		var rawReads = (parseInt(lineObj['mapped reads']) + parseInt(lineObj['unmapped reads']) + parseInt(lineObj['qual fail reads']));
 
 		if (rawReads > 0) {
-			obj['Map %'] = ((lineObj['mapped reads']/rawReads)*100).toFixed(2) + '%';
-			obj['Reads'] = rawReads;
-			obj['Yield'] = parseInt(rawReads*lineObj['average read length']);
+			obj['map_pct'] = ((lineObj['mapped reads']/rawReads)*100).toFixed(2) + '%';
+			obj['reads'] = rawReads;
+			obj['yield'] = parseInt(rawReads*lineObj['average read length']);
 		} else {
-			obj['Map %'] = 0;
-			obj['Reads'] = 0;
-			obj['Yield'] = 0;
+			obj['map_pct'] = 0;
+			obj['reads'] = 0;
+			obj['yield'] = 0;
 		}
 
 		// % on Target
-		obj['% on Target'] = (onTargetRate*100).toFixed(2) + '%';
+		obj['pct_on_target'] = (onTargetRate*100).toFixed(2) + '%';
 
 		// Insert mean, insert stdev, read length
 		if (lineObj['number of ends'] === 'paired end') {
-			obj['Insert Mean'] = parseFloat(lineObj['insert mean']).toFixed(2);
-			obj['Insert Stdev'] = parseFloat(lineObj['insert stdev']).toFixed(2);
-			obj['Read Length'] = lineObj['read 1 average length'] + ',' + lineObj['read 2 average length'];
+			obj['insert_mean'] = parseFloat(lineObj['insert mean']).toFixed(2);
+			obj['insert_stdev'] = parseFloat(lineObj['insert stdev']).toFixed(2);
+			obj['read_length_1'] = lineObj['read 1 average length']
+			obj['read_length_2'] = lineObj['read 2 average length'];
 		} else {
-			obj['Insert Mean'] = 'n/a';
-			obj['Insert Stdev'] = 'n/a';
-			obj['Read Length'] = lineObj['read ? average length'];
+			obj['insert_mean'] = 'n/a';
+			obj['insert_stdev'] = 'n/a';
+			obj['read_length_1'] = lineObj['read ? average length'];
+			obj['read_length_2'] = 'n/a';
 		}
 
 		// Coverage
 		var rawEstYield = lineObj['aligned bases'] * onTargetRate;
 		var collapsedEstYield = rawEstYield/readsSP;
 
-		obj['Coverage (collapsed)'] = (collapsedEstYield/lineObj['target size']).toFixed(2);
-		obj['Coverage (raw)'] = (rawEstYield/lineObj['target size']).toFixed(2);
+		obj['coverage_collapsed'] = (collapsedEstYield/lineObj['target size']).toFixed(2);
+		obj['coverage_raw'] = (rawEstYield/lineObj['target size']).toFixed(2);
 	} else {
 		console.log(jsonFile + " does not exist");
 
 		// Reads per start point
-		obj['Reads/SP'] = 'n/a';
-		obj['Map %'] = 'n/a';
-		obj['Reads'] = 'n/a';
-		obj['Yield'] = 'n/a';
-		obj['% on Target'] = 'n/a';
-		obj['Insert Mean'] = 'n/a';
-		obj['Insert Stdev'] = 'n/a';
-		obj['Read Length'] = 'n/a';
-		obj['Coverage (collapsed)'] = 'n/a';
-		obj['Coverage (raw)'] = 'n/a';
+		obj['reads_sp'] = 'n/a';
+		obj['map_pct'] = 'n/a';
+		obj['reads'] = 'n/a';
+		obj['yield'] = 'n/a';
+		obj['pct_on_target'] = 'n/a';
+		obj['insert_mean'] = 'n/a';
+		obj['insert_stdev'] = 'n/a';
+		obj['read_length_1'] = 'n/a';
+		obj['Read Length_2'] = 'n/a';
+		obj['coverage_collapsed'] = 'n/a';
+		obj['coverage_raw'] = 'n/a';
 	}
 	if (typeof xenomeFile !== 'undefined') {
 		var xenomeExists = fs.existsSync(xenomeFile);
@@ -825,10 +828,10 @@ function getReportData(jsonFile, xenomeFile, IUSSWID) {
 					match = /\t(.*)\tmouse?/.exec(lines[i]);
 				}
 			}
-			obj['% Mouse Content'] = parseFloat(match[1]).toFixed(2);
+			obj['pct_mouse_content'] = parseFloat(match[1]).toFixed(2);
 		} else {
 			//console.log(xenomeFile + " does not exist");
-			obj['% Mouse Content'] = 'N/A';
+			obj['pct_mouse_content'] = 'n/a';
 		}
 	}
 	//console.log(obj);
@@ -961,15 +964,15 @@ function getRNASeqQCData(zipFile, IUSSWID) {
 		var MEDIAN_5PRIME_TO_3PRIME_BIAS=metrics[21];
 
 		// Add to object
-		obj['Total Reads'] = TOTAL_READS; // including unaligned
-		obj['Uniq Reads'] = UNIQ_READS;
+		obj['reads'] = TOTAL_READS; // including unaligned
+		obj['uniq_reads'] = UNIQ_READS;
 		// Reads per start point
 		if (START_POINTS != 0) {
-			obj['Reads/SP'] = (UNIQ_READS/START_POINTS).toFixed(2);
+			obj['reads_sp'] = (UNIQ_READS/START_POINTS).toFixed(2);
 		} else {
-			obj['Reads/SP'] = '#Start Points Job Failed -> rerun!'
+			obj['reads_sp'] = '#Start Points Job Failed -> rerun!'
 		}
-		obj['Yield'] = PF_BASES; // Passed Filter Bases
+		obj['yield'] = PF_BASES; // Passed Filter Bases
 		/*
 		obj['Passed Filter Aligned Bases'] = PF_ALIGNED_BASES;
 		obj['Coding Bases'] = CODING_BASES;
@@ -1003,27 +1006,27 @@ function getRNASeqQCData(zipFile, IUSSWID) {
 		//obj['Median CV Coverage'] = MEDIAN_CV_COVERAGE;
 		//obj['Median 5Prime Bias'] = MEDIAN_5PRIME_BIAS;
 		//obj['Median 3Prime Bias'] = MEDIAN_3PRIME_BIAS;
-		obj['Median 5Prime to 3Prime Bias'] = MEDIAN_5PRIME_TO_3PRIME_BIAS;
+		obj['median_5prime_to_3prime_bias'] = MEDIAN_5PRIME_TO_3PRIME_BIAS;
 		// rRNA Contamination (%reads aligned)
 		if (TOTAL_READS !== 0) {
-			obj['% rRNA Content'] = ((RIBOSOMAL_READS/TOTAL_READS)*100).toFixed(2);
+			obj['pct_rrna_content'] = ((RIBOSOMAL_READS/TOTAL_READS)*100).toFixed(2);
 		} else {
-			obj['% rRNA Content'] = 'Total Reads Job Failed -> re-run report';
+			obj['pct_rrna_content'] = 'Total Reads Job Failed -> re-run report';
 		}
 	} else {
 		console.log(zipFile + " does not exist");
 
 		// Add to object
-		obj['Bases Breakdown'] = 'n/a';
-		obj['Junction Saturation'] = 'n/a';
-		obj['RSeQC Gene Body Coverage'] = 'n/a';
-		obj['Total Reads'] = 'n/a';
-		obj['Uniq Reads'] = 'n/a';
-		obj['Reads/SP'] = 'n/a';
-		obj['Yield'] = 'n/a';
-		obj['Proportion Correct Strand Reads'] = 'n/a';
-		obj['Median 5Prime to 3Prime Bias'] = 'n/a';
-		obj['% rRNA Content'] = 'n/a';
+		obj['bases_breakdown'] = 'n/a';
+		obj['junction_saturation'] = 'n/a';
+		obj['rseqc_gene_body_coverage'] = 'n/a';
+		obj['reads'] = 'n/a';
+		obj['uniq_reads'] = 'n/a';
+		obj['reads_sp'] = 'n/a';
+		obj['yield'] = 'n/a';
+		obj['proportion_correct_strand_reads'] = 'n/a';
+		obj['median_5prime_to_3prime_bias'] = 'n/a';
+		obj['pct_rrna_content'] = 'n/a';
 	}
 	return obj;
 }
@@ -1092,10 +1095,10 @@ exports.updateGraphData = function (fprData) {
 							var title = lineObj['run name'] + ' Lane: ' + lineObj['lane'] + ' Barcode: ' + lineObj['barcode'] + ' Library: ' + lineObj['library'];
 							var graphData = {};
 							graphData['iusswid'] = newIUSSWID[ius];
-							graphData['Read Breakdown'] = {};
-							graphData['Insert Distribution'] = {};
-							graphData['Soft Clip by Cycle'] = {};
-							graphData['Title'] = title;
+							graphData['read_breakdown'] = {};
+							graphData['insert_distribution'] = {};
+							graphData['soft_clip_by_cycle'] = {};
+							graphData['title'] = title;
 
 							// pie chart - read breakdown
 							// initialize variables
@@ -1107,9 +1110,9 @@ exports.updateGraphData = function (fprData) {
 							pieArray.push(parseInt(lineObj['qual fail reads']));
 							pieArray.push(parseInt(lineObj['unmapped reads']));
 
-							graphData['Read Breakdown']['Colors'] = colors;
-							graphData['Read Breakdown']['Labels'] = labels;
-							graphData['Read Breakdown']['Data'] = pieArray;
+							graphData['read_breakdown']['colors'] = colors;
+							graphData['read_breakdown']['labels'] = labels;
+							graphData['read_breakdown']['data'] = pieArray;
 							
 							// area chart - insert distribution
 							var xValInsert = [{label: 'Insert size', id: 'Insert size', type: 'number'}];
@@ -1138,9 +1141,9 @@ exports.updateGraphData = function (fprData) {
 								}
 							}
 
-						    graphData['Insert Distribution']['x values'] = xValInsert;
-						    graphData['Insert Distribution']['y values'] = yValInsert;
-						    graphData['Insert Distribution']['Colors'] = insertColors;
+						    graphData['insert_distribution']['x_values'] = xValInsert;
+							graphData['insert_distribution']['y_values'] = yValInsert;
+							graphData['insert_distribution']['colors'] = insertColors;
 
 						    // area chart - soft clip by cycle
 							var readArray = ['read 1', 'read 2', 'read ?'];
@@ -1186,8 +1189,8 @@ exports.updateGraphData = function (fprData) {
 								}
 							}
 
-							graphData['Soft Clip by Cycle']['x values'] = xValSoft;
-							graphData['Soft Clip by Cycle']['y values'] = yValSoft;
+							graphData['soft_clip_by_cycle']['x_values'] = xValSoft;
+							graphData['soft_clip_by_cycle']['y_values'] = yValSoft;
 
 							//console.log(graphData);
 							// Update in mongodb
@@ -1229,15 +1232,15 @@ function drawGraphsById(id) {
 		console.log('connect');
 
 		db.collection('IUSSWIDGraphData').findOne({iusswid: id}, function (err, item){
-			pieValues = _.zip(item['Read Breakdown']['Labels'], item['Read Breakdown']['Data']);
+			pieValues = _.zip(item['read_breakdown']['labels'], item['read_breakdown']['data']);
 			pieOptions = {
-				title: item['Title'] + ' Read Breakdown', 
+				title: item['title'] + ' read_breakdown', 
 				width: 600, height: 400, 
-				colors: item['Read Breakdown']['Colors']
+				colors: item['read_breakdown']['colors']
 			};
-			insertLineValues = _.zip(item['Insert Distribution']['x values'], item['Insert Distribution']['y values'], item['Insert Distribution']['Colors']);
-			insertLineOptions = {
-				title: item['Title'] + ' Insert Distribution', 
+			insertLineValues = _.zip(item['insert_distribution']['x_values'], item['insert_distribution']['y_values'], item['insert_distribution']['colors']);
+ 			insertLineOptions = {
+				title: item['title'] + ' insert_distribution',
 				width: 600, 
 				height: 400, 
 				lineWidth: 1, 
@@ -1255,9 +1258,9 @@ function drawGraphsById(id) {
 					position: 'none'
 				}
 			};
-			softLineValues = _.zip(item['Soft Clip by Cycle']['x values'], item['Soft Clip by Cycle']['y values']);
-			softLineOptions = {
-				title: item['Title'] + ' Soft Clips by Cycle', 
+			softLineValues = _.zip(item['soft_clip_by_cycle']['x_values'], item['soft_clip_by_cycle']['y_values']);
+ 			softLineOptions = {
+				title: item['title'] + ' soft_clip_by_cycle', 
 				width: 600, 
 				height: 400, 
 				lineWidth: 1, 
