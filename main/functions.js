@@ -804,6 +804,12 @@ function getReportData(jsonFile, xenomeFile, IUSSWID) {
 	} else {
 		console.log(jsonFile + " does not exist");
 
+		if (isNaN(parseInt(IUSSWID))) {
+			obj['iusswid'] = IUSSWID;
+		}
+		else {
+			obj['iusswid'] = parseInt(IUSSWID);
+		}
 		// Reads per start point
 		obj['reads_sp'] = 'n/a';
 		obj['map_pct'] = 'n/a';
@@ -833,48 +839,14 @@ function getReportData(jsonFile, xenomeFile, IUSSWID) {
 			//console.log(xenomeFile + " does not exist");
 			obj['pct_mouse_content'] = 'n/a';
 		}
+		obj['source'] = 'xenome';
+	}else {
+		obj['pct_mouse_content'] = 'N/A';
+		obj['source'] = 'bam_qc';
 	}
 	//console.log(obj);
+	obj['type'] = 'dna';
 	return obj;
-}
-
-/** IUSSWID
- * updates report data from json file and xenome file into mongodb
- * @param {json} fprData
- */
-exports.updateIUSSWIDReportData = function (fprData) {
-	// ALL DATA BASED ON REPORTS FROM JSON FILES
-	MongoClient.connect(url, function(err, db) {
-		if (err) console.error(err);
-		var batch = db.collection('IUSSWIDReportData').initializeUnorderedBulkOp();
-		db.collection('IUSSWIDReportData').createIndex({'iusswid': 1}, {unique: true}, function (err, result) {
-			var ids = [];
-			findReportDocumentsIUSSWID(ids, 'IUSSWIDReportData', db, function (err) {
-				var newIUSSWID = _.difference(Object.keys(fprData['Library']), ids);
-				// Individual library report data
-				for (var i = 0; i < newIUSSWID.length; i++) {
-					//console.log(newIUSSWID[i]);
-					if (typeof fprData['Library'][newIUSSWID[i]]['JSON'] !== 'undefined') {
-						var json = fprData['Library'][newIUSSWID[i]]['JSON'];
-						var xenomeFile = fprData['Library'][newIUSSWID[i]]['XenomeFile'];
-						var obj = {};
-						obj = getReportData(json, xenomeFile, newIUSSWID[i]);
-					
-						//Update in mongodb
-						batch.find({iusswid: newIUSSWID[i]}).upsert().updateOne(obj);
-					}
-				}
-				if (batch.s.currentBatch !== null) {
-					batch.execute(function(err, result) {
-						if (err) console.dir(err);
-						db.close();
-					});
-				} else {
-					db.close();
-				}
-			});
-		});
-	});
 }
 
 /**
@@ -1028,21 +1000,26 @@ function getRNASeqQCData(zipFile, IUSSWID) {
 		obj['median_5prime_to_3prime_bias'] = 'n/a';
 		obj['pct_rrna_content'] = 'n/a';
 	}
+	obj['type'] = 'rna';
+	obj['source'] = 'rna_seq_qc';
 	return obj;
 }
 /** IUSSWID
- * returns all RNA Seq QC data to mongodb
+ * returns all RNA Seq QC data , json file and xenome file into mongodb
  * @param {json} fprData
  */
-exports.updateIUSSWIDRNASeqQCData = function (fprData) {
+exports.updateIUSSWIDQCData = function (fprData) {
 	MongoClient.connect(url, function(err, db) {
 		if (err) console.error(err);
-		var batch = db.collection('IUSSWIDRNASeqQCData').initializeUnorderedBulkOp();
-		db.collection('IUSSWIDRNASeqQCData').createIndex({'iusswid': 1}, {unique: true}, function (err, result) {
+		var batch = db.collection('QC').initializeUnorderedBulkOp();
+		db.collection('QC').createIndex({'iusswid': 1}, {unique: true}, function (err, result) {
 			var ids = [];
-			findReportDocumentsIUSSWID(ids, 'IUSSWIDRNASeqQCData', db, function (err) {
+			console.log("retrieving iusswids from given file");
+			findReportDocumentsIUSSWID(ids, 'QC', db, function (err) {
 				var newIUSSWID = _.difference(Object.keys(fprData['Library']), ids);
-				// RNA Seq QC Data
+				// Individual library report data
+				console.log("starting loop through all iusswids");
+				console.log("there are %d new iusswids", newIUSSWID.length);
 				for (var i = 0; i < newIUSSWID.length; i++) {
 					if (typeof fprData['Library'][newIUSSWID[i]]['RNAZipFile'] !== 'undefined') {
 						var obj = {};
@@ -1051,7 +1028,41 @@ exports.updateIUSSWIDRNASeqQCData = function (fprData) {
 						//Update in mongodb
 						batch.find({iusswid: newIUSSWID[i]}).upsert().updateOne(obj);	
 					}
-				}
+					else if (typeof fprData['Library'][newIUSSWID[i]]['JSON'] !== 'undefined') {
+						var json = fprData['Library'][newIUSSWID[i]]['JSON'];
+						var xenomeFile = fprData['Library'][newIUSSWID[i]]['XenomeFile'];
+						//console.log("xenomeFile: "+xenomeFile);
+						var obj = {};
+						obj = getReportData(json, xenomeFile, newIUSSWID[i]);
+					
+						//Update in mongodb
+						batch.find({iusswid: newIUSSWID[i]}).upsert().updateOne(obj);
+					}
+					else if (typeof fprData['Library'][newIUSSWID[i]]['XenomeFile'] !== 'undefined') {
+						console.log("error: %s only contains a xenome file", newIUSSWID[i]);
+						var xenomeFile = fprData['Library'][newIUSSWID[i]]['XenomeFile'];
+						var obj = {};
+						obj = getReportData(null, xenomeFile, newIUSSWID[i]);
+					
+						//Update in mongodb
+						batch.find({iusswid: newIUSSWID[i]}).upsert().updateOne(obj);
+					}
+					else {
+						console.log("error: no given paths for iusswid %s, loaded collection with empty data sets", newIUSSWID[i]);
+						if (isNaN(parseInt(IUSSWID))) {
+							obj['iusswid'] = IUSSWID;
+						}
+						else {
+							obj['iusswid'] = parseInt(IUSSWID);
+						}
+						obj['reads'] = 'n/a';
+						obj['yield'] = 'n/a';
+						obj['type'] = 'n/a';
+						obj['source'] = 'n/a';
+						batch.find({iusswid: newIUSSWID[i]}).upsert().updateOne(obj);
+					}
+ 				}
+				console.log("finished adding all iusswids to bulk");
 				if (batch.s.currentBatch !== null) {
 					batch.execute(function(err, result) {
 						if (err) console.dir(err);
@@ -1439,7 +1450,8 @@ function findReportDocumentsIUSSWID(docs, collection, db, callback) {
 	cursor.each(function(err, doc) {
 		if (err) return console.error(err);
 		if (doc != null) {
-			docs.push(doc.iusswid);
+			if (doc != null) {
+				docs.push(doc.iusswid.toString()); }
 		} else {
 			callback();
 			return docs;
