@@ -263,8 +263,8 @@ exports.updateLibraryInfo = function (sequencerData, sampleData, skipData, recei
 								}
 								// Determine create and prepared dates
 								if (typeof sampleDateInfo[id] !== 'undefined') {
-									libraries[unique_id].create_tstmp = sampleDateInfo[id]['create_tstmp'];
-									libraries[unique_id].prep_tstmp = sampleDateInfo[id]['prep_tstmp'];
+									libraries[unique_id].create_tstmp = new Date(sampleDateInfo[id]['create_tstmp']);
+									libraries[unique_id].prep_tstmp = new Date(sampleDateInfo[id]['prep_tstmp']);
 								} else {
 									libraries[unique_id].create_tstmp = 'n/a';
 									libraries[unique_id].prep_tstmp = 'n/a';
@@ -298,7 +298,7 @@ exports.updateLibraryInfo = function (sequencerData, sampleData, skipData, recei
 										}
 									}
 									if (typeof sampleReceiveInfo[donor] !== 'undefined') {
-										libraries[unique_id].receive_tstmp = sampleReceiveInfo[donor];
+										libraries[unique_id].receive_tstmp = new Date(sampleReceiveInfo[donor]);
 									} else {
 										libraries[unique_id].receive_tstmp = 'n/a';
 									}
@@ -331,8 +331,8 @@ exports.updateLibraryInfo = function (sequencerData, sampleData, skipData, recei
 						}
 						// Determine create and prepared dates
 						if (typeof sampleDateInfo[id] !== 'undefined') {
-							libraries[unique_id].create_tstmp = sampleDateInfo[id]['create_tstmp'];
-							libraries[unique_id].prep_tstmp = sampleDateInfo[id]['prep_tstmp'];
+							libraries[unique_id].create_tstmp = new Date(sampleDateInfo[id]['create_tstmp']);
+							libraries[unique_id].prep_tstmp = new Date(sampleDateInfo[id]['prep_tstmp']);
 						} else {
 							libraries[unique_id].create_tstmp = 'n/a';
 							libraries[unique_id].prep_tstmp = 'n/a';
@@ -365,7 +365,7 @@ exports.updateLibraryInfo = function (sequencerData, sampleData, skipData, recei
 								}
 							}
 							if (typeof sampleReceiveInfo[donor] !== 'undefined') {
-								libraries[unique_id].receive_tstmp = sampleReceiveInfo[donor];
+								libraries[unique_id].receive_tstmp = new Date(sampleReceiveInfo[donor]);
 							} else {
 								libraries[unique_id].receive_tstmp = 'n/a';
 							}
@@ -519,7 +519,7 @@ exports.updateWorkflowInfo = function (analysisYAML) {
 					var jsonData = result.rows;
 
 					for (var i = 0; i < jsonData.length; i++) {
-						jsonData[i].sw_accession = jsonData[i].sw_accession;
+						jsonData[i].sw_accession = String(jsonData[i].sw_accession);
 						// Update WorkflowInfo
 						var WorkflowInfo_accession = jsonData[i].sw_accession;
 						if (/(.*?)_.*?/.test(jsonData[i].workflow_name)) {
@@ -547,15 +547,10 @@ exports.updateWorkflowInfo = function (analysisYAML) {
 							// Update workflows for each library id
 							if (typeof libraryObj[librarySeq_id] === 'undefined') {
 								libraryObj[librarySeq_id] = {};
-								libraryObj[librarySeq_id]['workflowinfo_accession'] = [];
-								if (isNaN(parseInt(iusswid))) { //only parseInt if there are no letters in id
-									libraryObj[librarySeq_id]['iusswid'] = (iusswid);
-								}
-								else {
-									libraryObj[librarySeq_id]['iusswid'] = parseInt(iusswid); //only for libraries with workflows
-								}							 
+								libraryObj[librarySeq_id]['WorkflowInfo_accession'] = [];
+								libraryObj[librarySeq_id]['iusswid'] = iusswid; //only for libraries with workflows 
 							}
-							libraryObj[librarySeq_id]['workflowinfo_accession'].push(WorkflowInfo_accession);
+							libraryObj[librarySeq_id]['WorkflowInfo_accession'].push(WorkflowInfo_accession);
 						}
 
 						// Update workflow information batch
@@ -625,9 +620,11 @@ exports.updateRunningWorkflowRuns = function (analysisYAML) {
 
 	MongoClient.connect(url, function(err, db) {
 		if (err) return console.error(err);
+		var currentWFBatch = db.collection('CurrentWorkflowRuns').initializeUnorderedBulkOp();
+		var failedWFBatch = db.collection('FailedWorkflowRuns').initializeUnorderedBulkOp();
 		var wfBatch = db.collection('WorkflowInfo').initializeUnorderedBulkOp();
 		var docs = [];
-		findWorkflowDocuments(docs, 'CurrentWorkflowRuns', 'running', 'pending', 'submitted', db, function() {
+		findWorkflowDocuments(docs, 'CurrentWorkflowRuns', db, function() {
 			// If ids exist, add to query, else just search for status = 'running'
 			var ids;
 			if (docs.length > 0) {
@@ -647,6 +644,7 @@ exports.updateRunningWorkflowRuns = function (analysisYAML) {
 					for (var i = 0; i < result.rows.length; i++) {
 						result.rows[i].sw_accession = String(result.rows[i].sw_accession);
 						// Update workflow info
+						var WorkflowInfo_accession = result.rows[i].sw_accession;
 						if (/(.*?)_.*?/.test(result.rows[i].workflow_name)) {
 							var match = /(.*?)_.*?/.exec(result.rows[i].workflow_name);
 							var workflowName = match[1];
@@ -664,8 +662,28 @@ exports.updateRunningWorkflowRuns = function (analysisYAML) {
 						// Do not update with library_ids, omit
 						result.rows[i] = _.omit(result.rows[i], ['libraryinfo_seqname', 'template_id']);
 
-						// Update workflow in collection, regardless if it is running, failed or completed
-						wfBatch.find({sw_accession: result.rows[i].sw_accession}).upsert().updateOne(result.rows[i]);
+						// Update running workflow collection
+						if (result.rows[i].status === 'running') {
+							currentWFBatch.find({sw_accession: result.rows[i].sw_accession}).upsert().updateOne(result.rows[i]);
+							wfBatch.find({sw_accession: result.rows[i].sw_accession}).upsert().updateOne(result.rows[i]);
+						// Update failed workflow collection and workflow info table, remove from running workflow collection
+						} else if (result.rows[i].status === 'failed') {
+							currentWFBatch.find({sw_accession: result.rows[i].sw_accession}).removeOne();
+							failedWFBatch.find({sw_accession: result.rows[i].sw_accession}).upsert().updateOne(result.rows[i]);
+							wfBatch.find({sw_accession: result.rows[i].sw_accession}).upsert().updateOne(result.rows[i]);
+						// Update completed workflows
+						} else {
+							currentWFBatch.find({sw_accession: result.rows[i].sw_accession}).removeOne();
+							wfBatch.find({sw_accession: result.rows[i].sw_accession}).upsert().updateOne(result.rows[i]);
+						}
+					}
+					currentWFBatch.execute(function(err, result) {
+						if (err) console.dir(err);
+					});
+					if (failedWFBatch.s.currentBatch !== null) {
+						failedWFBatch.execute(function(err, result) {
+							if (err) console.dir(err);
+						});
 					}
 
 					if (result.rows.length!==0){
@@ -690,10 +708,11 @@ exports.updateRunningWorkflowRuns = function (analysisYAML) {
 function checkFailedWorkflowRuns () {
 	MongoClient.connect(url, function(err, db) {
 		if (err) return console.error(err);
+		var failedWFBatch = db.collection('FailedWorkflowRuns').initializeUnorderedBulkOp();
 		var wfBatch = db.collection('WorkflowInfo').initializeUnorderedBulkOp();
 
 		var docs = [];
-		findWorkflowDocuments(docs, 'FailedWorkflowRuns', 'failed', '', '', db, function() {
+		findWorkflowDocuments(docs, 'FailedWorkflowRuns', db, function() {
 			if (typeof docs !== 'undefined') {
 
 				// Connect to postgresql client
@@ -725,10 +744,14 @@ function checkFailedWorkflowRuns () {
 								// Do not update with library_ids, omit
 								result.rows[i] = _.omit(result.rows[i], ['libraryinfo_seqname', 'template_id']);
 
+								failedWFBatch.find({sw_accession: result.rows[i].sw_accession}).removeOne();
 								wfBatch.find({sw_accession: result.rows[i].sw_accession}).upsert().updateOne(result.rows[i]);
 							}
 						}
 
+						failedWFBatch.execute(function(err, result) {
+							if (err) console.dir(err);
+						});
 						wfBatch.execute(function(err, result) {
 							if (err) console.dir(err);
 							db.close();
@@ -1399,8 +1422,9 @@ function getDateTimeString(date) {
 		var second = '0' + second;
 	}   
 	var dateTime = year+'-'+month+'-'+day+' '+hour+':'+minute+':'+second;
-
-    return dateTime;
+	var dateType = new Date(dateTime);
+	
+    return dateType;
 }
 
 /**
@@ -1411,8 +1435,8 @@ function getDateTimeString(date) {
  * @param {function} callback
  * @return {array} docs
  */
-function findWorkflowDocuments(docs, collection, restrictionOne, restrictionTwo, restrictionThree, db, callback) {
-	var cursor = db.collection(collection).find({status: restrictionOne, status: restrictionTwo, status: restrictionThree});
+function findWorkflowDocuments(docs, collection, db, callback) {
+	var cursor = db.collection(collection).find();
 	cursor.each(function(err, doc) {
 		if (err) return console.error(err);
 		if (doc != null) {
