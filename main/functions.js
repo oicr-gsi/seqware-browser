@@ -263,8 +263,8 @@ exports.updateLibraryInfo = function (sequencerData, sampleData, skipData, recei
 								}
 								// Determine create and prepared dates
 								if (typeof sampleDateInfo[id] !== 'undefined') {
-									libraries[unique_id].create_tstmp = sampleDateInfo[id]['create_tstmp'];
-									libraries[unique_id].prep_tstmp = sampleDateInfo[id]['prep_tstmp'];
+									libraries[unique_id].create_tstmp = new Date(sampleDateInfo[id]['create_tstmp']);
+									libraries[unique_id].prep_tstmp = new Date(sampleDateInfo[id]['prep_tstmp']);
 								} else {
 									libraries[unique_id].create_tstmp = 'n/a';
 									libraries[unique_id].prep_tstmp = 'n/a';
@@ -298,7 +298,7 @@ exports.updateLibraryInfo = function (sequencerData, sampleData, skipData, recei
 										}
 									}
 									if (typeof sampleReceiveInfo[donor] !== 'undefined') {
-										libraries[unique_id].receive_tstmp = sampleReceiveInfo[donor];
+										libraries[unique_id].receive_tstmp = new Date(sampleReceiveInfo[donor]);
 									} else {
 										libraries[unique_id].receive_tstmp = 'n/a';
 									}
@@ -331,8 +331,8 @@ exports.updateLibraryInfo = function (sequencerData, sampleData, skipData, recei
 						}
 						// Determine create and prepared dates
 						if (typeof sampleDateInfo[id] !== 'undefined') {
-							libraries[unique_id].create_tstmp = sampleDateInfo[id]['create_tstmp'];
-							libraries[unique_id].prep_tstmp = sampleDateInfo[id]['prep_tstmp'];
+							libraries[unique_id].create_tstmp = new Date(sampleDateInfo[id]['create_tstmp']);
+							libraries[unique_id].prep_tstmp = new Date(sampleDateInfo[id]['prep_tstmp']);
 						} else {
 							libraries[unique_id].create_tstmp = 'n/a';
 							libraries[unique_id].prep_tstmp = 'n/a';
@@ -365,7 +365,7 @@ exports.updateLibraryInfo = function (sequencerData, sampleData, skipData, recei
 								}
 							}
 							if (typeof sampleReceiveInfo[donor] !== 'undefined') {
-								libraries[unique_id].receive_tstmp = sampleReceiveInfo[donor];
+								libraries[unique_id].receive_tstmp = new Date(sampleReceiveInfo[donor]);
 							} else {
 								libraries[unique_id].receive_tstmp = 'n/a';
 							}
@@ -1413,8 +1413,9 @@ function getDateTimeString(date) {
 		var second = '0' + second;
 	}   
 	var dateTime = year+'-'+month+'-'+day+' '+hour+':'+minute+':'+second;
+	var dateType = new Date(dateTime);
 
-    return dateTime;
+    return dateType;
 }
 
 /**
