@@ -604,9 +604,19 @@ exports.updateFileInfo = function (fprData) {
 			// search file provenance report for file data
 			for (var fileSWID in fprData['File']) {
 				var obj = {};
-				obj['file_swid'] = fileSWID;
+				if (isNaN(parseInt(file_swid))) {
+					obj['file_swid'] = fileSWID;
+				}
+				else {
+					obj['file_swid'] = parseInt(fileSWID);
+				}
 				obj['file_path'] = fprData['File'][fileSWID]['Path'];
-				obj['workflowinfo_accession'] = fprData['File'][fileSWID]['WorkflowSWID'];
+				if (isNaN(parseInt(fprData['File'][fileSWID]['WorkflowSWID']))) {
+					obj['workflow_info_accession'] = fprData['File'][fileSWID]['WorkflowSWID'];
+				}
+				else {
+					obj['workflow_info_accession'] = parseInt(fprData['File'][fileSWID]['WorkflowSWID']);
+				}
 
 				batch.find({file_swid: fileSWID}).upsert().updateOne(obj);
 			}
@@ -767,7 +777,12 @@ function getReportData(jsonFile, xenomeFile, IUSSWID) {
 		var onTargetRate = lineObj['reads on target']/lineObj['mapped reads'];
 
 		// IUSSWID
-		obj['iusswid'] = IUSSWID;
+		if (isNaN(parseInt(IUSSWID))) {
+			obj['iusswid'] = IUSSWID;
+		}
+		else {
+			obj['iusswid'] = parseInt(IUSSWID);
+		};
 
 		// Reads per start point
 		obj['reads_sp'] = readsSP;
@@ -878,7 +893,12 @@ function getRNASeqQCData(zipFile, IUSSWID) {
 		var START_POINTS;
 
 		// IUSSWID
-		obj['iusswid'] = IUSSWID;
+		if (isNaN(parseInt(IUSSWID))) {
+			obj['iusswid'] = IUSSWID;
+		}
+		else {
+			obj['iusswid'] = parseInt(IUSSWID);
+		}
 
 		// Read from zip files without extracting
 		zipEntries.forEach(function(zipEntry) {
@@ -1111,7 +1131,12 @@ exports.updateGraphData = function (fprData) {
 							}
 							var title = lineObj['run name'] + ' Lane: ' + lineObj['lane'] + ' Barcode: ' + lineObj['barcode'] + ' Library: ' + lineObj['library'];
 							var graphData = {};
-							graphData['iusswid'] = newIUSSWID[ius];
+							if (isNaN(parseInt(newIUSSWID[ius]))) {
+								graphData['iusswid'] = newIUSSWID[ius];
+							}
+							else {
+								graphData['iusswid'] = parseInt(newIUSSWID[ius]);
+							}
 							graphData['read_breakdown'] = {};
 							graphData['insert_distribution'] = {};
 							graphData['soft_clip_by_cycle'] = {};
@@ -1457,8 +1482,7 @@ function findReportDocumentsIUSSWID(docs, collection, db, callback) {
 	cursor.each(function(err, doc) {
 		if (err) return console.error(err);
 		if (doc != null) {
-			if (doc != null) {
-				docs.push(doc.iusswid.toString()); }
+			docs.push(doc.iusswid.toString());
 		} else {
 			callback();
 			return docs;
