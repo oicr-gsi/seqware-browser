@@ -218,11 +218,11 @@ if (type=="dna") {
 			// Graphs (images to base64)
 			} else if (zipEntry.name === 'pieChart.jpeg'){
 				//console.log(zipEntry.getData().toString());
-				obj['Bases Breakdown'] = zipEntry.getData().toString('base64');
+				obj['bases_breakdown'] = zipEntry.getData().toString('base64');
 			} else if (/.*\.junctionSaturation_plot\.jpeg/.test(zipEntry.name)){
-				obj['Junction Saturation'] = zipEntry.getData().toString('base64');
+				obj['junction_saturation'] = zipEntry.getData().toString('base64');
 			} else if (/.*\.geneBodyCoverage\.curves\.jpeg/.test(zipEntry.name) || /.*\.geneBodyCoverage\.jpeg/.test(zipEntry.name)){
-				obj['RSeQC Gene Body Coverage'] = zipEntry.getData().toString('base64');
+				obj['rseqc_gene_body_coverage'] = zipEntry.getData().toString('base64');
 			}
 		});
 
@@ -278,9 +278,9 @@ if (type=="dna") {
 		obj['yield'] = parseFloat(PF_BASES); // Passed Filter Bases
 
 		if (PCT_CORRECT_STRAND_READS !== 0) {
-			obj['Proportion Correct Strand Reads'] = parseFloat(PCT_CORRECT_STRAND_READS);
+			obj['proportion_correct_strand_reads'] = parseFloat(PCT_CORRECT_STRAND_READS);
 		} else {
-			obj['Proportion Correct Strand Reads'] = 'Not a Strand Specific Library';
+			obj['proportion_correct_strand_reads'] = 'Not a Strand Specific Library';
 		}
 		obj['median_5prime_to_3prime_bias'] = parseFloat(MEDIAN_5PRIME_TO_3PRIME_BIAS);
 		// rRNA Contamination (%reads aligned)
