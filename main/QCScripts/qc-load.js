@@ -18,7 +18,7 @@ fs.readFile(process.argv[2], 'utf8', function (err, data) {
 
 		// Return updated info to mongodb, insert if not already in db
 		//batch.find({iusswid: newIUSSWID[i]}).upsert().updateOne(obj);
-		db.collection('QCTest2').updateOne({iusswid: runData['iusswid']}, runData, {upsert: true}, function (err) {
+		db.collection('QC').updateOne({iusswid: runData['iusswid']}, runData, {upsert: true}, function (err) {
 			if (err) return console.error(err);
 			db.close();
 		});

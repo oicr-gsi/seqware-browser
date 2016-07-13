@@ -19,7 +19,7 @@ fs.readFile(process.argv[2], 'utf8', function(err, data){
 		if (err) console.error(err);
 
 		var ids = [];
-		findReportDocumentsIUSSWID(ids, 'QCTest2', db, function (err) {
+		findReportDocumentsIUSSWID(ids, 'QC', db, function (err) {
 			var newIUSSWID = _.difference(Object.keys(fprDataLibrary['Library']), ids);
 			console.log("there are %d new iusswids", newIUSSWID.length);
 			var obj = [];
