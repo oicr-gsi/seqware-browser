@@ -8,19 +8,13 @@ var config = require('config.js');
 var JSON = require('JSON');
 var spawn = require('child_process').spawn;
 var readMultipleFiles = require('read-multiple-files');
-// Initialize mongo config
-var	mongodb = require('mongodb');
-var MongoClient = mongodb.MongoClient;
-var url = 'mongodb://' + config.mongo.host + '/' + config.mongo.database;
 
-//readMultipleFiles([process.argv[2], process.argv[3]], 'utf8', function(err, data){
-	//if (err) return console.error(err);
-	var type = process.argv[2];
-	var jsonData =process.argv[3];
-	var IUSSWID = process.argv[4];
-	var path = process.argv[5];
-	var xenomeData = process.argv[6];
-	var obj = {};
+var type = process.argv[3];
+var jsonData =process.argv[4];
+var IUSSWID = process.argv[5];
+var path = process.argv[2];
+var xenomeData = process.argv[6];
+var obj = {};
 if (type=="dna") {
 	obj['type'] = 'dna';
 
@@ -123,7 +117,7 @@ if (type=="dna") {
 				});
 			});
 		} else {
-			console.log(jsonFile + " does not exist");
+			console.log(jsonData + " does not exist");
 
 			if (isNaN(parseInt(IUSSWID))) {
 				obj['iusswid'] = IUSSWID;
@@ -180,8 +174,8 @@ if (type=="dna") {
 			stream.end();
 		});
 	}
-} else {
-		zipExists = fs.existsSync(jsonData);
+} else if (typeof type !== 'undefined') {
+	zipExists = fs.existsSync(jsonData);
 	if (zipExists) {
 		var zip = new AdmZip(jsonData);
 		var zipEntries = zip.getEntries();
@@ -290,7 +284,7 @@ if (type=="dna") {
 			obj['pct_rrna_content'] = 'Total Reads Job Failed -> re-run report';
 		}
 	} else {
-		console.log(zipFile + " does not exist");
+		console.log(jsonData + " does not exist");
 
 		// Add to object
 		obj['bases_breakdown'] = 'n/a';

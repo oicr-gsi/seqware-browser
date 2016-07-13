@@ -17,38 +17,30 @@ fs.readFile(process.argv[2], 'utf8', function(err, data){
 	fprDataLibrary = JSON.parse(data);
 	MongoClient.connect(url, function(err, db) {
 		if (err) console.error(err);
-
 		var ids = [];
 		findReportDocumentsIUSSWID(ids, 'QC', db, function (err) {
 			var newIUSSWID = _.difference(Object.keys(fprDataLibrary['Library']), ids);
-			console.log("there are %d new iusswids", newIUSSWID.length);
-			var obj = [];
+			//console.log("there are %d new iusswids", newIUSSWID.length);
+			var obj = "";
 			for (var i=0; i<newIUSSWID.length;i++) {
-				obj [i] = {};
-				obj[i]['iusswid']=newIUSSWID[i];
-				//console.log(obj['iusswid']);
 				if (typeof fprDataLibrary['Library'][newIUSSWID[i]]['RNAZipFile'] !== 'undefined') {
-					obj[i]['sampleType'] = "rna";
-					obj[i]['RNAZipFile'] = fprDataLibrary['Library'][newIUSSWID[i]]['RNAZipFile'];
+					var load = "rna "+fprDataLibrary['Library'][newIUSSWID[i]]['RNAZipFile']+" "+newIUSSWID[i]+"\n";
 				}
 				else {
-					obj[i]['sampleType'] = "dna";
 					if (typeof fprDataLibrary['Library'][newIUSSWID[i]]['JSON'] !== 'undefined') {
-						obj[i]['JSON'] = fprDataLibrary['Library'][newIUSSWID[i]]['JSON'];
+						var file = fprDataLibrary['Library'][newIUSSWID[i]]['JSON'];
 					} else {
-						obj[i]['JSON'] = "n/a";
+						var file = "n/a";
 					}
 					if (typeof fprDataLibrary['Library'][newIUSSWID[i]]['XenomeFile'] !== 'undefined') {
-						obj[i]['XenomeFile'] = fprDataLibrary['Library'][newIUSSWID[i]]['XenomeFile'];
+						var load= "dna "+file+" "+newIUSSWID[i]+" "+fprDataLibrary['Library'][newIUSSWID[i]]['XenomeFile']+"\n";
+					} else {
+						var load= "dna "+file+" "+newIUSSWID[i]+"\n";
 					}
-				}		
+				}
+				obj = obj.concat(load);		
 			}
-			//obj['count'] = newIUSSWID.length;
-			var stream = fs.createWriteStream(process.argv[3]+"/newQCData.json");
-			stream.once('open', function(fd) {
-				stream.write(JSON.stringify(obj));
-				stream.end();
-			});
+			console.log(obj);
 
 			db.close();
 		});
