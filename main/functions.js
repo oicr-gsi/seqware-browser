@@ -561,7 +561,7 @@ exports.updateWorkflowInfo = function (analysisYAML) {
 									libraryObj[librarySeq_id]['iusswid'] = parseInt(iusswid); //only for libraries with workflows
 								}							 
 							}
-							libraryObj[librarySeq_id]['workflowinfo_accession'].push(workflowinfo_accession);
+							libraryObj[librarySeq_id]['workflowinfo_accession'].push(WorkflowInfo_accession);
 						}
 
 						// Update workflow information batch
@@ -604,7 +604,7 @@ exports.updateFileInfo = function (fprData) {
 			// search file provenance report for file data
 			for (var fileSWID in fprData['File']) {
 				var obj = {};
-				if (isNaN(parseInt(file_swid))) {
+				if (isNaN(parseInt(fileSWID))) {
 					obj['file_swid'] = fileSWID;
 				}
 				else {

@@ -1,0 +1,11 @@
+xvals <- c(undefined)
+yvals <- c(undefined)
+yvals <- c(undefined)
+cols <- c("undefined")
+png(filename = "/home/silioukhina/seqware-test/tmp/8998soft_clips_by_cycle.png", width = 640, height = 640)
+plot(xvals, yvals, main="title", type="n", col="black", xlab="Cycle", ylab="% Bases Soft Clipped", ylim=c(0, 100))
+for(i in 1:(length(yvals)-1))
+{
+polygon(c(xvals[i] - 0.5, xvals[i] - 0.5, xvals[i] + 0.5, xvals[i] + 0.5), c(0, yvals[i], yvals[i], 0), col=cols[i], border=NA)
+}
+dev.off()

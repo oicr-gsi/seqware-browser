@@ -1,0 +1,8 @@
+Statistics
+B	G	H	M	count	percent	class
+0	0	1	0	1234567	8.0000	"definitely mouse"
+0	0	1	0	2345678	5.0000	"probably mouse"
+
+Summary
+count	percent	class
+12345	13.57911	mouse
