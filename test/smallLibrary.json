@@ -1,23 +1,23 @@
 {
 	"Library": {
 		"878379": {
-			"JSON": "/home/silioukhina/seqware-browser/tmpJSON/BART_0422_Br_P.BamQC.json"
+			"JSON": "/home/seqware-browser/tmpJSON/file_1.json"
 		},
 		"769467": {
-			"JSON": "/home/silioukhina/seqware-browser/tmpJSON/SWID_769467_HALT_0836_Pb_P_PE_382_TS_131205_SN801_0143_AC39YWACXX_GATGAATC_L002_R1_001.fastq.gz.annotated.bam.BamQC.json"
+			"JSON": "/home/seqware-browser/tmpJSON/file_2.bam.BamQC.json"
 		},
 		"725686": {
-			"JSON": "/home/silioukhina/seqware-browser/tmpJSON/SWID_725686_HALT_0663_Pb_P_PE_402_TS_131121_SN801_0141_AC2R4YACXX_GATAGACA_L002_R1_001.fastq.gz.annotated.bam.BamQC.json",
-			"XenomeFile": "/oicr/data/archive/seqware/seqware_analysis_8/hsqwprod/seqware-results/Xenome_1.3/2167634/SWID_2917020_PCSI_0605_Lv_X_PE_351_WG_NoGroup_151028_D00353_0113_BC7TNVANXX_TGACCA_L006.log"
+			"JSON": "/home/seqware-browser/tmpJSON/file_3.bam.BamQC.json",
+			"XenomeFile": "/home/seqware-results/Xenome//partial_xenome.log"
 		},
 		"906719": {
-			"JSON": "/home/silioukhina/seqware-browser/tmpJSON/BART_0563_Br_P.BamQC.json"
+			"JSON": "/home/seqware-browser/tmpJSON/file_4.json"
 		},
 		"527622": {
-			"RNAZipFile": "/oicr/data/archive/seqware/seqware_analysis_8/hsqwprod/seqware-results/RNAseqQc_2.3.1/74462254/rnaqc.report.zip"
+			"RNAZipFile": "/home/seqware-results/rnaqc.report.zip"
 		},
 		"8998": {
-			"JSON": "/home/silioukhina/seqware-browser/tmpJSON/SWID_8998_PCSI_0014_Pa_X_PE_228_EX_110311_I581_00031_612RN_LT_NoIndex_L008_R1_001.fastq.gz.annotated.bam.BamQC.json"
+			"JSON": "/home/seqware-browser/tmpJSON/file_5.fastq.gz.annotated.bam.BamQC.json"
 		}
 	}
 }

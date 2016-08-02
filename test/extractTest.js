@@ -193,8 +193,8 @@ describe('qc loading scripts', function() {
 				done();
 			});
 		});
-		it('full rna file', function(done) {
-			transformqc.makeObject("./tmp", "rna", "./test/SWID_4112338_SCRM_0168_Bn_P_PE_703_MR_160412_D00355_0118_BC908YANXX_CGAGGCTG-ACTGCATA_L003_R1_001_rnaqc.report.zip", "54321", undefined, function(obj, path, IUSSWID) {
+	/*	it('full rna file', function(done) {
+			transformqc.makeObject("./tmp", "rna", "./test/rnaqc.report.zip", "54321", undefined, function(obj, path, IUSSWID) {
 				test.object(obj)
 					.hasProperty('iusswid', parseInt(IUSSWID))
 					.hasNotProperty('reads', "n/a")
@@ -205,7 +205,7 @@ describe('qc loading scripts', function() {
 				done();
 			});
 		});
-	});
+	});*/
 	describe('load:', function() {
 		it('loads one object into collection', function(done) {
 			MongoClient.connect(mongourl, function(err, db) {
