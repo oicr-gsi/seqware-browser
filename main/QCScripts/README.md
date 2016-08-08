@@ -24,29 +24,23 @@ A possible way to run these scripts:
 
 ```
 #!/bin/bash
+set -euf -o pipefail
 
 FPR=$1
 TMP=$2
 
-node QCScripts/qc-extract.js $FPR $TMP
+echo "making list"
+node QCScripts/qc-extract.js "${FPR}" > "${TMP}/newQCData.txt"
 
-i="0"
-max=$(cat tmp/newQCData.json | jq '.' | grep "iusswid" | wc -l)
-
-while [ $i -lt $max ]
-do
-echo "here"
-#echo $(cat $TMP/newQCData.json | jq '.['$i'].JSON' -r | grep -v null)
-node QCScripts/qc-transform.js $(cat $TMP/newQCData.json | jq '.['$i'].sampleType' -r) $(cat $TMP/newQCData.json | jq '.['$i'].JSON' -r | grep -v null) $(cat $TMP/newQCData.json | jq '.['$i'].RNAZipFile' -r | grep -v null) $(cat $TMP/newQCData.json | jq '.['$i'].iusswid' -r) $TMP $(cat $TMP/newQCData.json | jq '.['$i'].XenomeFile' -r | grep -v null)
-i=$[$i+1]
-done
+echo "starting to generate json files"
+while read -r p; do 
+  node QCScripts/qc-transform.js "${TMP}" $p
+done <"${TMP}/newQCData.txt"
 
 echo "starting loading"
-
-
-for i in $(ls $TMP | grep "qc-"); do node QCScripts/qc-load.js $TMP/$i; done
- 
-module.exports = config;
+for i in $(ls "${TMP}" | grep ".json"); do
+  node QCScripts/qc-load.js "${TMP}/${i}"
+done
 
 ```
 
