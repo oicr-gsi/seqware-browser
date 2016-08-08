@@ -1,0 +1,15 @@
+{
+  "name": "seqware-browser",
+  "version": "0.0.0",
+  "description": "",
+  "main": "test/extractTest.js",
+  "scripts": {
+    "test": "./node_modules/.bin/mocha --reporter spec"
+  },
+  "author": "",
+  "license": "BSD-2-Clause",
+  "dependencies": {
+    "mocha": "~2.5.3",
+    "chai": "~3.5.0",
+  }
+}

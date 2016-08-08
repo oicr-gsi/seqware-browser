@@ -32,6 +32,8 @@ main
     ├── RunReport.pl
     ├── seqware-db-current-wfs.js
     └── seqware-db-wfs.js
+ test
+ └── extractTest.js
 ```
 
 ### Other required files (directories and locations determined by sqwwhich)
@@ -169,6 +171,11 @@ runs.txt file which is list of all sequencer runs in the file provenance report 
 Note: step 1 perl module outputs returned object into json file that is taken in by a separate javascript file to upload to mongo (can't directly upload to mongo because unable to use MongoDB.pm on the cluster due to outdated C compilier libc6.so)
 
 ---
+### Testing
+Unit.js was used for testing the QC Collection loading functions found in main/QCScripts. They look at all three scripts: extractFunctions.js, transformFunctions.js, and loadFunctions.js
+Firstly, npm inistall unitjs, chain and mocha, which are also listed in the package.json file. 
+Next, make a temporary directory called tmp in the same directory level as main and test.
+To run the tests, type npm test into the command line.
 ### MongoDB
 Install mongo from the mongodb website
 
