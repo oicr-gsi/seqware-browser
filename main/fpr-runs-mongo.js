@@ -3,8 +3,7 @@ var config = require('config.js');
 // Initialize mongo config
 var	mongodb = require('mongodb');
 var MongoClient = mongodb.MongoClient;
-//var url = 'mongodb://' + config.mongo.host + '/' + config.mongo.database;
-var url = 'mongodb://10.30.128.97/dev_db';
+var url = 'mongodb://' + config.mongo.host + '/' + config.mongo.database;
 
 var analysisYAML;
 
