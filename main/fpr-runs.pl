@@ -9,8 +9,8 @@ use IO::Uncompress::Gunzip qw($GunzipError);
 our @ISA = qw (Exporter);
 our @EXPORT_OK;
 
-my ($fpr, $outputDir) = @ARGV;
-my %runs;
+my ($fpr) = @ARGV;
+#my %runs;
 
 ########################################################################
 # Extract data from File Provenance Report
@@ -32,15 +32,10 @@ while (!$fprHandle->eof()) {
 	$line = $fprHandle->getline();
 	chomp $line;
 	@linehash{@header} = split("\t", $line);
-
+	my $instrument = "";
 	my $runName = $linehash{"Sequencer Run Name"};
-	
-	#By Run
-	$runs{$runName} = "1";
-}
-
-# Output list of runs to file
-open (runFH, ">", "$outputDir/runs.txt");
-foreach my $key (keys %runs) {
-	print runFH "$key \n";
+	if (index($runName, '_', 8)!= -1) {
+		$instrument = substr $runName, 7, index($runName, '_', 8)-7;
+		print "$runName $instrument\n"
+	}
 }
