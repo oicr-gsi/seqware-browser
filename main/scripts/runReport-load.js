@@ -5,8 +5,7 @@ var JSON = require('JSON');
 // Initialize mongo config
 var	mongodb = require('mongodb');
 var MongoClient = mongodb.MongoClient;
-//var url = 'mongodb://' + config.mongo.host + '/' + config.mongo.database;
-var url = 'mongodb://10.30.128.97/dev_db_2';
+var url = 'mongodb://' + config.mongo.host + '/' + config.mongo.database;
 
 runData = JSON.parse(process.argv[2]);
 
