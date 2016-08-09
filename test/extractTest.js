@@ -16,6 +16,7 @@ var config = require('config.js');
 var mongourl = 'mongodb://' + config.mongo.host + '/'+ config.mongo.database;
 
 describe('qc loading scripts', function() {
+	//connects to MongoDB, empties QC collection in this testing Directory
 	before ('empty QC collection', function(done) {
 		MongoClient.connect(mongourl, function(err, db) {
 				db.collection('QC').drop();
@@ -23,15 +24,14 @@ describe('qc loading scripts', function() {
 			});
 	});
 	describe('extract:', function() {
+		//check databese connection
 		it('connects to mongodb', function(done) {
 			MongoClient.connect(mongourl, function(err, db) {
-				//test.assert(err==null);
-				//assert.equal(err, null);
 				expect(err).to.equal(null);
-				//test.error(err).is('{}')
 				done();
 			});
 		});
+		//function does not return any ids for an empty collection
 		it('findReportDocumentsIUSSWID: identifies collection as empty', function(done) {
 			MongoClient.connect(mongourl, function(err, db) {
 				db.collection('QC').remove({});
@@ -42,7 +42,7 @@ describe('qc loading scripts', function() {
 				});
 			});
 		});
-		//sometimes doesnt work
+		//filled QC with information, function returns the matching ids
 		it('findReportDocumentsIUSSWID: identifies collection to have pre existing data', function(done) {
 			MongoClient.connect(mongourl, function(err, db) {
 				var insertArray = [];
@@ -62,17 +62,20 @@ describe('qc loading scripts', function() {
 				});
 			});
 		});
+		//will not generate empty json when no path given
 		it('makeFile: no arguments provided, throw error', function(done) {
 			MongoClient.connect(mongourl, function(err, db) {
 				test.assert(extractqc.makeFile(undefined, db)==null);
 				done();
 			});
 		});
+		//fs is working
 		it('readfile retrieves from json', function(done) {
 			var list = fs.readFileSync("./test/smallLibrary.json", 'utf8');
 			test.string(list).isNotEmpty();
 			done();
 		});
+		//function correctly reads list
 		it('makeFile: string, contains xenome and rna files', function(done) {
 			MongoClient.connect(mongourl, function(err, db) {
 				var jsonString = fs.readFileSync("./test/smallLibrary.json", 'utf8');  
@@ -87,6 +90,7 @@ describe('qc loading scripts', function() {
 		});
 	});
 	describe('transform:', function() {
+		//makes an R script, the function can then take this script and make an png file
 		it('transform R script to image', function(done) {
 			var stream = fs.createWriteStream("./tmp/graphCode.png.Rcode");
 			stream.once('open', function(fd) {
@@ -109,6 +113,7 @@ describe('qc loading scripts', function() {
 				});
 			});
 		});
+		//no png file created with incomplete R script data
 		it('no image when incomplete R script', function(done) {
 			var stream = fs.createWriteStream("./tmp/graphCode.png.Rcode");
 			stream.once('open', function(fd) {
@@ -128,6 +133,7 @@ describe('qc loading scripts', function() {
 				});
 			});
 		});
+		//can generate the R script file
 		it('transform json to Rscript', function(done) {
 			var jsonString = fs.readFileSync("./test/NA12877_art_30x_WG_BWAMEM_simulated.json", 'utf8'); 
 			var obj = JSON.parse(jsonString);
@@ -137,6 +143,7 @@ describe('qc loading scripts', function() {
 				done();
 			});
 		});
+		//makes empty properties when not given path
 		it('no path, input is n/a', function(done) {
 			transformqc.makeObject("./tmp", "dna", "n/a", "906719", undefined, function(obj, path, IUSSWID) {
 				test.object(obj)
@@ -219,6 +226,7 @@ describe('qc loading scripts', function() {
 				});
 			});
 		});
+		//load the same id twice, make sure it only appears once
 		it('iusswid already exists', function(done) {
 			MongoClient.connect(mongourl, function(err, db) {
 				var data = fs.readFileSync("./test/qc-906719.json", 'utf8');
