@@ -13,13 +13,21 @@ var extractqc = require("../main/QCScripts/extractFunctions");
 var transformqc = require("../main/QCScripts/transformFunctions");
 var loadqc = require("../main/QCScripts/loadFunctions");
 var config = require('config.js');
-var mongourl = 'mongodb://' + config.mongo.host + '/'+ config.mongo.database;
+var randomNum = parseInt(Math.random()*100000);
+var mongourl = 'mongodb://' + config.mongo.host + '/test_'+randomNum;
+
 
 describe('qc loading scripts', function() {
 	//connects to MongoDB, empties QC collection in this testing Directory
 	before ('empty QC collection', function(done) {
 		MongoClient.connect(mongourl, function(err, db) {
 				db.collection('QC').drop();
+				done();
+			});
+	});
+	after ('drop database', function(done) {
+		MongoClient.connect(mongourl, function(err, db) {
+				db.dropDatabase();
 				done();
 			});
 	});
@@ -211,8 +219,8 @@ describe('qc loading scripts', function() {
 					.hasLength(13);
 				done();
 			});
-		});
-	});*/
+		});*/
+	});
 	describe('load:', function() {
 		it('loads one object into collection', function(done) {
 			MongoClient.connect(mongourl, function(err, db) {
