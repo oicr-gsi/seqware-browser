@@ -12,10 +12,9 @@ var test = require('unit.js');
 var extractqc = require("../main/QCScripts/extractFunctions");
 var transformqc = require("../main/QCScripts/transformFunctions");
 var loadqc = require("../main/QCScripts/loadFunctions");
-var config = require('config.js');
 var randomNum = parseInt(Math.random()*100000);
-var mongourl = 'mongodb://' + config.mongo.host + '/test_'+randomNum;
-
+var input = process.env.KEY;
+var mongourl = 'mongodb://' + input + '/test_'+ randomNum;
 
 describe('qc loading scripts', function() {
 	//connects to MongoDB, empties QC collection in this testing Directory

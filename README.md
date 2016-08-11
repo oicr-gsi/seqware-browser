@@ -174,11 +174,11 @@ Note: step 1 perl module outputs returned object into json file that is taken in
 ### Testing
 Unit.js was used for testing the QC Collection loading functions found in main/QCScripts. They look at all three scripts: extractFunctions.js, transformFunctions.js, and loadFunctions.js
 
-To test, first install all the requuired modules:
+First install all the required modules and then enter then run the test with the mongo address as a variable:
 
 ```
 npm install
-npm test
+env KEY=host_address npm test
 ```
 ---
 ### MongoDB
