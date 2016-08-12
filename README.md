@@ -174,13 +174,12 @@ Note: step 1 perl module outputs returned object into json file that is taken in
 ### Testing
 Unit.js was used for testing the QC Collection loading functions found in main/QCScripts. They look at all three scripts: extractFunctions.js, transformFunctions.js, and loadFunctions.js
 
-Firstly, npm inistall unitjs, chain and mocha, which are also listed in the package.json file
+First install all the required modules and then enter then run the test with the mongo address as a variable:
 
-Next, make a temporary directory called tmp in the same directory level as main and test
-
-To run the tests, type npm test into the command line
-
-
+```
+npm install
+env KEY=host_address npm test
+```
 ---
 ### MongoDB
 Install mongo from the mongodb website

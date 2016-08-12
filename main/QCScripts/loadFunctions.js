@@ -1,6 +1,5 @@
 // arguments: transformedJsonFile
 var fs = require('fs');
-var config = require('config.js');
 var JSON = require('JSON');
 
 // Initialize mongo config
