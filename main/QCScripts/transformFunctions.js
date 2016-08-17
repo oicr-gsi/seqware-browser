@@ -54,7 +54,7 @@ function makeObject(path, type, jsonData, IUSSWID, xenomeData, callback) {
 				};
 
 				// Reads per start point
-				obj['reads_sp'] = parseInt(readsSP);
+				obj['reads_sp'] = parseFloat(readsSP);
 
 				// Map %, Raw Reads, Raw Yield
 				var rawReads = (parseInt(lineObj['mapped reads']) + parseInt(lineObj['unmapped reads']) + parseInt(lineObj['qual fail reads']));

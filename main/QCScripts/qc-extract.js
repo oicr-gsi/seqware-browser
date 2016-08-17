@@ -11,7 +11,6 @@ var functions = require("./extractFunctions.js")
 
 var analysisYAML;
 var fileRead=process.argv[2];
-console.log(fileRead);
 fs.readFile(fileRead, 'utf8', function(err, data){
 	if (err) return console.error(err);
 	
