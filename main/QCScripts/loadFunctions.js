@@ -17,6 +17,7 @@ function insertJSON(dataFile, url, callback) {
 			//batch.find({iusswid: newIUSSWID[i]}).upsert().updateOne(obj);
 			db.collection('QC').updateOne({iusswid: runData['iusswid']}, runData, {upsert: true}, function (err) {
 				if (err) return console.error(err);
+				db.collection('QC').createIndex({iusswid: 1});
 				db.close();
 				return callback();
 			});
