@@ -16,7 +16,6 @@ fs.readFile(fileRead, 'utf8', function(err, data){
 	
 	MongoClient.connect(url, function(err, db) {
 		if (err) console.error(err);
-
 		functions.makeFile(data,db, function(obj) {
 			console.log(obj);
 			db.close();
