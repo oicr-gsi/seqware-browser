@@ -1,0 +1,17 @@
+{
+	"type": "dna",
+	"pct_mouse_content": "n/a",
+	"source": "bam_qc",
+	"iusswid": 878378,
+	"reads_sp": "1.11",
+	"map_pct": 100,
+	"reads": 44444,
+	"yield": 555555,
+	"pct_on_target": 50.00,
+	"insert_mean": 122.22,
+	"insert_stdev": 48.48,
+	"read_length_1": 101,
+	"read_length_2": 101,
+	"coverage_collapsed": 18.00,
+	"coverage_raw": 20.00
+}

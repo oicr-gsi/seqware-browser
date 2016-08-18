@@ -1,0 +1,23 @@
+{
+	"Library": {
+		"878379": {
+			"JSON": "/home/seqware-browser/tmpJSON/file_1.json"
+		},
+		"769467": {
+			"JSON": "/home/seqware-browser/tmpJSON/file_2.bam.BamQC.json"
+		},
+		"725686": {
+			"JSON": "/home/seqware-browser/tmpJSON/file_3.bam.BamQC.json",
+			"XenomeFile": "/home/seqware-results/Xenome//partial_xenome.log"
+		},
+		"906719": {
+			"JSON": "/home/seqware-browser/tmpJSON/file_4.json"
+		},
+		"527622": {
+			"RNAZipFile": "/home/seqware-results/rnaqc.report.zip"
+		},
+		"8998": {
+			"JSON": "/home/seqware-browser/tmpJSON/file_5.fastq.gz.annotated.bam.BamQC.json"
+		}
+	}
+}

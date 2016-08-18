@@ -1,0 +1,26 @@
+{
+  "name": "seqware-browser",
+  "version": "0.0.0",
+  "description": "",
+  "main": "test/extractTest.js",
+  "scripts": {
+    "test": "./node_modules/.bin/mocha --reporter spec"
+  },
+  "author": "",
+  "license": "BSD-2-Clause",
+  "dependencies": {
+    "unit.js": "~2.0.0",
+    "mocha": "~2.5.3",
+    "chai": "~3.5.0",
+    "body-parser": "~1.15.1",
+    "express": "~4.13.4",
+    "adm-zip": "~0.4.7",
+    "underscore": "~1.8.3",
+    "mongodb": "~2.1.7",
+    "fs": "~0.0.2",
+    "yamljs": "~0.2.5",
+    "read-multiple-files": "~1.1.1",
+    "pg": "~4.5.1",
+    "JSON": "~1.0.0"
+  }
+}
