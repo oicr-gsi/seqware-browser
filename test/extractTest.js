@@ -23,18 +23,24 @@ describe('qc loading scripts', function() {
 			test.fail('mongo address was not entered correctly: npm --mongo_db_for_testing=_______ test');
 		}
 		MongoClient.connect(mongourl, function(err, db) {
-				db.collection('QC').drop();
-				done();
-			});
+			if(db==null) {
+				test.fail('incorrect address entered');
+			}
+			db.collection('QC').drop();
+			done();
+		});
 	});
 	after ('drop database', function(done) {
 		if(input==undefined) {
 			test.fail('mongo address was not entered correctly: npm --mongo_db_for_testing=_______ test');
 		}
 		MongoClient.connect(mongourl, function(err, db) {
-				db.dropDatabase();
-				done();
-			});
+			if(db==null) {
+				test.fail('incorrect address entered');
+			}
+			db.dropDatabase();
+			done();
+		});
 	});
 	describe('extract:', function() {
 		//check databese connection
