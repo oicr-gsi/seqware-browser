@@ -13,20 +13,24 @@ var extractqc = require("../main/QCScripts/extractFunctions");
 var transformqc = require("../main/QCScripts/transformFunctions");
 var loadqc = require("../main/QCScripts/loadFunctions");
 var randomNum = parseInt(Math.random()*100000);
-var input = process.env.KEY;
+var input = process.env.npm_config_mongo_db_for_testing;
 var mongourl = 'mongodb://' + input + '/test_'+ randomNum;
 
 describe('qc loading scripts', function() {
 	//connects to MongoDB, empties QC collection in this testing Directory
 	before ('mongo address received, empty QC collection', function(done) {
-		expect(input).to.not.equal(undefined);
+		if(input==undefined) {
+			test.fail('mongo address was not entered correctly: npm --mongo_db_for_testing=_______ test');
+		}
 		MongoClient.connect(mongourl, function(err, db) {
 				db.collection('QC').drop();
 				done();
 			});
 	});
 	after ('drop database', function(done) {
-		expect(input).to.not.equal(undefined);
+		if(input==undefined) {
+			test.fail('mongo address was not entered correctly: npm --mongo_db_for_testing=_______ test');
+		}
 		MongoClient.connect(mongourl, function(err, db) {
 				db.dropDatabase();
 				done();

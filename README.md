@@ -178,7 +178,7 @@ First install all the required modules and then enter then run the test with the
 
 ```
 npm install
-env KEY=host_address npm test
+npm --mongo_db_for_testing=host_address test
 ```
 ---
 ### MongoDB
