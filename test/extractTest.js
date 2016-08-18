@@ -38,7 +38,7 @@ describe('qc loading scripts', function() {
 			if(db==null) {
 				test.fail('incorrect address entered');
 			}
-			db.dropDatabase();
+			//db.dropDatabase();
 			done();
 		});
 	});
@@ -62,7 +62,32 @@ describe('qc loading scripts', function() {
 			});
 		});
 		//filled QC with information, function returns the matching ids
-		it('findReportDocumentsIUSSWID: identifies collection to have pre existing data', function(done) {
+	/*	it('findReportDocumentsIUSSWID: identifies collection to have pre existing data', function(done) {
+			MongoClient.connect(mongourl, function(err, db) {
+				loadCollection( function() {
+					var docs = [];
+					extractqc.findReportDocumentsIUSSWID(docs, 'QC', db, function (err) {
+						expect(docs.length).to.equal(5);
+						expect(docs).to.deep.equal(testArray);
+						done();
+					});
+				})
+				function loadCollection(callback) {
+					var insertArray = [];
+					var testArray = [];
+					for (i=0; i<5;i++) {
+						insertArray[i]={};
+						insertArray[i]['type']="dna";
+						insertArray[i]['iusswid'] = i;
+						testArray[i]=i.toString();
+						db.collection('QC').insert(insertArray[i]);
+					}
+					//db.collection('QC').insert(insertArray);
+					return callback();
+				}
+
+			});*/
+			it('findReportDocumentsIUSSWID: identifies collection to have pre existing data', function(done) {
 			MongoClient.connect(mongourl, function(err, db) {
 				var insertArray = [];
 				var testArray = [];
@@ -71,8 +96,8 @@ describe('qc loading scripts', function() {
 					insertArray[i]['type']="dna";
 					insertArray[i]['iusswid'] = i;
 					testArray[i]=i.toString();
+					db.collection('QC').insert(insertArray[i]);
 				}
-				db.collection('QC').insert(insertArray);
 				var docs = [];
 				extractqc.findReportDocumentsIUSSWID(docs, 'QC', db, function (err) {
 					expect(docs.length).to.equal(5);
