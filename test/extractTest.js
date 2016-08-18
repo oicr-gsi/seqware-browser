@@ -18,13 +18,15 @@ var mongourl = 'mongodb://' + input + '/test_'+ randomNum;
 
 describe('qc loading scripts', function() {
 	//connects to MongoDB, empties QC collection in this testing Directory
-	before ('empty QC collection', function(done) {
+	before ('mongo address received, empty QC collection', function(done) {
+		expect(input).to.not.equal(undefined);
 		MongoClient.connect(mongourl, function(err, db) {
 				db.collection('QC').drop();
 				done();
 			});
 	});
 	after ('drop database', function(done) {
+		expect(input).to.not.equal(undefined);
 		MongoClient.connect(mongourl, function(err, db) {
 				db.dropDatabase();
 				done();
@@ -99,11 +101,11 @@ describe('qc loading scripts', function() {
 	describe('transform:', function() {
 		//makes an R script, the function can then take this script and make an png file
 		it('transform R script to image', function(done) {
-			var stream = fs.createWriteStream("./tmp/graphCode.png.Rcode");
+			var stream = fs.createWriteStream("./test/tmp/graphCode.png.Rcode");
 			stream.once('open', function(fd) {
 				line1="xvals <- c(1,2,3,4,5)\nyvals <- c(0,0,0,0.018276523805172255,0.018276523805172255)\n"
 				line12="cols <- c(\"firebrick\", \"firebrick\", \"firebrick\", \"firebrick\", \"firebrick\")\n";
-				line2="png(filename = \"./tmp/8999soft_clips_by_cycle.png\", width = 640, height = 640)\n";
+				line2="png(filename = \"./test/tmp/8999soft_clips_by_cycle.png\", width = 640, height = 640)\n";
 				line3="plot(xvals, yvals, main=\"title\", type=\"n\", col=\"black\", xlab=\"Cycle\", ylab=\"% Bases Soft Clipped\", ylim=c(0, 100))\n";
 				line4="for(i in 1:(length(yvals)-1))\n{\n";
 				line5="polygon(c(xvals[i] - 0.5, xvals[i] - 0.5, xvals[i] + 0.5, xvals[i] + 0.5), c(0, yvals[i], yvals[i], 0), col=cols[i], border=NA)\n";
@@ -111,10 +113,10 @@ describe('qc loading scripts', function() {
 				var final = line1.concat(line12, line2, line3, line4, line5, line6);
 				stream.write(final);
 				stream.end();
-				transformqc.useR("8999", "soft_clips_by_cycle", "./tmp", function(image) {
+				transformqc.useR("8999", "soft_clips_by_cycle", "./test/tmp", function(image) {
 					expect(image).to.not.equal(null);
 					expect(image).to.not.equal("n/a");
-					var imageFile = fs.readFileSync("./tmp/8999soft_clips_by_cycle.png", 'utf8');
+					var imageFile = fs.readFileSync("./test/tmp/8999soft_clips_by_cycle.png", 'utf8');
 					expect(imageFile).to.not.equal(undefined);
 					done()
 				});
@@ -122,7 +124,7 @@ describe('qc loading scripts', function() {
 		});
 		//no png file created with incomplete R script data
 		it('no image when incomplete R script', function(done) {
-			var stream = fs.createWriteStream("./tmp/graphCode.png.Rcode");
+			var stream = fs.createWriteStream("./test/tmp/graphCode.png.Rcode");
 			stream.once('open', function(fd) {
 				line1="xvals <- c(undefined)\nyvals <- c(undefined)\nyvals <- c(undefined)\ncols <- c(\"undefined\")\n";
 				line2="png(filename = \"./8998soft_clips_by_cycle.png\", width = 640, height = 640)\n";
@@ -133,7 +135,7 @@ describe('qc loading scripts', function() {
 				var final = line1.concat(line2, line3, line4, line5, line6);
 				stream.write(final);
 				stream.end();
-				transformqc.useR(8998, "insert_distribution", "./tmp", function(image) {
+				transformqc.useR(8998, "insert_distribution", "./test/tmp", function(image) {
 					expect(image).to.not.equal(null);
 					expect(image).to.equal("n/a");
 					done();
@@ -144,7 +146,7 @@ describe('qc loading scripts', function() {
 		it('transform json to Rscript', function(done) {
 			var jsonString = fs.readFileSync("./test/NA12877_art_30x_WG_BWAMEM_simulated.json", 'utf8'); 
 			var obj = JSON.parse(jsonString);
-			transformqc.getReadBreakdown(obj, 906719, "./tmp", function(image) {
+			transformqc.getReadBreakdown(obj, 906719, "./test/tmp", function(image) {
 				expect(image).to.not.equal(null);
 				expect(image).to.not.equal("n/a");
 				done();
@@ -152,7 +154,7 @@ describe('qc loading scripts', function() {
 		});
 		//makes empty properties when not given path
 		it('no path, input is n/a', function(done) {
-			transformqc.makeObject("./tmp", "dna", "n/a", "906719", undefined, function(obj, path, IUSSWID) {
+			transformqc.makeObject("./test/tmp", "dna", "n/a", "906719", undefined, function(obj, path, IUSSWID) {
 				test.object(obj)
 					.hasProperty('iusswid', parseInt(IUSSWID))
 					.hasProperty('type', "dna")
@@ -163,7 +165,7 @@ describe('qc loading scripts', function() {
 			});
 		});
 		it('rna file does not exist', function(done) {
-			transformqc.makeObject("./tmp", "rna", "./rnaqc.report.zip", "906719", undefined, function(obj, path, IUSSWID) {
+			transformqc.makeObject("./test/tmp", "rna", "./rnaqc.report.zip", "906719", undefined, function(obj, path, IUSSWID) {
 				test.object(obj)
 					.hasProperty('iusswid', parseInt(IUSSWID))
 					.hasProperty('type', "rna")
@@ -173,7 +175,7 @@ describe('qc loading scripts', function() {
 			});
 		});
 		it('dna file does not exist', function(done) {
-			transformqc.makeObject("./tmp", "dna", "./dna.BamQC.json", "906719", undefined, function(obj, path, IUSSWID) {
+			transformqc.makeObject("./test/tmp", "dna", "./dna.BamQC.json", "906719", undefined, function(obj, path, IUSSWID) {
 				test.object(obj)
 					.hasProperty('iusswid', parseInt(IUSSWID))
 					.hasProperty('read_breakdown', "n/a")
@@ -183,7 +185,7 @@ describe('qc loading scripts', function() {
 			});
 		});
 		it('full dna without xenome file', function(done) {
-			transformqc.makeObject("./tmp", "dna", "./test/NA12877_art_30x_WG_BWAMEM_simulated.json", "906719", undefined, function(obj, path, IUSSWID) {
+			transformqc.makeObject("./test/tmp", "dna", "./test/NA12877_art_30x_WG_BWAMEM_simulated.json", "906719", undefined, function(obj, path, IUSSWID) {
 				test.object(obj)
 					.hasProperty('iusswid', parseInt(IUSSWID))
 					.hasNotProperty('reads', "n/a")
@@ -196,7 +198,7 @@ describe('qc loading scripts', function() {
 			});
 		});
 		it('full dna with xenome file', function(done) {
-			transformqc.makeObject("./tmp", "dna", "./test/NA12877_art_30x_WG_BWAMEM_simulated.json", "906719", "./test/partial_xenome.log", function(obj, path, IUSSWID) {
+			transformqc.makeObject("./test/tmp", "dna", "./test/NA12877_art_30x_WG_BWAMEM_simulated.json", "906719", "./test/partial_xenome.log", function(obj, path, IUSSWID) {
 				test.object(obj)
 					.hasProperty('iusswid', parseInt(IUSSWID))
 					.hasNotProperty('reads', "n/a")
@@ -208,7 +210,7 @@ describe('qc loading scripts', function() {
 			});
 		});
 	/*	it('full rna file', function(done) {
-			transformqc.makeObject("./tmp", "rna", "./test/rnaqc.report.zip", "54321", undefined, function(obj, path, IUSSWID) {
+			transformqc.makeObject("./test/tmp", "rna", "./test/rnaqc.report.zip", "54321", undefined, function(obj, path, IUSSWID) {
 				test.object(obj)
 					.hasProperty('iusswid', parseInt(IUSSWID))
 					.hasNotProperty('reads', "n/a")
