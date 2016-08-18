@@ -70,13 +70,14 @@ describe('qc loading scripts', function() {
 					insertArray[i]['type']="dna";
 					insertArray[i]['iusswid'] = i;
 					testArray[i]=i.toString();
-					db.collection('QC').insert(insertArray[i]);
 				}
-				var docs = [];
-				extractqc.findReportDocumentsIUSSWID(docs, 'QC', db, function (err) {
-					expect(docs.length).to.equal(5);
-					expect(docs).to.deep.equal(testArray);
-					done();
+				db.collection('QC').insert(insertArray, function() {
+					var docs = [];
+					extractqc.findReportDocumentsIUSSWID(docs, 'QC', db, function (err) {
+						expect(docs.length).to.equal(5);
+						expect(docs).to.deep.equal(testArray);
+						done();
+					});
 				});
 			});
 		});
