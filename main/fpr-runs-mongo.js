@@ -1,5 +1,5 @@
 var fs = require('fs');
-var config = require('config.js');
+var config = require(process.env.config);
 // Initialize mongo config
 var	mongodb = require('mongodb');
 var MongoClient = mongodb.MongoClient;

@@ -1,5 +1,5 @@
 // arguments: transformedJsonFile
-var config = require('config.js');
+var config = require(process.env.config);
 
 // Initialize mongo config
 var url = 'mongodb://' + config.mongo.host + '/'+ config.mongo.database;

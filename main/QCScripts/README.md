@@ -30,7 +30,7 @@ FPR=$1
 TMP=$2
 
 echo "making list"
-node QCScripts/qc-extract.js "${FPR}" > "${TMP}/newQCData.txt"
+config=../config.js node QCScripts/qc-extract.js "${FPR}" > "${TMP}/newQCData.txt"
 
 echo "starting to generate json files"
 while read -r p; do 
@@ -39,7 +39,7 @@ done <"${TMP}/newQCData.txt"
 
 echo "starting loading"
 for i in $(ls "${TMP}" | grep ".json"); do
-  node QCScripts/qc-load.js "${TMP}/${i}"
+  config=../config.js node QCScripts/qc-load.js "${TMP}/${i}"
 done
 
 ```

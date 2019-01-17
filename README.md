@@ -83,11 +83,15 @@ The back end uses a NodeJS framework and some install packages. First, install N
 
 Most scripts under seqware-browser/main/scripts require functions from 'functions.js'.
 
-'functions.js' path should be added to NODE_PATH environment variable, as well as access to the config.js file
+'functions.js' path should be added to NODE_PATH environment variable.
+
+Details on how to run each script can be found in the wiki under seqware-browser: https://wiki.oicr.on.ca/display/GSI/How+to+run+collection+loading+scripts
 
 ### Config.js
-This is the configuration file that functions.js reads from to connect to databases: mongo and postgresql.
-
+This is the configuration file that functions.js reads from to connect to databases: mongo and postgresql. The path to this file is passed as an environment variable. An example of how to run the script that loads the FileInfo collection:
+```
+config=~/seqware-browser/config.js node --max_old_space_size=8192 main/scripts/fpr-file.js ~/.seqware-browser/tmp/fpr-File.json
+```
 Note: subject to change if more credentials are required for mongo
 
 ```

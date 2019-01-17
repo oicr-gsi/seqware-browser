@@ -6,7 +6,7 @@ var _ = require('underscore');
 var YAML = require('yamljs');
 var http = require("http");
 var AdmZip = require('adm-zip');
-var config = require('config.js');
+var config = require(process.env.config);
 var JSON = require('JSON');
 
 // Initialize mongo config
